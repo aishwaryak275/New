@@ -706,10 +706,10 @@
             <div class="flex items-center justify-between mb-4">
               <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">SIM Lines</h4>
               <button (click)="openAddSimModalFrom360()"
-                [disabled]="selected360Account?.lines?.some(l => l.status === 'Active')"
-                [title]="selected360Account?.lines?.some(l => l.status === 'Active') ? 'Delete the existing active SIM line first' : 'Add a new SIM line'"
+                [disabled]="hasActiveLine"
+                [title]="hasActiveLine ? 'Delete the existing active SIM line first' : 'Add a new SIM line'"
                 class="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition"
-                [ngClass]="selected360Account?.lines?.some(l => l.status === 'Active') ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-rose-600 hover:bg-rose-700 cursor-pointer'">
+                [ngClass]="hasActiveLine ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-rose-600 hover:bg-rose-700 cursor-pointer'">
                 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>

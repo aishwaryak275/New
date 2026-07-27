@@ -323,7 +323,7 @@
                 <span class="text-lg font-extrabold text-slate-900">₹{{ addOn.price }}</span>
                 <button
                   (click)="openAddOnModal(addOn)"
-                  [disabled]="addOn.status !== 'Active'"
+                  [disabled]="addOn.status !== 'Active' && addOn.status !== 'A'"
                   class="px-3 py-1.5 bg-primary-700 text-white text-xs font-semibold rounded-lg hover:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shadow-sm"
                 >
                   Add to Plan
@@ -413,12 +413,37 @@
           </div>
         </div>
 
+        <!-- Forecast / insights strip -->
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Data Remaining</span>
+            <p class="text-2xl font-extrabold text-slate-800 mt-2">{{ dataRemainingGb | number:'1.1-1' }} GB</p>
+            <p class="text-xs text-slate-500 font-light mt-1">of {{ account360?.lines?.[0]?.activeSubscription?.plan?.dataGb }} GB entitlement</p>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Avg Daily Data</span>
+            <p class="text-2xl font-extrabold text-slate-800 mt-2">{{ avgDailyDataMb | number:'1.0-0' }} MB<span class="text-sm font-medium text-slate-400">/day</span></p>
+            <p class="text-xs text-slate-500 font-light mt-1">based on this cycle's usage</p>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"
+               [class.border-amber-300]="usageRunwayDays !== null && usageRunwayDays <= 5">
+            <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Projected Runway</span>
+            <p class="text-2xl font-extrabold mt-2"
+               [class.text-slate-800]="usageRunwayDays === null || usageRunwayDays > 5"
+               [class.text-amber-600]="usageRunwayDays !== null && usageRunwayDays <= 5">
+              {{ usageRunwayDays !== null ? usageRunwayDays + ' days' : '—' }}
+            </p>
+            <p class="text-xs text-slate-500 font-light mt-1">until data is exhausted at current pace</p>
+          </div>
+        </div>
+
         <!-- Chart line panel -->
         <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
           <h3 class="text-base font-bold text-slate-800 tracking-tight mb-6">Daily Usage History (Data Consumption)</h3>
           <div class="h-80 relative">
             <canvas id="usageChart"></canvas>
           </div>
+          <p *ngIf="!usageRecords?.length" class="text-center text-sm text-slate-400 font-light -mt-40 relative">No usage recorded yet for this billing cycle.</p>
         </div>
       </div>
 

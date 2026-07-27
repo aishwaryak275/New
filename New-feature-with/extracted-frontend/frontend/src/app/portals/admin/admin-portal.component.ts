@@ -85,6 +85,11 @@ export class AdminPortalComponent implements OnInit {
   selected360Account: any = null;
   isSearching360 = false;
 
+  /** True when the selected account already has at least one Active SIM line. */
+  get hasActiveLine(): boolean {
+    return !!this.selected360Account?.lines?.some((l: any) => l?.status === 'Active');
+  }
+
   // ── Audit Logs ────────────────────────────────────────────────────────────────
   auditLogs: any[] = [];
   auditPage = 0;

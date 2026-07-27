@@ -35,6 +35,11 @@ export class AgentPortalComponent implements OnInit {
   selectedAccount360: any = null;
   isSearching = false;
 
+  /** True when the selected account already has at least one Active SIM line. */
+  get hasActiveLine(): boolean {
+    return !!this.selectedAccount360?.lines?.some((l: any) => l?.status === 'Active');
+  }
+
   // Request Handler Queue
   requestsQueue: any[] = [];
   filterStatus = 'All';

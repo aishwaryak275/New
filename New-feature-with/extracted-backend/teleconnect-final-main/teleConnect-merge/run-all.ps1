@@ -35,3 +35,4 @@ foreach ($s in $services) {
 Write-Host ""
 Write-Host "All services launching. They take ~25-30s to be ready." -ForegroundColor Cyan
 Write-Host "Stop them all with:  .\stop-all.ps1"
+

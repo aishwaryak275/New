@@ -48,6 +48,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
   // Usage tracking
   usageSummary: any = null;
+  usageRecords: any[] = [];
   activeBillingCycleId: number | null = null;
 
   // Payment processing
@@ -265,23 +266,37 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     const accountId = this.account360?.accountId;
     if (!line?.lineId || !accountId) return;
 
-    this.billingService.getCyclesByAccount(accountId).subscribe({
-      next: (cycles: any[]) => {
-        if (!cycles?.length) return;
-        const now = new Date().toISOString().substring(0, 10);
-        const activeCycle = cycles.find((c: any) => c.cycleStart <= now && c.cycleEnd >= now)
-                         ?? cycles[cycles.length - 1];
-        if (!activeCycle) return;
-        this.activeBillingCycleId = activeCycle.cycleId ?? activeCycle.id;
-        this.usageService.getSummary(line.lineId, this.activeBillingCycleId!).subscribe({
+    // A Subscriber cannot list billing cycles (that needs BILLING_CYCLE authority),
+    // but can read their own invoices — derive the latest billing cycle from there.
+    this.billingService.getInvoicesByAccount(accountId).subscribe({
+      next: (invoices: any[]) => {
+        const list = Array.isArray(invoices) ? invoices : [];
+        if (!list.length) return;
+        const latest = list.reduce((a, b) => ((b?.cycleId ?? 0) > (a?.cycleId ?? 0) ? b : a));
+        this.activeBillingCycleId = latest?.cycleId ?? null;
+        if (!this.activeBillingCycleId) return;
+
+        this.usageService.getSummary(line.lineId, this.activeBillingCycleId).subscribe({
           next: (summary) => {
             this.usageSummary = summary;
             if (this.activeTab() === 'usage') setTimeout(() => this.renderUsageChart(), 100);
           },
           error: () => {}
         });
+        this.loadUsageRecords(line.lineId, this.activeBillingCycleId);
       },
       error: () => {}
+    });
+  }
+
+  private loadUsageRecords(lineId: number, cycleId: number): void {
+    this.usageService.getRecordsByCycle(lineId, cycleId).subscribe({
+      next: (res: any) => {
+        this.usageRecords = Array.isArray(res?.records) ? res.records
+                          : (Array.isArray(res) ? res : []);
+        if (this.activeTab() === 'usage') setTimeout(() => this.renderUsageChart(), 100);
+      },
+      error: () => { this.usageRecords = []; }
     });
   }
 
@@ -624,11 +639,24 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
       this.toastService.error('No active plan found. Activate a plan first.');
       return;
     }
-    this.planService.updateSubscription(sub.subscriptionId, { addOnId: this.targetAddOn.addOnId }).subscribe({
+
+    // Capture values before the modal is closed (closeAddOnModal nulls targetAddOn).
+    const addOn = this.targetAddOn;
+    const accountId: number = this.account360?.accountId;
+    const method: string = this.addOnPaymentMethod ?? 'UPI';
+    const addOnPrice: number = addOn.price ?? 0;
+    const taxes = Math.round(addOnPrice * 0.18 * 100) / 100;
+
+    this.planService.updateSubscription(sub.subscriptionId, { addOnId: addOn.addOnId }).subscribe({
       next: () => {
-        this.toastService.success(`${this.targetAddOn.name} add-on activated!`);
+        this.toastService.success(`${addOn.name} add-on activated!`);
         this.closeAddOnModal();
+        // Bill the add-on: generate an invoice carrying the add-on charge, then record payment.
+        if (accountId) {
+          this.autoCreateAddOnInvoice(accountId, addOnPrice, taxes, method, addOn.name);
+        }
         this.loadData();
+        this.setTab('billing');
       },
       error: (err: any) => {
         const msg = err.error?.message
@@ -637,6 +665,81 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
         this.toastService.error('Add-on failed: ' + msg);
       }
     });
+  }
+
+  /**
+   * Bill an add-on purchase: create a billing cycle, generate an invoice whose
+   * charge is the add-on price (+ tax), then record the subscriber's payment.
+   * The resulting invoice + payment surface in the subscriber's billing section
+   * and in the Billing Executive's invoice and payment ledgers.
+   */
+  private autoCreateAddOnInvoice(
+    accountId: number,
+    addOnPrice: number,
+    taxes: number,
+    method: string,
+    addOnName: string
+  ): void {
+    const cycleStart = this.todayStr();
+    const cycleEnd = this.addDaysToDate(cycleStart, 30);
+
+    this.billingService.createBillingCycle(accountId, cycleStart, cycleEnd).subscribe({
+      next: (cycle: any) => {
+        const cycleId: number = cycle?.cycleId ?? cycle?.id;
+        if (!cycleId) {
+          this.toastService.error('Add-on invoice not created: billing cycle ID missing.');
+          return;
+        }
+        this.billingService.generateInvoice({
+          accountId,
+          cycleId,
+          planCharges: 0,
+          excessCharges: 0,
+          addOnCharges: addOnPrice,
+          taxes
+        }).subscribe({
+          next: (inv: any) => {
+            const invoiceId: number = inv?.invoiceId ?? inv?.id;
+            // Use the backend-computed total to avoid any rounding mismatch on payment.
+            const amount: number = inv?.totalAmount ?? Math.round((addOnPrice + taxes) * 100) / 100;
+            this.toastService.success(`${addOnName} invoice generated (₹${Number(amount).toFixed(0)}).`);
+
+            if (!invoiceId) {
+              setTimeout(() => this.loadInvoices(), 400);
+              return;
+            }
+            this.billingService.payInvoice(invoiceId, {
+              amountPaid: amount,
+              paymentMethod: method,
+              transactionRef: `TXN-ADDON-${invoiceId}-${Date.now()}`
+            }).subscribe({
+              next: () => {
+                this.toastService.success(`Payment of ₹${Number(amount).toFixed(0)} recorded via ${method}.`);
+                setTimeout(() => this.loadInvoices(), 400);
+              },
+              error: (err: any) => {
+                const msg = err.error?.message ?? `HTTP ${err.status}`;
+                this.toastService.error('Add-on payment failed: ' + msg);
+                setTimeout(() => this.loadInvoices(), 400);
+              }
+            });
+          },
+          error: (err: any) => {
+            const msg = err.error?.message ?? `HTTP ${err.status}`;
+            this.toastService.error('Add-on invoice generation failed: ' + msg);
+          }
+        });
+      },
+      error: (err: any) => {
+        const msg = err.error?.message ?? `HTTP ${err.status}`;
+        this.toastService.error('Billing cycle creation failed: ' + msg);
+      }
+    });
+  }
+
+  private todayStr(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   }
 
   getAddOnTypeLabel(type: string): string {
@@ -774,23 +877,44 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     if (!ctx) return;
     if (this.usageChart) this.usageChart.destroy();
 
-    const line = this.account360?.lines?.[0];
-    const fallbackLabels = ['Day 1', 'Day 5', 'Day 10', 'Day 15', 'Day 20', 'Day 25', 'Day 30'];
-    const fallbackData = [0.5, 4.2, 8.9, 14.5, 23.1, 35.8, 41.9];
+    // Build the daily data trend from the subscriber's own usage records
+    // (USAGE_RECORDS authority) — the /analytics endpoint needs USAGE_ANALYTICS
+    // which subscribers don't have.
+    const dataRecords = (this.usageRecords ?? [])
+      .filter((r: any) => String(r?.usageType ?? '').toUpperCase() === 'DATA');
 
-    if (line?.lineId) {
-      this.usageService.getUsageTrend(line.lineId).subscribe({
-        next: (trend: any) => {
-          const entries: any[] = Array.isArray(trend) ? trend : (trend?.data ?? []);
-          const labels = entries.map((t: any) => t.usageDate ?? t.date ?? 'Day');
-          const data = entries.map((t: any) => +((t.dataUsedMb ?? t.dataUsed ?? 0) / 1024).toFixed(2));
-          this.drawUsageChart(ctx, labels.length ? labels : fallbackLabels, data.length ? data : fallbackData);
-        },
-        error: () => this.drawUsageChart(ctx, fallbackLabels, fallbackData)
-      });
-    } else {
-      this.drawUsageChart(ctx, fallbackLabels, fallbackData);
+    const byDay = new Map<string, number>();
+    for (const r of dataRecords) {
+      const day = String(r?.usageDate ?? '').substring(0, 10);
+      if (!day) continue;
+      byDay.set(day, (byDay.get(day) ?? 0) + Number(r?.quantity ?? 0));
     }
+    const days = [...byDay.keys()].sort();
+    const labels = days.map(d => d.substring(5));              // MM-DD
+    const data = days.map(d => +(((byDay.get(d) ?? 0)) / 1024).toFixed(3)); // GB
+
+    this.drawUsageChart(ctx, labels, data);
+  }
+
+  // ── Usage forecast / insights ────────────────────────────────────────────────
+  get dataUsedGb(): number { return (this.usageSummary?.dataUsedMb ?? 0) / 1024; }
+  get dataRemainingGb(): number { return (this.usageSummary?.dataRemainingMb ?? 0) / 1024; }
+
+  /** Average data consumed per active day this cycle, in MB. */
+  get avgDailyDataMb(): number {
+    const dataRecords = (this.usageRecords ?? [])
+      .filter((r: any) => String(r?.usageType ?? '').toUpperCase() === 'DATA');
+    const days = new Set(dataRecords.map((r: any) => String(r?.usageDate ?? '').substring(0, 10))).size;
+    const totalMb = dataRecords.reduce((s: number, r: any) => s + Number(r?.quantity ?? 0), 0);
+    return days > 0 ? totalMb / days : 0;
+  }
+
+  /** Projected days until data runs out at the current pace (null if unknown). */
+  get usageRunwayDays(): number | null {
+    const remainingMb = this.usageSummary?.dataRemainingMb ?? 0;
+    const avg = this.avgDailyDataMb;
+    if (avg <= 0) return null;
+    return Math.max(0, Math.round(remainingMb / avg));
   }
 
   private drawUsageChart(ctx: HTMLCanvasElement, labels: string[], data: number[]): void {

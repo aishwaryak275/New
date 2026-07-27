@@ -531,6 +531,8 @@ export class AdminPortalComponent implements OnInit {
         this.closeCreateAccountModal();
         this.createdAccountId = res?.accountId ?? res?.id ?? null;
         this.showAccountCreatedSuccessModal = true;
+        this.iamService.recordAudit('SUBSCRIBER_ACCOUNT_CREATED', 'SUBSCRIBER');
+        this.enrichUsersWithAccountStatus();
         this.toastService.success('Subscriber account created successfully.');
       },
       error: (err) => {
@@ -572,7 +574,7 @@ export class AdminPortalComponent implements OnInit {
     if (this.simForm.invalid || !this.createdAccountId) return;
     this.isActivatingSim = true;
     const payload = {
-      msisdn: this.selectedSubscriberUser?.phone || this.simForm.getRawValue().msisdn || '',
+      msisdn: this.simForm.getRawValue().msisdn || '',
       serviceType: this.simForm.value.serviceType,
       iccid: this.simForm.value.iccid
     };
@@ -580,10 +582,11 @@ export class AdminPortalComponent implements OnInit {
     this.accountService.addLine(this.createdAccountId, payload).subscribe({
       next: () => {
         this.isActivatingSim = false;
+        this.iamService.recordAudit('SIM_LINE_ACTIVATED', 'SUBSCRIBER');
         this.toastService.success(`SIM line activated successfully for Account #${this.createdAccountId}.`);
         this.closeAddSimModal();
-        if (this.selected360Account?.accountId === this.createdAccountId) {
-          this.loadAccount360Profile(this.createdAccountId!);
+        if (this.selected360Account) {
+          this.loadAccount360Profile(this.selected360Account.accountId);
         } else {
           this.loadIamUsers();
         }
@@ -738,6 +741,7 @@ export class AdminPortalComponent implements OnInit {
   updateSimStatus360(accountId: number, lineId: number, status: string): void {
     this.accountService.updateSimStatus(accountId, lineId, status).subscribe({
       next: () => {
+        this.iamService.recordAudit('SIM_STATUS_UPDATED', 'SUBSCRIBER');
         this.toastService.success(`SIM line ${status === 'Active' ? 'reactivated' : 'suspended'}.`);
         this.loadAccount360Profile(accountId);
       },

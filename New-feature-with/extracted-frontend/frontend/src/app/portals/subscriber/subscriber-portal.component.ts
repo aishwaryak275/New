@@ -236,6 +236,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     this.ticketService.createRequest(payload).subscribe({
       next: () => {
         this.isSubmittingNewConn = false;
+        this.iamService.recordAudit('NEW_CONNECTION_REQUESTED', 'SUBSCRIBER');
         this.closeNewConnectionModal();
         this.newConnectionForm.reset({
           accountType: 'Prepaid',
@@ -456,6 +457,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
       status: 'Active'
     }).subscribe({
       next: () => {
+        this.iamService.recordAudit('SIM_LINE_CREATED', 'SUBSCRIBER');
         // Fetch the newly created line to get its lineId
         this.accountService.getSimLines(accountId).subscribe({
           next: (lines: any[]) => {
@@ -493,6 +495,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     }).subscribe({
       next: () => {
         this.isProcessingPayment = false;
+        this.iamService.recordAudit('PLAN_ACTIVATED', 'SUBSCRIBER');
         this.toastService.success(
           `${this.targetPlan.name} activated! ₹${totalAmount.toFixed(0)} paid via ${paymentMethod}.`
         );
@@ -576,6 +579,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
       transactionRef: `TXN-${inv.invoiceId}-${Date.now()}`
     }).subscribe({
       next: () => {
+        this.iamService.recordAudit('INVOICE_PAID', 'BILLING');
         this.toastService.success('Payment successful! Thank you.');
         this.loadInvoices();
       },
@@ -649,6 +653,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
     this.planService.updateSubscription(sub.subscriptionId, { addOnId: addOn.addOnId }).subscribe({
       next: () => {
+        this.iamService.recordAudit('ADDON_ACTIVATED', 'SUBSCRIBER');
         this.toastService.success(`${addOn.name} add-on activated!`);
         this.closeAddOnModal();
         // Bill the add-on: generate an invoice carrying the add-on charge, then record payment.
@@ -765,6 +770,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
       disputedAmount
     }).subscribe({
       next: () => {
+        this.iamService.recordAudit('BILLING_DISPUTE_RAISED', 'BILLING');
         this.toastService.success('Billing dispute ticket raised for investigation.');
         this.closeDisputeModal();
         this.loadInvoices();
@@ -798,6 +804,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
       additionalDetails: this.newRequestForm.value.additionalDetails
     }).subscribe({
       next: () => {
+        this.iamService.recordAudit('SERVICE_REQUEST_SUBMITTED', 'SUBSCRIBER');
         this.toastService.success('Service request raised successfully.');
         this.closeRequestModal();
         this.loadServiceRequests();
@@ -829,6 +836,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
       priority: this.newTicketForm.value.priority
     }).subscribe({
       next: () => {
+        this.iamService.recordAudit('FAULT_TICKET_SUBMITTED', 'SUBSCRIBER');
         this.toastService.success('Fault ticket registered in NOC tracking queues.');
         this.closeTicketModal();
         this.loadData(); // reload tickets

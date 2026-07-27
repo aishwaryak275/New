@@ -803,6 +803,8 @@ export class AgentPortalComponent implements OnInit {
         this.closeCreateAccountModal();
         this.createdAccountId = res?.accountId ?? res?.id ?? null;
         this.showAccountCreatedSuccessModal = true;
+        this.iamService.recordAudit('SUBSCRIBER_ACCOUNT_CREATED', 'SUBSCRIBER');
+        this.enrichUsersWithAccountStatus();
         this.toastService.success('Subscriber account created successfully.');
       },
       error: (err) => {
@@ -844,7 +846,7 @@ export class AgentPortalComponent implements OnInit {
     if (this.simForm.invalid || !this.createdAccountId) return;
     this.isActivatingSim = true;
     const payload = {
-      msisdn: this.selectedSubscriberUser?.phone || this.simForm.getRawValue().msisdn || '',
+      msisdn: this.simForm.getRawValue().msisdn || '',
       serviceType: this.simForm.value.serviceType,
       iccid: this.simForm.value.iccid
     };
@@ -852,10 +854,11 @@ export class AgentPortalComponent implements OnInit {
     this.accountService.addLine(this.createdAccountId, payload).subscribe({
       next: () => {
         this.isActivatingSim = false;
+        this.iamService.recordAudit('SIM_LINE_ACTIVATED', 'SUBSCRIBER');
         this.toastService.success(`SIM line activated successfully for Account #${this.createdAccountId}.`);
         this.closeAddSimModal();
-        if (this.selectedAccount360?.accountId === this.createdAccountId) {
-          this.selectAccount(this.createdAccountId!);
+        if (this.selectedAccount360) {
+          this.selectAccount(this.selectedAccount360.accountId);
         } else if (this.activeTab() === 'users') {
           this.loadIamUsers();
         }

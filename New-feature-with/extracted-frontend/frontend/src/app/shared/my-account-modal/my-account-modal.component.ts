@@ -37,6 +37,10 @@ export class MyAccountModalComponent implements OnInit {
     Active: 'Active', Inactive: 'Inactive', Suspended: 'Suspended'
   };
 
+  get isSubscriber(): boolean {
+    return this.profile?.roleName === 'S' || this.profile?.roleName === 'Subscriber';
+  }
+
   constructor(
     private authService: AuthService,
     private iamService: IamService,
@@ -90,10 +94,12 @@ export class MyAccountModalComponent implements OnInit {
   saveProfile(): void {
     if (this.profileForm.invalid || !this.userId) return;
     this.isSavingProfile = true;
-    this.iamService.updateProfile(this.userId, this.profileForm.value).subscribe({
+    const { name, phone } = this.profileForm.value;
+    const payload = this.isSubscriber ? { name } : { name, phone };
+    this.iamService.updateProfile(this.userId, payload).subscribe({
       next: () => {
         this.iamService.recordAudit('PROFILE_UPDATED', 'IAM');
-        this.profile = { ...this.profile, ...this.profileForm.value };
+        this.profile = { ...this.profile, ...payload };
         this.isEditing = false;
         this.isSavingProfile = false;
         this.toastService.success('Profile updated successfully.');

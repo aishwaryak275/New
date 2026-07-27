@@ -44,6 +44,16 @@ public class BillingDisputeController {
     // ── Static-path endpoints first (must come before /{disputeId}) ────────────
 
     /**
+     * GET /teleConnect/billing/disputes
+     * Returns every dispute (used by the Billing &amp; Collection dashboard queue).
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('EDIT_DISPUTE','BILLING_DISPUTE')")
+    public ResponseEntity<List<DisputeResponse>> getAllDisputes() {
+        return ResponseEntity.ok(disputeService.getAllDisputes());
+    }
+
+    /**
      * POST /teleConnect/billing/disputes
      * Body: { "invoiceId": 7001, "disputeReason": "ExcessData",
      *         "disputedAmount": 173.60, "description": "..." }

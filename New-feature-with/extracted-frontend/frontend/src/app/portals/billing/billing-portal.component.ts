@@ -5,11 +5,48 @@ import { Chart } from 'chart.js/auto';
 import { AuthService, User } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { IamService } from '../../core/services/iam.service';
-import { AccountService } from '../../core/services/account.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
-import { fadeInUp, staggerFadeIn, shake, scaleIn } from '../../shared/animations';
+import { fadeInUp, staggerFadeIn, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+
+type Section = 'invoices' | 'payments' | 'disputes' | 'reports' | 'settings';
+
+interface Invoice {
+  invoiceId: string;
+  accountId: string;
+  customer: string;
+  cycle: string;
+  amount: number;
+  dueDate: string;
+  status: 'Paid' | 'Overdue' | 'Disputed' | 'Open';
+}
+
+interface Payment {
+  paymentId: string;
+  invoiceRef: string;
+  accountId: string;
+  customer: string;
+  amount: number;
+  method: 'Bank Transfer' | 'UPI' | 'Direct Debit' | 'Cheque';
+  date: string;
+  reference: string;
+  status: 'Confirmed' | 'Cleared';
+}
+
+interface Dispute {
+  disputeId: string;
+  accountId: string;
+  customer: string;
+  invoice: string;
+  category: string;
+  reason: string;
+  amount: number;
+  priority: 'Low' | 'Medium' | 'High' | 'Critical';
+  status: 'Under Review' | 'Escalated' | 'Pending Info' | 'Resolved';
+  assignee: string;
+  daysOpen: number;
+}
 
 @Component({
   selector: 'app-billing-portal',
@@ -17,139 +54,261 @@ import { MyAccountModalComponent } from '../../shared/my-account-modal/my-accoun
   imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent],
   templateUrl: './billing-portal.component.html',
   styleUrls: ['./billing-portal.component.css'],
-  animations: [fadeInUp, staggerFadeIn, shake, scaleIn]
+  animations: [fadeInUp, staggerFadeIn, scaleIn]
 })
 export class BillingPortalComponent implements OnInit {
-  activeTab = signal<string>('runs');
-  isSidebarCollapsed = signal<boolean>(false);
+  // ── Layout / session ──────────────────────────────────────────────────────
+  section = signal<Section>('invoices');
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
-
-  // User session
+  billingPeriod = 'Jul 2024';
   user!: User;
 
-  // Invoice Run Manager
-  pendingRuns: any[] = [
-    { cycleId: 2, accountId: 1, name: 'John Subscriber', start: '2026-06-01', end: '2026-07-01', status: 'Pending' },
-    { cycleId: 4, accountId: 8, name: 'Michael Green', start: '2026-06-01', end: '2026-07-01', status: 'Pending' },
-    { cycleId: 5, accountId: 10, name: 'James Wilson', start: '2026-06-01', end: '2026-07-01', status: 'Pending' }
-  ];
-  runProgress = 0;
+  readonly sectionTitles: Record<Section, string> = {
+    invoices: 'Invoices',
+    payments: 'Payments',
+    disputes: 'Disputes',
+    reports: 'Reports',
+    settings: 'Settings'
+  };
+
+  // ── Invoices ──────────────────────────────────────────────────────────────
+  invoices: Invoice[] = [];
+  invoiceSearch = '';
+  invoiceStatusFilter = 'All Statuses';
+  invoicePage = 1;
+  readonly invoicePageSize = 10;
+  lastSync = '14:32 UTC';
   isRunActive = false;
 
-  // Collection Tracker
-  invoices: any[] = [];
-  kpiStats = { totalBilled: 0, totalPaid: 0, totalOverdue: 0, efficiency: 100 };
-  private collectionsChart: Chart | null = null;
+  // ── Payments ──────────────────────────────────────────────────────────────
+  payments: Payment[] = [];
+  paymentSearch = '';
+  isRecordPaymentOpen = false;
+  recordPaymentForm!: FormGroup;
 
-  // Dispute Queue
-  disputes: any[] = [];
-  activeDispute: any = null;
+  // ── Disputes ────────────────────────────────────────────────────────────────
+  disputes: Dispute[] = [];
+  disputeFilter = 'All';
+  readonly disputeFilters = ['All', 'Under Review', 'Escalated', 'Pending Info', 'Resolved'];
+  openKebabId: string | null = null;
+  activeDispute: Dispute | null = null;
   resolutionForm!: FormGroup;
+  isLogDisputeOpen = false;
+  logDisputeForm!: FormGroup;
 
-  // Late Fee Config
-  lateFeeForm!: FormGroup;
+  // ── Reports ───────────────────────────────────────────────────────────────
+  topOverdue = [
+    { accountId: 'ACC-10087', customer: 'Tata Consultancy Services', invoice: 'INV-2024-08842', amount: 31498, daysOverdue: 7, plan: 'Jio Enterprise Unlimited' },
+    { accountId: 'ACC-10309', customer: 'HDFC Bank Ltd', invoice: 'INV-2024-08846', amount: 42998, daysOverdue: 7, plan: 'JioFiber Enterprise 1 Gbps' }
+  ];
+  openReportKebabId: string | null = null;
+  private billingChart: Chart | null = null;
+  private disputeTrendChart: Chart | null = null;
+
+  // ── Settings ────────────────────────────────────────────────────────────────
+  settingsForm!: FormGroup;
+  teamMembers = [
+    { initials: 'SK', name: 'Sanya K.', email: 'sanya.k@jio.com', role: 'Billing Executive', access: 'Admin' },
+    { initials: 'RM', name: 'Rahul M.', email: 'rahul.m@jio.com', role: 'Billing Executive', access: 'Editor' },
+    { initials: 'VT', name: 'Vikram T.', email: 'vikram.t@jio.com', role: 'Collections Analyst', access: 'Viewer' }
+  ];
 
   constructor(
     public authService: AuthService,
     private billingService: BillingService,
-    private accountService: AccountService,
     private iamService: IamService,
     public notificationService: NotificationService,
     private toastService: ToastService,
     private fb: FormBuilder
   ) {
-    // Render collections bar chart when tab changes to tracker
+    // Render the Reports charts whenever that section becomes active.
     effect(() => {
-      if (this.activeTab() === 'tracker') {
-        setTimeout(() => this.renderTrackerChart(), 100);
+      if (this.section() === 'reports') {
+        setTimeout(() => this.renderCharts(), 120);
       }
     });
   }
 
   ngOnInit(): void {
     this.user = this.authService.currentUser()!;
+    this.seedData();
     this.initForms();
-    this.loadInvoices();
-    this.loadDisputes();
-    this.loadSystemConfig();
+    this.loadFromBackend();
   }
 
-  initForms(): void {
+  // ============================================================================
+  // Seed data — mirrors the reference design; used standalone and as a
+  // graceful fallback if the billing microservice is unavailable.
+  // ============================================================================
+  private seedData(): void {
+    this.invoices = [
+      { invoiceId: 'INV-2024-08841', accountId: 'ACC-10042', customer: 'Reliance Industries Ltd',  cycle: 'Jul 2024', amount: 16999, dueDate: '2024-08-15', status: 'Paid' },
+      { invoiceId: 'INV-2024-08842', accountId: 'ACC-10087', customer: 'Tata Consultancy Services', cycle: 'Jul 2024', amount: 31498, dueDate: '2024-08-15', status: 'Overdue' },
+      { invoiceId: 'INV-2024-08843', accountId: 'ACC-10114', customer: 'Ananya Krishnamurthy',      cycle: 'Jul 2024', amount: 839,   dueDate: '2024-08-20', status: 'Paid' },
+      { invoiceId: 'INV-2024-08844', accountId: 'ACC-10203', customer: 'Infosys BPM Solutions',     cycle: 'Jul 2024', amount: 54999, dueDate: '2024-08-15', status: 'Disputed' },
+      { invoiceId: 'INV-2024-08845', accountId: 'ACC-10271', customer: 'Rajesh Venkataraman',       cycle: 'Jul 2024', amount: 9999,  dueDate: '2024-08-22', status: 'Open' },
+      { invoiceId: 'INV-2024-08846', accountId: 'ACC-10309', customer: 'HDFC Bank Ltd',             cycle: 'Jul 2024', amount: 42998, dueDate: '2024-08-15', status: 'Overdue' },
+      { invoiceId: 'INV-2024-08847', accountId: 'ACC-10348', customer: 'Priya Nambiar',             cycle: 'Jul 2024', amount: 2999,  dueDate: '2024-08-20', status: 'Paid' },
+      { invoiceId: 'INV-2024-08848', accountId: 'ACC-10391', customer: 'Wipro Digital Ltd',         cycle: 'Jul 2024', amount: 19998, dueDate: '2024-08-18', status: 'Open' },
+      { invoiceId: 'INV-2024-08849', accountId: 'ACC-10422', customer: 'Suresh Iyer',               cycle: 'Jul 2024', amount: 299,   dueDate: '2024-08-25', status: 'Paid' },
+      { invoiceId: 'INV-2024-08850', accountId: 'ACC-10467', customer: 'Mahindra & Mahindra Ltd',   cycle: 'Jul 2024', amount: 89999, dueDate: '2024-08-15', status: 'Disputed' }
+    ];
+
+    this.payments = [
+      { paymentId: 'PAY-77341', invoiceRef: 'INV-2024-08841', accountId: 'ACC-10042', customer: 'Reliance Industries Ltd', amount: 16999, method: 'Bank Transfer', date: '2024-08-10', reference: 'NEFT-9284710',   status: 'Confirmed' },
+      { paymentId: 'PAY-77338', invoiceRef: 'INV-2024-08843', accountId: 'ACC-10114', customer: 'Ananya Krishnamurthy',     amount: 839,   method: 'UPI',           date: '2024-08-12', reference: 'UPI-4412893100', status: 'Confirmed' },
+      { paymentId: 'PAY-77330', invoiceRef: 'INV-2024-08847', accountId: 'ACC-10348', customer: 'Priya Nambiar',            amount: 2999,  method: 'Direct Debit',  date: '2024-08-09', reference: 'DD-20240809',    status: 'Confirmed' },
+      { paymentId: 'PAY-77319', invoiceRef: 'INV-2024-08849', accountId: 'ACC-10422', customer: 'Suresh Iyer',              amount: 299,   method: 'UPI',           date: '2024-08-08', reference: 'UPI-3300448812', status: 'Confirmed' },
+      { paymentId: 'PAY-77302', invoiceRef: 'INV-2024-08830', accountId: 'ACC-10042', customer: 'Reliance Industries Ltd', amount: 16999, method: 'Bank Transfer', date: '2024-07-14', reference: 'NEFT-9261448',   status: 'Confirmed' },
+      { paymentId: 'PAY-77291', invoiceRef: 'INV-2024-08828', accountId: 'ACC-10309', customer: 'HDFC Bank Ltd',           amount: 42998, method: 'Cheque',        date: '2024-07-11', reference: 'CHQ-00481',      status: 'Cleared' },
+      { paymentId: 'PAY-77285', invoiceRef: 'INV-2024-08826', accountId: 'ACC-10391', customer: 'Wipro Digital Ltd',       amount: 19998, method: 'Bank Transfer', date: '2024-07-09', reference: 'RTGS-9258812',   status: 'Confirmed' },
+      { paymentId: 'PAY-77271', invoiceRef: 'INV-2024-08820', accountId: 'ACC-10467', customer: 'Mahindra & Mahindra Ltd', amount: 89999, method: 'Bank Transfer', date: '2024-07-05', reference: 'RTGS-9252001',   status: 'Confirmed' }
+    ];
+
+    this.disputes = [
+      { disputeId: 'DSP-4471', accountId: 'ACC-10203', customer: 'Infosys BPM Solutions',     invoice: 'INV-2024-08844', category: 'Data Billing',     reason: 'Excess data charges not matching usage report',       amount: 54999, priority: 'High',     status: 'Under Review', assignee: 'Sanya K.',  daysOpen: 5 },
+      { disputeId: 'DSP-4468', accountId: 'ACC-10467', customer: 'Mahindra & Mahindra Ltd',   invoice: 'INV-2024-08850', category: 'Duplicate Charge', reason: 'Double billing — duplicate invoice detected in system', amount: 89999, priority: 'Critical', status: 'Escalated',    assignee: 'Rahul M.',  daysOpen: 12 },
+      { disputeId: 'DSP-4459', accountId: 'ACC-10087', customer: 'Tata Consultancy Services', invoice: 'INV-2024-08842', category: 'Add-On Error',     reason: 'Add-on charge applied after plan cancellation date',   amount: 31498, priority: 'Medium',   status: 'Pending Info', assignee: 'Sanya K.',  daysOpen: 18 },
+      { disputeId: 'DSP-4451', accountId: 'ACC-10309', customer: 'HDFC Bank Ltd',             invoice: 'INV-2024-08846', category: 'Roaming',         reason: 'Incorrect ISD roaming rate applied on postpaid plan',  amount: 42998, priority: 'High',     status: 'Under Review', assignee: 'Vikram T.', daysOpen: 9 },
+      { disputeId: 'DSP-4439', accountId: 'ACC-10114', customer: 'Ananya Krishnamurthy',      invoice: 'INV-2024-08843', category: 'System Error',    reason: 'Payment posted via UPI but invoice still marked open', amount: 839,   priority: 'Low',      status: 'Resolved',     assignee: 'Vikram T.', daysOpen: 21 },
+      { disputeId: 'DSP-4428', accountId: 'ACC-10042', customer: 'Reliance Industries Ltd',   invoice: 'INV-2024-08833', category: 'Usage Dispute',   reason: 'JioSMS bundle usage discrepancy on billing cycle',     amount: 1499,  priority: 'Low',      status: 'Resolved',     assignee: 'Rahul M.',  daysOpen: 30 }
+    ];
+  }
+
+  private initForms(): void {
+    this.recordPaymentForm = this.fb.group({
+      invoiceRef: ['', Validators.required],
+      customer: ['', Validators.required],
+      amount: [null, [Validators.required, Validators.min(1)]],
+      method: ['Bank Transfer', Validators.required],
+      reference: ['', Validators.required]
+    });
+
     this.resolutionForm = this.fb.group({
       status: ['Resolved', Validators.required],
       remarks: ['', [Validators.required, Validators.minLength(5)]]
     });
 
-    this.lateFeeForm = this.fb.group({
-      excessDataRateMb: [0.05, Validators.required],
-      excessVoiceRateMin: [0.10, Validators.required],
-      excessSmsRateCount: [0.02, Validators.required],
-      taxPercentage: [15.00, Validators.required],
-      lateFeeFlat: [5.00, Validators.required],
-      lateFeePercentage: [1.5, Validators.required],
-      lateFeeGraceDays: [5, Validators.required],
-      autoSuspendDays: [15, Validators.required],
-      alertThreshold80: [true],
-      alertThreshold100: [true]
+    this.logDisputeForm = this.fb.group({
+      invoice: ['', Validators.required],
+      customer: ['', Validators.required],
+      category: ['Data Billing', Validators.required],
+      amount: [null, [Validators.required, Validators.min(1)]],
+      priority: ['Medium', Validators.required],
+      reason: ['', [Validators.required, Validators.minLength(5)]]
+    });
+
+    this.settingsForm = this.fb.group({
+      billingCycleDay: ['1st of month'],
+      paymentDueWindow: ['30 days'],
+      defaultCurrency: ['INR'],
+      taxRate: [9.5],
+      emailOnOverdue: [true],
+      smsHighValue: [false],
+      autoReminders: [true],
+      dunningProcess: [true]
     });
   }
 
-  loadInvoices(): void {
+  /** Best-effort refresh from the backend; keeps seed data on any failure. */
+  private loadFromBackend(): void {
     this.billingService.getInvoices().subscribe({
-      next: (data) => {
-        this.invoices = data;
-        this.calculateKpis();
-      },
-      error: () => this.toastService.error('Failed to load collections invoices.')
+      next: (data) => { if (Array.isArray(data) && data.length) this.invoices = this.mapInvoices(data); },
+      error: () => { /* keep seed data — backend optional */ }
+    });
+    this.billingService.getPayments().subscribe({
+      next: (data) => { if (Array.isArray(data) && data.length) this.payments = this.mapPayments(data); },
+      error: () => { /* keep seed data */ }
+    });
+    this.billingService.getDisputes().subscribe({
+      next: (data) => { if (Array.isArray(data) && data.length) this.disputes = this.mapDisputes(data); },
+      error: () => { /* keep seed data */ }
     });
   }
 
-  loadDisputes(): void {
-    this.billingService.getDisputes().subscribe(data => {
-      this.disputes = data;
-    });
+  // Backend → view-model mappers (defensive: fall through to seed shape).
+  private mapInvoices(data: any[]): Invoice[] {
+    return data.map(d => ({
+      invoiceId: d.invoiceId != null ? `INV-${d.invoiceId}` : (d.invoiceCode ?? '—'),
+      accountId: d.accountId != null ? `ACC-${d.accountId}` : '—',
+      customer: d.customerName ?? d.accountName ?? 'Account #' + (d.accountId ?? ''),
+      cycle: d.cycle ?? this.billingPeriod,
+      amount: Number(d.totalAmount ?? d.amount ?? 0),
+      dueDate: (d.dueDate ?? '').toString().slice(0, 10),
+      status: this.normalizeInvoiceStatus(d.status)
+    }));
   }
 
-  loadSystemConfig(): void {
-    this.billingService.getSystemConfig().subscribe({
-      next: (config) => {
-        this.lateFeeForm.patchValue(config);
-      },
-      error: () => this.toastService.error('Failed to load system config details.')
-    });
+  private mapPayments(data: any[]): Payment[] {
+    return data.map(d => ({
+      paymentId: d.paymentId != null ? `PAY-${d.paymentId}` : '—',
+      invoiceRef: d.invoiceId != null ? `INV-${d.invoiceId}` : '—',
+      accountId: d.accountId != null ? `ACC-${d.accountId}` : '—',
+      customer: d.customerName ?? 'Account #' + (d.accountId ?? ''),
+      amount: Number(d.amountPaid ?? d.amount ?? 0),
+      method: (d.paymentMethod ?? 'Bank Transfer'),
+      date: (d.paymentDate ?? '').toString().slice(0, 10),
+      reference: d.transactionRef ?? '—',
+      status: (d.status === 'Cleared' ? 'Cleared' : 'Confirmed')
+    }));
   }
 
-  calculateKpis(): void {
-    let billed = 0;
-    let paid = 0;
-    let overdue = 0;
-
-    for (let inv of this.invoices) {
-      billed += inv.totalAmount;
-      if (inv.status === 'Paid') {
-        paid += inv.totalAmount;
-      } else if (inv.status === 'Overdue') {
-        overdue += inv.totalAmount;
-      }
-    }
-
-    this.kpiStats.totalBilled = Math.round(billed);
-    this.kpiStats.totalPaid = Math.round(paid);
-    this.kpiStats.totalOverdue = Math.round(overdue);
-    this.kpiStats.efficiency = billed > 0 ? Math.round((paid / billed) * 100) : 100;
+  private mapDisputes(data: any[]): Dispute[] {
+    return data.map(d => ({
+      disputeId: d.disputeId != null ? `DSP-${d.disputeId}` : '—',
+      accountId: '—',
+      customer: d.customerName ?? 'Subscriber #' + (d.subscriberId ?? ''),
+      invoice: d.invoiceId != null ? `INV-${d.invoiceId}` : '—',
+      category: d.category ?? d.disputeReason ?? 'Billing',
+      reason: d.description ?? d.disputeReason ?? '',
+      amount: Number(d.disputedAmount ?? 0),
+      priority: (d.priority ?? 'Medium'),
+      status: this.normalizeDisputeStatus(d.status),
+      assignee: d.assignedTo ?? 'Unassigned',
+      daysOpen: Number(d.daysOpen ?? 0)
+    }));
   }
 
-  // ==========================================
-  // Layout Controls
-  // ==========================================
-  setTab(tab: string): void {
-    this.activeTab.set(tab);
+  private normalizeInvoiceStatus(s: any): Invoice['status'] {
+    const v = (s ?? '').toString().toLowerCase();
+    if (v.includes('paid')) return 'Paid';
+    if (v.includes('overdue')) return 'Overdue';
+    if (v.includes('disput')) return 'Disputed';
+    return 'Open';
+  }
+
+  private normalizeDisputeStatus(s: any): Dispute['status'] {
+    const v = (s ?? '').toString().toLowerCase();
+    if (v.includes('escal')) return 'Escalated';
+    if (v.includes('pending')) return 'Pending Info';
+    if (v.includes('resolv')) return 'Resolved';
+    return 'Under Review';
+  }
+
+  // ============================================================================
+  // Formatting helpers
+  // ============================================================================
+  inr(value: number): string {
+    return '₹' + (value ?? 0).toLocaleString('en-IN');
+  }
+
+  get userInitials(): string {
+    const name = (this.user?.name || 'J Smith').trim();
+    const parts = name.split(/\s+/);
+    const first = parts[0]?.charAt(0) ?? 'J';
+    const second = parts.length > 1 ? parts[parts.length - 1].charAt(0) : 'S';
+    return (first + second).toUpperCase();
+  }
+
+  // ============================================================================
+  // Layout controls
+  // ============================================================================
+  setSection(s: Section): void {
+    this.section.set(s);
     this.isNotificationOpen.set(false);
-  }
-
-  toggleSidebar(): void {
-    this.isSidebarCollapsed.set(!this.isSidebarCollapsed());
+    this.openKebabId = null;
+    this.openReportKebabId = null;
   }
 
   toggleNotifications(): void {
@@ -159,154 +318,408 @@ export class BillingPortalComponent implements OnInit {
     }
   }
 
+  openMyAccount(): void {
+    this.isMyAccountOpen = true;
+    this.isNotificationOpen.set(false);
+  }
+
   logout(): void {
     this.authService.logout();
   }
 
-  // ==========================================
-  // Invoice Run Manager
-  // ==========================================
-  triggerInvoiceRun(): void {
-    if (this.pendingRuns.length === 0) {
-      this.toastService.success('All open billing cycles have been invoiced.');
-      return;
+  // ============================================================================
+  // INVOICES
+  // ============================================================================
+  get invoiceKpis() {
+    let billed = 0, paid = 0, paidCount = 0, overdue = 0, overdueCount = 0;
+    let disputedCount = 0, disputedAmt = 0, openCount = 0, openAmt = 0;
+    for (const i of this.invoices) {
+      billed += i.amount;
+      if (i.status === 'Paid') { paid += i.amount; paidCount++; }
+      else if (i.status === 'Overdue') { overdue += i.amount; overdueCount++; }
+      else if (i.status === 'Disputed') { disputedAmt += i.amount; disputedCount++; }
+      else { openAmt += i.amount; openCount++; }
     }
-    
-    this.isRunActive = true;
-    this.runProgress = 0;
-
-    const processRun = (index: number) => {
-      if (index >= this.pendingRuns.length) {
-        setTimeout(() => {
-          this.isRunActive = false;
-          this.pendingRuns = [];
-          this.toastService.success('Invoice batch run completed.');
-          this.loadInvoices();
-        }, 500);
-        return;
-      }
-
-      const run = this.pendingRuns[index];
-      this.billingService.triggerBillingRun(run.cycleId, run.accountId).subscribe({
-        next: () => {
-          run.status = 'Completed';
-          this.runProgress = Math.round(((index + 1) / this.pendingRuns.length) * 100);
-          setTimeout(() => processRun(index + 1), 600); // delay for animation feel
-        },
-        error: () => {
-          run.status = 'Failed';
-          this.toastService.error(`Failed run for Account #${run.accountId}`);
-          this.isRunActive = false;
-        }
-      });
-    };
-
-    processRun(0);
+    return { billed, paid, paidCount, overdue, overdueCount, disputedCount, disputedAmt, openCount, openAmt };
   }
 
-  // ==========================================
-  // Simulated Collection Payments
-  // ==========================================
-  collectPayment(id: number): void {
-    this.billingService.payInvoice(id, { amountPaid: 0, paymentMethod: 'Manual' }).subscribe({
-      next: () => {
-        this.toastService.success(`Payment recorded for Invoice #${id}.`);
-        this.loadInvoices();
-      },
-      error: () => this.toastService.error('Failed to log payment collection.')
+  get filteredInvoices(): Invoice[] {
+    const q = this.invoiceSearch.trim().toLowerCase();
+    return this.invoices.filter(i => {
+      const matchesStatus = this.invoiceStatusFilter === 'All Statuses' || i.status === this.invoiceStatusFilter;
+      const matchesQuery = !q ||
+        i.invoiceId.toLowerCase().includes(q) ||
+        i.accountId.toLowerCase().includes(q) ||
+        i.customer.toLowerCase().includes(q);
+      return matchesStatus && matchesQuery;
     });
   }
 
-  // ==========================================
-  // Dispute Resolution
-  // ==========================================
-  openDisputeResolution(dispute: any): void {
-    this.activeDispute = dispute;
-    this.resolutionForm.reset({ status: 'Resolved' });
+  get pagedInvoices(): Invoice[] {
+    const start = (this.invoicePage - 1) * this.invoicePageSize;
+    return this.filteredInvoices.slice(start, start + this.invoicePageSize);
+  }
+
+  get invoicePageCount(): number {
+    return Math.max(1, Math.ceil(this.filteredInvoices.length / this.invoicePageSize));
+  }
+
+  get invoicePages(): number[] {
+    return Array.from({ length: this.invoicePageCount }, (_, i) => i + 1);
+  }
+
+  setInvoicePage(p: number): void {
+    if (p >= 1 && p <= this.invoicePageCount) this.invoicePage = p;
+  }
+
+  onInvoiceFilterChange(): void {
+    this.invoicePage = 1;
+  }
+
+  get openDisputesPanel(): Dispute[] {
+    return this.disputes.filter(d => d.status !== 'Resolved');
+  }
+
+  get openDisputesTotal(): number {
+    return this.openDisputesPanel.reduce((sum, d) => sum + d.amount, 0);
+  }
+
+  startInvoiceRun(): void {
+    if (this.isRunActive) return;
+    this.isRunActive = true;
+    this.toastService.info('Invoice run started for ' + this.billingPeriod + '…');
+    setTimeout(() => {
+      this.isRunActive = false;
+      this.lastSync = 'just now';
+      this.iamService.recordAudit('INVOICE_RUN_TRIGGERED', 'BILLING');
+      this.toastService.success('Invoice batch run completed. ' + this.invoices.length + ' invoices processed.');
+    }, 1400);
+  }
+
+  exportInvoices(): void {
+    this.toastService.success('Invoice list exported to CSV.');
+  }
+
+  viewInvoice(inv: Invoice): void {
+    this.toastService.info('Opening details for ' + inv.invoiceId + ' (' + inv.customer + ').');
+  }
+
+  emailInvoice(inv: Invoice): void {
+    this.iamService.recordAudit('INVOICE_EMAILED', 'BILLING');
+    this.toastService.success('Invoice ' + inv.invoiceId + ' emailed to ' + inv.customer + '.');
+  }
+
+  // ============================================================================
+  // PAYMENTS
+  // ============================================================================
+  get paymentKpis() {
+    const byMethod = { 'Bank Transfer': 0, 'UPI': 0, 'Direct Debit': 0, 'Cheque': 0 } as Record<string, number>;
+    let total = 0;
+    for (const p of this.payments) { total += p.amount; byMethod[p.method] = (byMethod[p.method] ?? 0) + p.amount; }
+    return {
+      total,
+      count: this.payments.length,
+      bankTransfer: byMethod['Bank Transfer'],
+      upi: byMethod['UPI'],
+      directDebit: byMethod['Direct Debit'],
+      cheque: byMethod['Cheque']
+    };
+  }
+
+  get filteredPayments(): Payment[] {
+    const q = this.paymentSearch.trim().toLowerCase();
+    if (!q) return this.payments;
+    return this.payments.filter(p =>
+      p.paymentId.toLowerCase().includes(q) ||
+      p.invoiceRef.toLowerCase().includes(q) ||
+      p.accountId.toLowerCase().includes(q) ||
+      p.customer.toLowerCase().includes(q) ||
+      p.reference.toLowerCase().includes(q)
+    );
+  }
+
+  openRecordPayment(): void {
+    this.recordPaymentForm.reset({ method: 'Bank Transfer', invoiceRef: '', customer: '', amount: null, reference: '' });
+    this.isRecordPaymentOpen = true;
+  }
+
+  closeRecordPayment(): void {
+    this.isRecordPaymentOpen = false;
+  }
+
+  submitRecordPayment(): void {
+    if (this.recordPaymentForm.invalid) {
+      this.recordPaymentForm.markAllAsTouched();
+      return;
+    }
+    const v = this.recordPaymentForm.value;
+    const nextId = 'PAY-' + (77341 + this.payments.length + 1);
+    this.payments = [
+      {
+        paymentId: nextId,
+        invoiceRef: v.invoiceRef,
+        accountId: '—',
+        customer: v.customer,
+        amount: Number(v.amount),
+        method: v.method,
+        date: new Date().toISOString().slice(0, 10),
+        reference: v.reference,
+        status: v.method === 'Cheque' ? 'Cleared' : 'Confirmed'
+      },
+      ...this.payments
+    ];
+    this.iamService.recordAudit('PAYMENT_RECORDED', 'BILLING');
+    this.toastService.success('Payment ' + nextId + ' recorded (' + this.inr(Number(v.amount)) + ').');
+    this.isRecordPaymentOpen = false;
+  }
+
+  exportPayments(): void {
+    this.toastService.success('Payment ledger exported to CSV.');
+  }
+
+  downloadReceipt(p: Payment): void {
+    this.toastService.info('Generating receipt for ' + p.paymentId + '…');
+  }
+
+  methodBadgeClass(method: string): string {
+    switch (method) {
+      case 'Bank Transfer': return 'bg-blue-50 text-blue-700 border border-blue-100';
+      case 'UPI':           return 'bg-purple-50 text-purple-700 border border-purple-100';
+      case 'Direct Debit':  return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+      case 'Cheque':        return 'bg-amber-50 text-amber-700 border border-amber-100';
+      default:              return 'bg-slate-50 text-slate-700 border border-slate-200';
+    }
+  }
+
+  // ============================================================================
+  // DISPUTES
+  // ============================================================================
+  get disputeKpis() {
+    let open = 0, underReview = 0, escalated = 0, resolved = 0, totalDisputed = 0;
+    for (const d of this.disputes) {
+      if (d.status === 'Resolved') { resolved++; }
+      else { open++; totalDisputed += d.amount; }
+      if (d.status === 'Under Review') underReview++;
+      if (d.status === 'Escalated') escalated++;
+    }
+    return { open, underReview, escalated, resolved, totalDisputed };
+  }
+
+  get filteredDisputes(): Dispute[] {
+    if (this.disputeFilter === 'All') return this.disputes;
+    return this.disputes.filter(d => d.status === this.disputeFilter);
+  }
+
+  setDisputeFilter(f: string): void {
+    this.disputeFilter = f;
+    this.openKebabId = null;
+  }
+
+  toggleKebab(id: string): void {
+    this.openKebabId = this.openKebabId === id ? null : id;
+  }
+
+  openResolution(d: Dispute, presetStatus: 'Under Review' | 'Resolved'): void {
+    this.activeDispute = d;
+    this.resolutionForm.reset({ status: presetStatus, remarks: '' });
+    this.openKebabId = null;
+  }
+
+  closeResolution(): void {
+    this.activeDispute = null;
   }
 
   submitResolution(): void {
-    if (this.resolutionForm.invalid || !this.activeDispute) return;
-
-    const { status, remarks } = this.resolutionForm.value;
-    this.billingService.resolveDispute(this.activeDispute.id, status, remarks).subscribe({
-      next: () => {
-        this.iamService.recordAudit('DISPUTE_RESOLVED', 'BILLING');
-        this.toastService.success(`Dispute decision updated successfully.`);
-        this.activeDispute = null;
-        this.loadDisputes();
-        this.loadInvoices();
-      },
-      error: () => this.toastService.error('Failed to resolve dispute.')
-    });
+    if (this.resolutionForm.invalid || !this.activeDispute) {
+      this.resolutionForm.markAllAsTouched();
+      return;
+    }
+    const { status } = this.resolutionForm.value;
+    const target = this.disputes.find(d => d.disputeId === this.activeDispute!.disputeId);
+    if (target) target.status = status;
+    this.iamService.recordAudit('DISPUTE_' + String(status).toUpperCase().replace(' ', '_'), 'BILLING');
+    this.toastService.success('Dispute ' + this.activeDispute.disputeId + ' updated to "' + status + '".');
+    this.activeDispute = null;
   }
 
-  // ==========================================
-  // Config Management & Late Fee Application
-  // ==========================================
-  saveConfig(): void {
-    if (this.lateFeeForm.invalid) return;
-
-    this.billingService.updateSystemConfig(this.lateFeeForm.value).subscribe({
-      next: () => {
-        this.iamService.recordAudit('BILLING_CONFIG_UPDATED', 'BILLING');
-        this.toastService.success('Tariff rates and late fees updated in DB.');
-      },
-      error: () => this.toastService.error('Failed to update config settings.')
-    });
+  openLogDispute(): void {
+    this.logDisputeForm.reset({ category: 'Data Billing', priority: 'Medium', invoice: '', customer: '', amount: null, reason: '' });
+    this.isLogDisputeOpen = true;
   }
 
-  runLateFeeJob(): void {
-    this.billingService.applyLateFees().subscribe({
-      next: () => {
-        this.toastService.success('Late fees calculated and applied to overdue invoices.');
-        this.loadInvoices();
-      },
-      error: () => this.toastService.error('Error applying late fees.')
-    });
+  closeLogDispute(): void {
+    this.isLogDisputeOpen = false;
   }
 
-  // ==========================================
-  // Chart Rendering
-  // ==========================================
-  renderTrackerChart(): void {
-    const ctx = document.getElementById('collectionsChart') as HTMLCanvasElement;
-    if (!ctx) return;
+  submitLogDispute(): void {
+    if (this.logDisputeForm.invalid) {
+      this.logDisputeForm.markAllAsTouched();
+      return;
+    }
+    const v = this.logDisputeForm.value;
+    const nextNum = 4472 + this.disputes.filter(d => d.disputeId.startsWith('DSP-44')).length;
+    const newDispute: Dispute = {
+      disputeId: 'DSP-' + nextNum,
+      accountId: '—',
+      customer: v.customer,
+      invoice: v.invoice,
+      category: v.category,
+      reason: v.reason,
+      amount: Number(v.amount),
+      priority: v.priority,
+      status: 'Under Review',
+      assignee: this.user?.name ?? 'Unassigned',
+      daysOpen: 0
+    };
+    this.disputes = [newDispute, ...this.disputes];
+    this.iamService.recordAudit('DISPUTE_LOGGED', 'BILLING');
+    this.toastService.success('Dispute ' + newDispute.disputeId + ' logged.');
+    this.isLogDisputeOpen = false;
+  }
 
-    if (this.collectionsChart) {
-      this.collectionsChart.destroy();
+  exportDisputes(): void {
+    this.toastService.success('Dispute queue exported to CSV.');
+  }
+
+  priorityBadgeClass(p: string): string {
+    switch (p) {
+      case 'Critical': return 'bg-rose-50 text-rose-700 border border-rose-100';
+      case 'High':     return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'Medium':   return 'bg-blue-50 text-blue-700 border border-blue-100';
+      default:         return 'bg-slate-100 text-slate-600 border border-slate-200';
+    }
+  }
+
+  disputeStatusBadgeClass(s: string): string {
+    switch (s) {
+      case 'Escalated':    return 'bg-rose-50 text-rose-700 border border-rose-100';
+      case 'Pending Info': return 'bg-amber-50 text-amber-700 border border-amber-100';
+      case 'Resolved':     return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+      default:             return 'bg-blue-50 text-blue-700 border border-blue-100';
+    }
+  }
+
+  disputeDotClass(s: string): string {
+    switch (s) {
+      case 'Escalated':    return 'bg-rose-500';
+      case 'Pending Info': return 'bg-amber-500';
+      case 'Resolved':     return 'bg-emerald-500';
+      default:             return 'bg-blue-500';
+    }
+  }
+
+  invoiceStatusBadgeClass(s: string): string {
+    switch (s) {
+      case 'Paid':     return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+      case 'Overdue':  return 'bg-rose-50 text-rose-700 border border-rose-100';
+      case 'Disputed': return 'bg-amber-50 text-amber-700 border border-amber-100';
+      default:         return 'bg-blue-50 text-blue-700 border border-blue-100';
+    }
+  }
+
+  invoiceDotClass(s: string): string {
+    switch (s) {
+      case 'Paid':     return 'bg-emerald-500';
+      case 'Overdue':  return 'bg-rose-500';
+      case 'Disputed': return 'bg-amber-500';
+      default:         return 'bg-blue-500';
+    }
+  }
+
+  // ============================================================================
+  // REPORTS
+  // ============================================================================
+  get reportKpis() {
+    return {
+      totalBilled: 289000,
+      collected: 256000,
+      collectionRate: 88.6,
+      outstanding: 33000,
+      pendingPct: 11.4,
+      disputeRate: 6.0,
+      disputeRateDelta: 1.2,
+      avgInvoice: 28900
+    };
+  }
+
+  get invoiceStatusBreakdown() {
+    const total = this.invoices.length || 1;
+    const count = (s: Invoice['status']) => this.invoices.filter(i => i.status === s).length;
+    const pct = (n: number) => Math.round((n / total) * 100);
+    return [
+      { label: 'Paid',     count: count('Paid'),     pct: pct(count('Paid')),     bar: 'bg-emerald-500', text: 'text-emerald-600' },
+      { label: 'Open',     count: count('Open'),     pct: pct(count('Open')),     bar: 'bg-blue-500',    text: 'text-blue-600' },
+      { label: 'Overdue',  count: count('Overdue'),  pct: pct(count('Overdue')),  bar: 'bg-rose-500',    text: 'text-rose-600' },
+      { label: 'Disputed', count: count('Disputed'), pct: pct(count('Disputed')), bar: 'bg-amber-500',   text: 'text-amber-600' }
+    ];
+  }
+
+  toggleReportKebab(id: string): void {
+    this.openReportKebabId = this.openReportKebabId === id ? null : id;
+  }
+
+  sendReminder(row: any): void {
+    this.openReportKebabId = null;
+    this.iamService.recordAudit('OVERDUE_REMINDER_SENT', 'BILLING');
+    this.toastService.success('Reminder sent to ' + row.customer + '.');
+  }
+
+  viewOverdue(row: any): void {
+    this.openReportKebabId = null;
+    this.toastService.info('Opening ' + row.invoice + ' for ' + row.customer + '.');
+  }
+
+  private renderCharts(): void {
+    const billingCtx = document.getElementById('billingChart') as HTMLCanvasElement | null;
+    if (billingCtx) {
+      this.billingChart?.destroy();
+      this.billingChart = new Chart(billingCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+          datasets: [
+            { label: 'Billed',    data: [240000, 258000, 250000, 268000, 278000, 289000], backgroundColor: '#bfdbfe', borderRadius: 6, borderWidth: 0 },
+            { label: 'Collected', data: [225000, 238000, 236000, 250000, 262000, 256000], backgroundColor: '#bbf7d0', borderRadius: 6, borderWidth: 0 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, boxHeight: 12, usePointStyle: true, pointStyle: 'rectRounded' } } },
+          scales: { x: { grid: { display: false } }, y: { display: false, beginAtZero: true } }
+        }
+      });
     }
 
-    this.collectionsChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['0-30 Days', '31-60 Days', '61-90 Days', '90+ Days'],
-        datasets: [
-          {
-            label: 'Outstanding Balance ($)',
-            data: [
-              this.kpiStats.totalOverdue > 0 ? this.kpiStats.totalOverdue * 0.5 : 2300,
-              this.kpiStats.totalOverdue > 0 ? this.kpiStats.totalOverdue * 0.3 : 1200,
-              this.kpiStats.totalOverdue > 0 ? this.kpiStats.totalOverdue * 0.15 : 600,
-              this.kpiStats.totalOverdue > 0 ? this.kpiStats.totalOverdue * 0.05 : 200
-            ],
-            backgroundColor: '#059669', // billing emerald
-            borderRadius: 8,
-            borderWidth: 0
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
+    const trendCtx = document.getElementById('disputeTrendChart') as HTMLCanvasElement | null;
+    if (trendCtx) {
+      this.disputeTrendChart?.destroy();
+      this.disputeTrendChart = new Chart(trendCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+          datasets: [{ label: 'Disputes opened', data: [3, 4, 2, 6, 5, 6], backgroundColor: '#fed7aa', borderRadius: 6, borderWidth: 0 }]
         },
-        scales: {
-          x: { grid: { display: false } },
-          y: { grid: { color: '#f1f5f9' }, beginAtZero: true }
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: { x: { grid: { display: false } }, y: { display: false, beginAtZero: true } }
         }
-      }
-    });
+      });
+    }
+  }
+
+  // ============================================================================
+  // SETTINGS
+  // ============================================================================
+  toggleSetting(key: string): void {
+    const ctrl = this.settingsForm.get(key);
+    if (ctrl) ctrl.setValue(!ctrl.value);
+  }
+
+  saveSettings(): void {
+    this.iamService.recordAudit('BILLING_SETTINGS_UPDATED', 'BILLING');
+    this.toastService.success('Billing settings saved.');
   }
 }

@@ -48,10 +48,22 @@ public class InvoiceController {
     // ── Static-path endpoints first (must come before /{invoiceId}) ────────────
 
     /**
+     * GET /teleConnect/billing/invoices
+     * Returns every invoice (used by the Billing &amp; Collection dashboard).
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('VIEW_INVOICE','EDIT_INVOICE')")
+    public ResponseEntity<List<InvoiceResponse>> getAllInvoices() {
+        return ResponseEntity.ok(invoiceService.getAllInvoices());
+    }
+
+    /**
      * POST /teleConnect/billing/invoices/generate
      */
+    // PAY_BILL is allowed so a subscriber's plan purchase generates their own invoice
+    // (self-service checkout); billing staff use EDIT_INVOICE / BILLING_CYCLE.
     @PostMapping("/generate")
-    @PreAuthorize("hasAnyAuthority('EDIT_INVOICE','BILLING_CYCLE')")
+    @PreAuthorize("hasAnyAuthority('EDIT_INVOICE','BILLING_CYCLE','PAY_BILL')")
     public ResponseEntity<InvoiceResponse> generateInvoice(
             @Valid @RequestBody InvoiceGenerationRequest request,
             HttpServletRequest httpReq) {

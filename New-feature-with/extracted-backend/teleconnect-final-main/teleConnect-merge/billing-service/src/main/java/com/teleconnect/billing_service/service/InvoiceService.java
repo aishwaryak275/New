@@ -16,6 +16,8 @@ public interface InvoiceService {
 
     InvoiceResponse getInvoiceById(Long invoiceId);
 
+    List<InvoiceResponse> getAllInvoices();
+
     List<InvoiceResponse> getInvoicesByAccount(Long accountId);
 
     List<InvoiceResponse> getInvoicesByAccount(Long accountId, InvoiceStatus status,

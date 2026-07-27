@@ -5,6 +5,7 @@ import { AuthService, User } from '../../core/services/auth.service';
 import { AccountService } from '../../core/services/account.service';
 import { IamService } from '../../core/services/iam.service';
 import { PlanService } from '../../core/services/plan.service';
+import { BillingService } from '../../core/services/billing.service';
 import { TicketService } from '../../core/services/ticket.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
@@ -82,6 +83,7 @@ export class AgentPortalComponent implements OnInit {
     private accountService: AccountService,
     private iamService: IamService,
     private planService: PlanService,
+    private billingService: BillingService,
     private ticketService: TicketService,
     public notificationService: NotificationService,
     private toastService: ToastService,
@@ -646,17 +648,83 @@ export class AgentPortalComponent implements OnInit {
 
   confirmWizardChange(): void {
     if (!this.selectedWizardLine || !this.selectedWizardPlan) return;
-    
-    // Simulate plan changes activation or request creation
-    this.planService.activatePlan(this.selectedWizardLine.lineId, this.selectedWizardPlan.id).subscribe({
+
+    const plan = this.selectedWizardPlan;
+    const planId: number = plan.planId ?? plan.id;
+    const lineId: number = this.selectedWizardLine.lineId;
+    const accountId: number =
+      this.selectedWizardLine.accountId ?? this.selectedAccount360?.accountId;
+
+    const activationDate: string = this.wizardForm.value.effectiveDate;
+    const validityDays: number = plan.validityDays ?? 28;
+    const expiryDate = this.addDaysToDate(activationDate, validityDays);
+    const planPrice: number = plan.planPrice ?? 0;
+    const taxes = Math.round(planPrice * 0.18 * 100) / 100;
+
+    this.planService.createSubscription({
+      lineId, planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A'
+    }).subscribe({
       next: () => {
-        this.toastService.success(`Plan upgraded successfully to ${this.selectedWizardPlan.name}!`);
+        this.toastService.success(`Plan upgraded successfully to ${plan.name}!`);
+        // Bill the plan: create a billing cycle + invoice carrying the plan price so
+        // it appears in the subscriber's invoices and the Billing Executive queue.
+        if (accountId) {
+          this.autoCreateInvoice(accountId, planPrice, taxes, activationDate, expiryDate);
+        } else {
+          this.toastService.error('Invoice not created: account ID could not be resolved for this line.');
+        }
         this.resetWizard();
         this.setTab('search');
-        this.selectAccount(this.selectedAccount360.accountId); // reload
+        if (this.selectedAccount360?.accountId) {
+          this.selectAccount(this.selectedAccount360.accountId); // reload
+        }
       },
-      error: () => {
-        this.toastService.error('Failed to activate plan change in wizard.');
+      error: (err: any) => {
+        const msg = err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`;
+        this.toastService.error('Failed to activate plan change: ' + msg);
+      }
+    });
+  }
+
+  private addDaysToDate(dateStr: string, days: number): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d + days);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  /** Creates a billing cycle then a plan-charge invoice for the given account. */
+  private autoCreateInvoice(
+    accountId: number,
+    planPrice: number,
+    taxes: number,
+    cycleStart: string,
+    cycleEnd: string
+  ): void {
+    this.billingService.createBillingCycle(accountId, cycleStart, cycleEnd).subscribe({
+      next: (cycle: any) => {
+        const cycleId: number = cycle?.cycleId ?? cycle?.id;
+        if (!cycleId) {
+          this.toastService.error('Invoice not created: billing cycle ID missing.');
+          return;
+        }
+        this.billingService.generateInvoice({
+          accountId,
+          cycleId,
+          planCharges: planPrice,
+          excessCharges: 0,
+          addOnCharges: 0,
+          taxes
+        }).subscribe({
+          next: () => this.toastService.success('Invoice generated and sent to the Billing Executive queue.'),
+          error: (err: any) => {
+            const msg = err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`;
+            this.toastService.error('Invoice generation failed: ' + msg);
+          }
+        });
+      },
+      error: (err: any) => {
+        const msg = err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`;
+        this.toastService.error('Billing cycle creation failed: ' + msg);
       }
     });
   }

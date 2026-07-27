@@ -14,6 +14,8 @@ public interface BillingDisputeService {
 
     DisputeResponse getDisputeById(Long disputeId);
 
+    List<DisputeResponse> getAllDisputes();
+
     List<DisputeResponse> getDisputesByInvoice(Long invoiceId);
 
     List<DisputeResponse> getDisputesBySubscriber(Long subscriberId);

@@ -46,8 +46,10 @@ public class BillingCycleController {
      * POST /teleConnect/billing/cycles
      * Creates a new billing cycle for an account.
      */
+    // PAY_BILL is allowed so a subscriber purchasing a plan can open the billing
+    // cycle for their own account (self-service checkout); billing staff use BILLING_CYCLE.
     @PostMapping
-    @PreAuthorize("hasAuthority('BILLING_CYCLE')")
+    @PreAuthorize("hasAnyAuthority('BILLING_CYCLE','PAY_BILL')")
     public ResponseEntity<BillingCycleResponse> createBillingCycle(
             @Valid @RequestBody BillingCycleRequest request,
             HttpServletRequest httpReq) {

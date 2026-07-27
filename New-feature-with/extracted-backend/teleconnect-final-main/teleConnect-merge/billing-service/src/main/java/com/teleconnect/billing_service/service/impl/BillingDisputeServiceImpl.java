@@ -91,6 +91,15 @@ public class BillingDisputeServiceImpl implements BillingDisputeService {
     }
 
     @Override
+    public List<DisputeResponse> getAllDisputes() {
+        log.debug("Fetching all disputes");
+        List<DisputeResponse> disputes = disputeRepository.findAll()
+                .stream().map(this::toResponse).collect(Collectors.toList());
+        log.info("Found {} disputes total", disputes.size());
+        return disputes;
+    }
+
+    @Override
     public List<DisputeResponse> getDisputesByInvoice(Long invoiceId) {
         log.debug("Fetching disputes for invoiceId={}", invoiceId);
         List<DisputeResponse> disputes = disputeRepository.findByInvoiceId(invoiceId)

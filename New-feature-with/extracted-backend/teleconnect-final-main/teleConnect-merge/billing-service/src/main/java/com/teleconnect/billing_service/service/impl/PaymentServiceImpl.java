@@ -96,6 +96,17 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
     @Override
+    public List<PaymentResponse> getAllPayments() {
+        log.debug("Fetching all payments");
+        List<PaymentResponse> payments = paymentRepository.findAll()
+                .stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+        log.info("Found {} payments total", payments.size());
+        return payments;
+    }
+
+    @Override
     public List<PaymentResponse> getPaymentsByInvoice(Long invoiceId) {
         log.debug("Fetching payments for invoiceId={}", invoiceId);
         if (!invoiceRepository.existsById(invoiceId)) {

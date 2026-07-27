@@ -108,6 +108,15 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
+    public List<InvoiceResponse> getAllInvoices() {
+        log.info("Get all invoices requested");
+        List<InvoiceResponse> responses = invoiceRepository.findAll()
+            .stream().map(this::toResponse).collect(Collectors.toList());
+        log.info("Found {} invoices total", responses.size());
+        return responses;
+    }
+
+    @Override
     public List<InvoiceResponse> getInvoicesByAccount(Long accountId) {
         log.info("Get invoices by account requested accountId={}", accountId);
         List<InvoiceResponse> responses = invoiceRepository.findByAccountId(accountId)

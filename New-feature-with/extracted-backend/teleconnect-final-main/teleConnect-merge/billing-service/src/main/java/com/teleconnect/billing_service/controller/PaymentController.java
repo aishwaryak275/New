@@ -54,6 +54,16 @@ public class PaymentController {
     }
 
     /**
+     * GET /teleConnect/billing/payments
+     * Retrieve every payment record (used by the Billing &amp; Collection dashboard).
+     */
+    @GetMapping
+    @PreAuthorize("hasAnyAuthority('EDIT_INVOICE','PAY_BILL')")
+    public ResponseEntity<List<PaymentResponse>> getAllPayments() {
+        return ResponseEntity.ok(paymentService.getAllPayments());
+    }
+
+    /**
      * GET /api/billing/payments/{paymentId}
      * Retrieve a single payment record by its ID.
      */

@@ -15,4 +15,7 @@ public interface SubscriberAccountRepository
 
     boolean existsBySubscriberIdAndAccountType(
             Long subscriberId, SubscriberAccount.AccountType accountType);
+
+    boolean existsBySubscriberIdAndStatus(
+            Long subscriberId, SubscriberAccount.AccountStatus status);
 }

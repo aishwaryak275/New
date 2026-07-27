@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.teleconnect.subscriber.dto.request.*;
 import com.teleconnect.subscriber.dto.response.*;
 import com.teleconnect.subscriber.entity.SimLine;
+import com.teleconnect.subscriber.entity.SubscriberAccount;
 import com.teleconnect.subscriber.repository.SimLineRepository;
 import com.teleconnect.subscriber.repository.SubscriberAccountRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,9 +42,12 @@ public class SimLineService {
     public MessageDTO createSimLine(Integer accountId,
                                     CreateSimLineRequest req) {
         log.info("Create SIM line request for accountId={} msisdn={}", accountId, req.getMsisdn());
-        accountRepo.findById(accountId)
-            .orElseThrow(() -> new RuntimeException(
-                "Account not found: " + accountId));
+        SubscriberAccount account = accountRepo.findById(accountId)
+            .orElseThrow(() -> new RuntimeException("Account not found: " + accountId));
+        if (account.getKycStatus() != SubscriberAccount.KycStatus.Verified) {
+            throw new RuntimeException(
+                "KYC verification must be completed before activating a SIM line.");
+        }
         if (simLineRepo.existsByMsisdn(req.getMsisdn()))
             throw new RuntimeException("MSISDN already in use: " + req.getMsisdn());
         if (simLineRepo.existsByIccid(req.getIccid()))

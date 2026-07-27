@@ -287,7 +287,19 @@
           <div class="grid md:grid-cols-12 gap-6">
             <!-- SIM Lines -->
             <div class="md:col-span-8 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-              <h4 class="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">Assigned SIM Lines &amp; Subscriptions</h4>
+              <div class="flex items-center justify-between mb-4">
+                <h4 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Assigned SIM Lines &amp; Subscriptions</h4>
+                <button (click)="openAddSimModalFrom360()"
+                  [disabled]="selectedAccount360?.lines?.some(l => l.status === 'Active')"
+                  [title]="selectedAccount360?.lines?.some(l => l.status === 'Active') ? 'Delete the existing active SIM line first' : 'Add a new SIM line'"
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition"
+                  [ngClass]="selectedAccount360?.lines?.some(l => l.status === 'Active') ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-teal-600 hover:bg-teal-700 cursor-pointer'">
+                  <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add SIM Line
+                </button>
+              </div>
               
               <div class="flex flex-col gap-4">
                 <div *ngFor="let line of selectedAccount360.lines" class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
@@ -810,12 +822,15 @@
                   </td>
                   <td class="px-4 py-3 text-right">
                     <button *ngIf="u.roleName === 'S' || u.roleName === 'Subscriber'"
-                      (click)="openCreateAccountModal(u)"
-                      class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl shadow-xs transition cursor-pointer">
+                      (click)="!u.hasActiveAccount && openCreateAccountModal(u)"
+                      [disabled]="u.hasActiveAccount"
+                      [title]="u.hasActiveAccount ? 'This subscriber already has an active account' : 'Create subscriber account'"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 text-white text-xs font-semibold rounded-xl shadow-xs transition"
+                      [ngClass]="u.hasActiveAccount ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-teal-600 hover:bg-teal-700 cursor-pointer'">
                       <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                       </svg>
-                      Create Account
+                      {{ u.hasActiveAccount ? 'Account Exists' : 'Create Account' }}
                     </button>
                   </td>
                 </tr>

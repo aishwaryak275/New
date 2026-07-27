@@ -283,8 +283,23 @@ export class AdminPortalComponent implements OnInit {
   loadIamUsers(): void {
     this.userPage = 0;
     this.iamService.getUsers().subscribe({
-      next: (users) => this.iamUsers = users,
+      next: (users) => { this.iamUsers = users; this.enrichUsersWithAccountStatus(); },
       error: () => this.toastService.error('Failed to load users.')
+    });
+  }
+
+  private enrichUsersWithAccountStatus(): void {
+    this.accountService.getAllAccounts().subscribe({
+      next: (accounts) => {
+        const activeIds = new Set<number>(
+          accounts.filter((a: any) => a.status === 'Active').map((a: any) => Number(a.subscriberId))
+        );
+        this.iamUsers = this.iamUsers.map((u: any) => ({
+          ...u,
+          hasActiveAccount: activeIds.has(Number(u.userId))
+        }));
+      },
+      error: () => {}
     });
   }
 
@@ -299,7 +314,7 @@ export class AdminPortalComponent implements OnInit {
       role: this.searchRole || undefined,
       status: this.searchStatus || undefined
     }).subscribe({
-      next: (users) => this.iamUsers = users,
+      next: (users) => { this.iamUsers = users; this.enrichUsersWithAccountStatus(); },
       error: () => this.toastService.error('User search failed.')
     });
   }
@@ -534,6 +549,16 @@ export class AdminPortalComponent implements OnInit {
     this.showAddSimModal = true;
   }
 
+  openAddSimModalFrom360(): void {
+    this.createdAccountId = this.selected360Account.accountId;
+    this.simForm.patchValue({
+      msisdn: this.selected360Account.subscriber?.phone || '',
+      serviceType: 'VoiceData',
+      iccid: ''
+    });
+    this.showAddSimModal = true;
+  }
+
   closeAddSimModal(): void {
     this.showAddSimModal = false;
   }
@@ -552,7 +577,11 @@ export class AdminPortalComponent implements OnInit {
         this.isActivatingSim = false;
         this.toastService.success(`SIM line activated successfully for Account #${this.createdAccountId}.`);
         this.closeAddSimModal();
-        this.loadIamUsers();
+        if (this.selected360Account?.accountId === this.createdAccountId) {
+          this.loadAccount360Profile(this.createdAccountId!);
+        } else {
+          this.loadIamUsers();
+        }
       },
       error: (err) => {
         this.isActivatingSim = false;
@@ -575,7 +604,27 @@ export class AdminPortalComponent implements OnInit {
           if (line?.accountId) { this.loadAccount360Profile(line.accountId); }
           else { this.toastService.error('No subscriber found for that phone number.'); }
         },
-        error: () => { this.isSearching360 = false; this.toastService.error('No subscriber found for that phone number.'); }
+        error: () => {
+          this.iamService.searchUsers({ phone: query }).subscribe({
+            next: (users) => {
+              const sub = users.find((u: any) => u.roleName === 'S' || u.roleName === 'Subscriber');
+              if (sub) {
+                this.accountService.getAccountsBySubscriberId(sub.userId).subscribe({
+                  next: (accounts) => {
+                    this.isSearching360 = false;
+                    if (accounts?.length > 0) { this.loadAccount360Profile(accounts[0].accountId); }
+                    else { this.toastService.error('No subscriber account found for that phone number.'); }
+                  },
+                  error: () => { this.isSearching360 = false; this.toastService.error('No subscriber found for that phone number.'); }
+                });
+              } else {
+                this.isSearching360 = false;
+                this.toastService.error('No subscriber found for that phone number.');
+              }
+            },
+            error: () => { this.isSearching360 = false; this.toastService.error('No subscriber found for that phone number.'); }
+          });
+        }
       });
       return;
     }

@@ -40,6 +40,11 @@ public class SubscriberAccountService {
 
     public MessageDTO createAccount(CreateAccountRequest req) {
         log.info("Create account request for subscriberId={} type={}", req.getSubscriberId(), req.getAccountType());
+        if (accountRepo.existsBySubscriberIdAndStatus(
+                req.getSubscriberId(), SubscriberAccount.AccountStatus.Active)) {
+            throw new RuntimeException(
+                "Subscriber already has an active account. Terminate the existing one first.");
+        }
         SubscriberAccount account = new SubscriberAccount();
         account.setSubscriberId(req.getSubscriberId());
         account.setAccountType(

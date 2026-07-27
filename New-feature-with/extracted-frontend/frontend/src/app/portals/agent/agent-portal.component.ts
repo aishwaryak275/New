@@ -212,8 +212,23 @@ export class AgentPortalComponent implements OnInit {
   loadIamUsers(): void {
     this.userPage = 0;
     this.iamService.searchUsers({}).subscribe({
-      next: (users) => this.iamUsers = users,
+      next: (users) => { this.iamUsers = users; this.enrichUsersWithAccountStatus(); },
       error: () => this.toastService.error('Failed to load users.')
+    });
+  }
+
+  private enrichUsersWithAccountStatus(): void {
+    this.accountService.getAllAccounts().subscribe({
+      next: (accounts) => {
+        const activeIds = new Set<number>(
+          accounts.filter((a: any) => a.status === 'Active').map((a: any) => Number(a.subscriberId))
+        );
+        this.iamUsers = this.iamUsers.map((u: any) => ({
+          ...u,
+          hasActiveAccount: activeIds.has(Number(u.userId))
+        }));
+      },
+      error: () => {}
     });
   }
 
@@ -226,7 +241,7 @@ export class AgentPortalComponent implements OnInit {
       role: this.searchRole || undefined,
       status: this.searchStatus || undefined
     }).subscribe({
-      next: (users) => this.iamUsers = users,
+      next: (users) => { this.iamUsers = users; this.enrichUsersWithAccountStatus(); },
       error: () => this.toastService.error('User search failed.')
     });
   }
@@ -313,8 +328,26 @@ export class AgentPortalComponent implements OnInit {
           }
         },
         error: () => {
-          this.isSearching = false;
-          this.toastService.error('No subscriber found for that phone number.');
+          this.iamService.searchUsers({ phone: query }).subscribe({
+            next: (users) => {
+              const sub = users.find((u: any) => u.roleName === 'S' || u.roleName === 'Subscriber');
+              if (sub) {
+                this.accountService.getAccountsBySubscriberId(sub.userId).subscribe({
+                  next: (accounts) => {
+                    this.isSearching = false;
+                    this.searchResults = [];
+                    if (accounts?.length > 0) { this.selectAccount(accounts[0].accountId); }
+                    else { this.toastService.error('No subscriber account found for that phone number.'); }
+                  },
+                  error: () => { this.isSearching = false; this.toastService.error('No subscriber found for that phone number.'); }
+                });
+              } else {
+                this.isSearching = false;
+                this.toastService.error('No subscriber found for that phone number.');
+              }
+            },
+            error: () => { this.isSearching = false; this.toastService.error('No subscriber found for that phone number.'); }
+          });
         }
       });
       return;
@@ -788,6 +821,16 @@ export class AgentPortalComponent implements OnInit {
     this.showAddSimModal = true;
   }
 
+  openAddSimModalFrom360(): void {
+    this.createdAccountId = this.selectedAccount360.accountId;
+    this.simForm.patchValue({
+      msisdn: this.selectedAccount360.subscriber?.phone || '',
+      serviceType: 'VoiceData',
+      iccid: ''
+    });
+    this.showAddSimModal = true;
+  }
+
   closeAddSimModal(): void {
     this.showAddSimModal = false;
   }
@@ -806,7 +849,11 @@ export class AgentPortalComponent implements OnInit {
         this.isActivatingSim = false;
         this.toastService.success(`SIM line activated successfully for Account #${this.createdAccountId}.`);
         this.closeAddSimModal();
-        if (this.activeTab() === 'users') this.loadIamUsers();
+        if (this.selectedAccount360?.accountId === this.createdAccountId) {
+          this.selectAccount(this.createdAccountId!);
+        } else if (this.activeTab() === 'users') {
+          this.loadIamUsers();
+        }
       },
       error: (err) => {
         this.isActivatingSim = false;

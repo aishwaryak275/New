@@ -1,0 +1,489 @@
+<div class="min-h-screen flex bg-slate-50 font-sans">
+
+  <!-- ========================================== -->
+  <!-- SIDEBAR                                    -->
+  <!-- ========================================== -->
+  <aside 
+    [class.w-64]="!isSidebarCollapsed()" 
+    [class.w-20]="isSidebarCollapsed()" 
+    class="bg-slate-900 text-white flex flex-col justify-between transition-all duration-300 ease-in-out border-r border-slate-800 shadow-xl shrink-0"
+  >
+    <div>
+      <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+        <div class="flex items-center gap-2" *ngIf="!isSidebarCollapsed()">
+          <div class="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center font-bold text-sm shadow-md">NO</div>
+          <span class="font-bold text-lg tracking-tight">NOC Console</span>
+        </div>
+        <div class="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center font-bold text-sm mx-auto shadow-md" *ngIf="isSidebarCollapsed()">NO</div>
+        <button (click)="toggleSidebar()" class="text-slate-400 hover:text-white transition duration-150 focus:outline-none cursor-pointer">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="mt-6 px-3 flex flex-col gap-1.5">
+        <!-- Kanban Board -->
+        <button 
+          (click)="setTab('kanban')"
+          [class.bg-violet-600]="activeTab() === 'kanban'"
+          [class.text-white]="activeTab() === 'kanban'"
+          [class.text-slate-400]="activeTab() !== 'kanban'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Kanban Board</span>
+        </button>
+
+        <!-- SLA tracker -->
+        <button 
+          (click)="setTab('sla')"
+          [class.bg-violet-600]="activeTab() === 'sla'"
+          [class.text-white]="activeTab() === 'sla'"
+          [class.text-slate-400]="activeTab() !== 'sla'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">SLA Monitor</span>
+        </button>
+
+        <!-- Regions Impairment Map -->
+        <button 
+          (click)="setTab('regions')"
+          [class.bg-violet-600]="activeTab() === 'regions'"
+          [class.text-white]="activeTab() === 'regions'"
+          [class.text-slate-400]="activeTab() !== 'regions'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Region Grid</span>
+        </button>
+
+        <!-- Escalation Queue -->
+        <button 
+          (click)="setTab('escalations')"
+          [class.bg-violet-600]="activeTab() === 'escalations'"
+          [class.text-white]="activeTab() === 'escalations'"
+          [class.text-slate-400]="activeTab() !== 'escalations'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Escalations</span>
+        </button>
+
+        <!-- User Lookup -->
+        <button
+          (click)="setTab('userlookup')"
+          [class.bg-violet-600]="activeTab() === 'userlookup'"
+          [class.text-white]="activeTab() === 'userlookup'"
+          [class.text-slate-400]="activeTab() !== 'userlookup'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c0 1.306.835 2.417 2 2.83M17 16.83A3.001 3.001 0 0015 14" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">User Lookup</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar Profile -->
+    <div class="p-3 border-t border-slate-800">
+      <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-950/40 cursor-pointer hover:bg-slate-800/60 transition" (click)="isMyAccountOpen = true" *ngIf="!isSidebarCollapsed()">
+        <div class="w-8 h-8 rounded-lg bg-violet-600/20 text-violet-400 flex items-center justify-center font-bold text-sm">N</div>
+        <div class="min-w-0 flex-grow">
+          <p class="text-xs font-semibold text-slate-200 truncate">{{ user.name }}</p>
+          <p class="text-[10px] text-slate-500 truncate">{{ user.role }}</p>
+        </div>
+      </div>
+      <button (click)="logout()" class="w-full mt-2 flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-xl transition duration-150 cursor-pointer focus:outline-none">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span *ngIf="!isSidebarCollapsed()">Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE                             -->
+  <!-- ========================================== -->
+  <main class="flex-grow flex flex-col min-w-0 overflow-y-auto">
+    <!-- Header -->
+    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 shadow-sm relative z-30">
+      <div class="flex items-center gap-3">
+        <h2 class="text-lg font-bold text-slate-800 tracking-tight capitalize">{{ activeTab() }} Monitor</h2>
+        <span *ngIf="selectedRegionFilter" class="px-2 py-0.5 bg-violet-100 text-violet-700 rounded text-xs font-bold">
+          Filtering: {{ selectedRegionFilter }} Region
+          <button (click)="selectedRegionFilter = null; loadTickets()" class="ml-1 text-slate-400 hover:text-slate-700">×</button>
+        </span>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span class="px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-medium border border-violet-200">
+          NOC operations center
+        </span>
+
+        <!-- Notifications bell dropdown -->
+        <div class="relative">
+          <button (click)="toggleNotifications()" class="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 transition duration-150 focus:outline-none relative cursor-pointer">
+            <svg [@shake]="notificationService.unreadCount() > 0 ? 'shake' : ''" class="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span *ngIf="notificationService.unreadCount() > 0" class="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] text-white flex items-center justify-center font-bold animate-bounce">{{ notificationService.unreadCount() }}</span>
+          </button>
+
+          <!-- Dropdown List -->
+          <div *ngIf="isNotificationOpen()" [@scaleIn] class="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 py-1">
+            <div class="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <span class="font-bold text-xs text-slate-700">Notifications</span>
+              <button (click)="notificationService.markAllAsRead()" class="text-[10px] font-semibold text-primary-700 hover:underline cursor-pointer">Mark all read</button>
+            </div>
+            
+            <div class="max-h-64 overflow-y-auto">
+              <div *ngIf="notificationService.notifications().length === 0" class="p-6 text-center text-slate-400 text-xs font-light">No notifications</div>
+              <div *ngFor="let n of notificationService.notifications()" [class.bg-blue-50]="n.status === 'Unread'" class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 flex flex-col gap-1 transition">
+                <p class="text-xs text-slate-700 font-light leading-snug">{{ n.message }}</p>
+                <span class="text-[9px] text-slate-400 font-light">{{ n.createdDate | date:'shortTime' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Workspace context -->
+    <div class="p-6 flex-grow min-w-0">
+
+      <!-- ========================================== -->
+      <!-- TAB: KANBAN BOARD                          -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'kanban'" [@fadeInUp] class="grid grid-cols-1 md:grid-cols-5 gap-4 h-[calc(100vh-12rem)] min-h-[500px]">
+        <div *ngFor="let col of kanbanColumns" class="bg-slate-100 rounded-2xl p-3 flex flex-col h-full border border-slate-200/50">
+          <!-- Column Header -->
+          <div class="flex justify-between items-center mb-3 px-1">
+            <span class="text-xs font-bold text-slate-600 uppercase tracking-wider">{{ col }}</span>
+            <span class="px-2 py-0.5 rounded bg-slate-200 text-slate-700 text-xs font-bold">{{ getTicketsInColumn(col).length }}</span>
+          </div>
+
+          <!-- Column Cards Area -->
+          <div class="flex-grow overflow-y-auto flex flex-col gap-3 pr-1">
+            <div 
+              *ngFor="let t of getTicketsInColumn(col)" 
+              class="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow transition relative overflow-hidden"
+            >
+              <!-- Priority indicator bar -->
+              <div 
+                [class.bg-rose-500]="t.priority === 'Critical'"
+                [class.bg-amber-500]="t.priority === 'High'"
+                [class.bg-indigo-500]="t.priority === 'Medium'"
+                [class.bg-slate-300]="t.priority === 'Low'"
+                class="absolute left-0 top-0 bottom-0 w-1.5"
+              ></div>
+
+              <!-- Ticket Info -->
+              <div class="flex justify-between items-start mb-2">
+                <span class="font-mono text-[10px] text-slate-400 font-semibold">#T-{{ t.id }}</span>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{{ t.priority }}</span>
+              </div>
+              <h5 class="text-xs font-bold text-slate-800 mb-1.5">{{ t.faultType }}</h5>
+              <p class="text-xs text-slate-500 font-light leading-snug mb-3">{{ t.description }}</p>
+
+              <!-- Assignment selection dropdown -->
+              <div class="mb-3 pt-2 border-t border-slate-100">
+                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-wider mb-1">Assignee</label>
+                <select 
+                  [ngModel]="t.assignedTo?.id || ''"
+                  (ngModelChange)="assignTicket(t.id, $event)"
+                  class="w-full bg-slate-50 border border-slate-200 rounded px-2 py-1 text-[10px] focus:outline-none"
+                >
+                  <option value="">Unassigned</option>
+                  <option *ngFor="let s of staffMembers" [value]="s.id">{{ s.name }}</option>
+                </select>
+              </div>
+
+              <!-- Move Actions -->
+              <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                <button 
+                  *ngIf="col !== 'Resolved' && col !== 'Closed'"
+                  (click)="moveTicket(t.id, 'Resolved')"
+                  class="px-2 py-1 bg-emerald-500 hover:bg-emerald-600 text-white rounded text-[9px] font-bold cursor-pointer"
+                >
+                  Resolve
+                </button>
+                <button 
+                  *ngIf="col === 'Resolved'"
+                  (click)="moveTicket(t.id, 'Closed')"
+                  class="px-2 py-1 bg-slate-900 hover:bg-slate-800 text-white rounded text-[9px] font-bold cursor-pointer"
+                >
+                  Close
+                </button>
+                <button 
+                  *ngIf="col !== 'Escalated' && col !== 'Closed'"
+                  (click)="moveTicket(t.id, 'Escalated')"
+                  class="px-2 py-1 bg-rose-500 hover:bg-rose-600 text-white rounded text-[9px] font-bold cursor-pointer"
+                >
+                  Escalate
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: SLA TRACKER                           -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'sla'" [@fadeInUp] class="flex flex-col gap-6">
+        <!-- SLA compliance percentage gauge -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center justify-between max-w-lg">
+          <div>
+            <h3 class="text-base font-bold text-slate-800 tracking-tight">Active SLA Compliance</h3>
+            <p class="text-xs text-slate-400 font-light mt-0.5">Ratio of resolved fault tickets meeting set response criteria.</p>
+          </div>
+          <div class="text-indigo-600 font-extrabold text-4xl shadow-inner px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-2xl">
+            {{ slaCompliancePct }}%
+          </div>
+        </div>
+
+        <!-- SLA ticket countdown list -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <span class="text-xs font-bold text-slate-600">Active SLA Deadlines monitor</span>
+          </div>
+
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+                <th class="px-6 py-4">Ticket</th>
+                <th class="px-6 py-4">Fault Type</th>
+                <th class="px-6 py-4">Priority</th>
+                <th class="px-6 py-4">SLA Deadline</th>
+                <th class="px-6 py-4">Time Remaining</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let t of allTickets" class="hover:bg-slate-50/20">
+                <td class="px-6 py-4 font-semibold text-slate-700">#T-{{ t.id }}</td>
+                <td class="px-6 py-4 font-bold text-slate-800">{{ t.faultType }}</td>
+                <td class="px-6 py-4 font-medium text-slate-600">{{ t.priority }}</td>
+                <td class="px-6 py-4 text-slate-500 font-light">{{ t.slaDeadline | date:'medium' }}</td>
+                <td class="px-6 py-4">
+                  <!-- Timer states -->
+                  <span 
+                    *ngIf="getSlaState(t.slaDeadline, t.status) === 'breached'"
+                    class="px-2.5 py-1 rounded bg-rose-100 text-rose-700 text-xs font-bold animate-pulse"
+                  >
+                    BREACHED
+                  </span>
+                  <span 
+                    *ngIf="getSlaState(t.slaDeadline, t.status) === 'risk'"
+                    class="px-2.5 py-1 rounded bg-amber-100 text-amber-700 text-xs font-bold animate-pulse"
+                  >
+                    AT RISK ({{ getSlaTimeRemaining(t.slaDeadline) }})
+                  </span>
+                  <span 
+                    *ngIf="getSlaState(t.slaDeadline, t.status) === 'normal'"
+                    class="px-2.5 py-1 rounded bg-slate-100 text-slate-600 text-xs font-medium"
+                  >
+                    {{ getSlaTimeRemaining(t.slaDeadline) }} remaining
+                  </span>
+                  <span 
+                    *ngIf="getSlaState(t.slaDeadline, t.status) === 'resolved'"
+                    class="px-2.5 py-1 rounded bg-emerald-100 text-emerald-700 text-xs font-semibold"
+                  >
+                    COMPLIED
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: REGIONS OUTAGES MAP                   -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'regions'" [@fadeInUp] class="flex flex-col gap-6">
+        <div>
+          <h3 class="text-base font-bold text-slate-800">Region-wise Impairment grid</h3>
+          <p class="text-xs text-slate-400 font-light mt-0.5">National network impairments mapped by region severity.</p>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-6">
+          <div 
+            *ngFor="let reg of regionsList" 
+            (click)="filterByRegion(reg.name)"
+            [class.ring-2]="selectedRegionFilter === reg.name"
+            [class.ring-violet-600]="selectedRegionFilter === reg.name"
+            class="bg-white border {{reg.border}} rounded-2xl p-6 shadow-sm hover:shadow transition cursor-pointer flex flex-col justify-between"
+          >
+            <div>
+              <span class="text-xs text-slate-400 font-semibold uppercase">{{ reg.name }} Region</span>
+              <p class="text-3xl font-extrabold text-slate-800 mt-2">{{ reg.count }} Active</p>
+            </div>
+            
+            <div class="mt-8 flex justify-between items-center">
+              <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status:</span>
+              <span class="px-2 py-0.5 rounded text-white text-[10px] font-bold {{reg.color}}">{{ reg.status }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: ESCALATIONS QUEUE                     -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'escalations'" [@fadeInUp] class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+          <h3 class="text-base font-bold text-slate-800 tracking-tight">Escalation tickets Queue</h3>
+        </div>
+
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+              <th class="px-6 py-3">Ticket</th>
+              <th class="px-6 py-3">Region</th>
+              <th class="px-6 py-3">Priority</th>
+              <th class="px-6 py-3">Escalation Reason</th>
+              <th class="px-6 py-3">Status</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr *ngFor="let esc of escalatedQueue" class="hover:bg-slate-50/20">
+              <td class="px-6 py-3 font-semibold text-slate-700">#T-{{ esc.id }}</td>
+              <td class="px-6 py-3 font-bold text-slate-800">{{ esc.account.subscriber.regionId }}</td>
+              <td class="px-6 py-3 font-medium text-rose-600">{{ esc.priority }}</td>
+              <td class="px-6 py-3 text-slate-500 font-light italic">"{{ esc.escalationReason }}"</td>
+              <td class="px-6 py-3">
+                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-rose-100 text-rose-700">{{ esc.status }}</span>
+              </td>
+            </tr>
+            <tr *ngIf="escalatedQueue.length === 0">
+              <td colspan="5" class="px-6 py-8 text-center text-slate-400 font-light">No escalated tickets registered.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: USER LOOKUP                          -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'userlookup'" [@fadeInUp] class="flex flex-col gap-5 max-w-xl">
+
+        <!-- Search card -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h4 class="font-bold text-slate-800 text-sm mb-1">User Lookup by ID</h4>
+          <p class="text-xs text-slate-400 mb-5">Enter a User ID to fetch that user's profile details.</p>
+          <div class="flex gap-3">
+            <input
+              type="number"
+              [(ngModel)]="lookupUserId"
+              placeholder="Enter User ID…"
+              (keyup.enter)="lookupUser()"
+              class="flex-grow bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            />
+            <button (click)="lookupUser()" [disabled]="!lookupUserId || isLookingUp"
+              class="px-5 py-2.5 bg-violet-600 hover:bg-violet-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer transition shadow-md shadow-violet-600/15">
+              {{ isLookingUp ? 'Searching…' : 'Search' }}
+            </button>
+            <button *ngIf="lookupResult || lookupError" (click)="clearLookup()"
+              class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-semibold rounded-xl text-xs cursor-pointer transition">
+              Clear
+            </button>
+          </div>
+          <!-- Error state -->
+          <p *ngIf="lookupError" class="mt-3 text-xs text-rose-500 font-medium">{{ lookupError }}</p>
+        </div>
+
+        <!-- Result card -->
+        <div *ngIf="lookupResult" [@fadeInUp] class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center font-bold text-violet-600 text-sm">
+              {{ lookupResult.roleName }}
+            </div>
+            <div>
+              <h4 class="font-bold text-slate-800 text-sm">{{ lookupResult.name }}</h4>
+              <p class="text-xs text-slate-400">User #{{ lookupResult.userId }}</p>
+            </div>
+          </div>
+          <div class="p-6 grid grid-cols-2 gap-5">
+            <div>
+              <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Email</label>
+              <p class="mt-1 text-sm text-slate-700">{{ lookupResult.email }}</p>
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Phone</label>
+              <p class="mt-1 text-sm text-slate-700">{{ lookupResult.phone || '—' }}</p>
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Role</label>
+              <div class="mt-1 flex items-center gap-2">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-violet-100 text-violet-600 font-bold text-[10px]">{{ lookupResult.roleName }}</span>
+                <span class="text-sm text-slate-700">{{ getLookupRoleLabel(lookupResult.roleName) }}</span>
+              </div>
+            </div>
+            <div>
+              <label class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Status</label>
+              <div class="mt-1">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                  [class.bg-emerald-100]="lookupResult.status === 'A'"
+                  [class.text-emerald-700]="lookupResult.status === 'A'"
+                  [class.bg-amber-100]="lookupResult.status === 'S'"
+                  [class.text-amber-700]="lookupResult.status === 'S'"
+                  [class.bg-rose-100]="lookupResult.status === 'I'"
+                  [class.text-rose-700]="lookupResult.status === 'I'">
+                  {{ getLookupStatusLabel(lookupResult.status) }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Escalation modal -->
+<div *ngIf="isEscalateModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="text-base font-bold text-slate-800">Escalate Ticket #{{ escalatingTicket?.id }}</h3>
+      <button (click)="closeEscalateModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
+    </div>
+    
+    <div class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Escalation Reason / Remarks</label>
+        <textarea 
+          [(ngModel)]="escalationReasonText"
+          rows="3"
+          placeholder="State reason for L2/L3 escalation (e.g. SLA breach threshold)..."
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-500"
+        ></textarea>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-2">
+        <button type="button" (click)="closeEscalateModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+        <button (click)="submitEscalation()" [disabled]="!escalationReasonText.trim()" class="px-4 py-2.5 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Confirm Escalation</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- My Account Modal -->
+<app-my-account-modal
+  *ngIf="isMyAccountOpen"
+  [userId]="user.id"
+  (closed)="isMyAccountOpen = false">
+</app-my-account-modal>

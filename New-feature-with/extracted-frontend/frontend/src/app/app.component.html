@@ -1,0 +1,38 @@
+<router-outlet></router-outlet>
+
+<!-- Global Toasts Container -->
+<div class="fixed top-5 right-5 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+  <div 
+    *ngFor="let toast of toastService.toasts()"
+    class="pointer-events-auto flex items-center justify-between gap-3 px-4 py-3.5 rounded-2xl shadow-xl border text-sm font-medium transition-all duration-300 transform translate-y-0"
+    [class.bg-emerald-500]="toast.type === 'success'"
+    [class.text-white]="toast.type === 'success' || toast.type === 'error'"
+    [class.border-emerald-600]="toast.type === 'success'"
+    [class.bg-rose-500]="toast.type === 'error'"
+    [class.border-rose-600]="toast.type === 'error'"
+    [class.bg-slate-900]="toast.type === 'info'"
+    [class.text-slate-100]="toast.type === 'info'"
+    [class.border-slate-800]="toast.type === 'info'"
+  >
+    <div class="flex items-center gap-2.5">
+      <!-- Success -->
+      <svg *ngIf="toast.type === 'success'" class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <!-- Error -->
+      <svg *ngIf="toast.type === 'error'" class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <!-- Info -->
+      <svg *ngIf="toast.type === 'info'" class="w-5 h-5 flex-shrink-0 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <span>{{ toast.message }}</span>
+    </div>
+    <button (click)="toastService.remove(toast.id)" class="text-white/70 hover:text-white transition duration-150 cursor-pointer focus:outline-none">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+</div>

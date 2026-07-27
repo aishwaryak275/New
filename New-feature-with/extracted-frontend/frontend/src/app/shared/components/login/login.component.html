@@ -1,0 +1,123 @@
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-950 via-primary-900 to-slate-900 px-4 py-8 relative overflow-hidden">
+  <!-- Glowing decorative blobs -->
+  <div class="absolute w-[500px] h-[500px] rounded-full bg-primary-700/10 blur-[120px] top-[-100px] left-[-100px] pointer-events-none animate-pulse"></div>
+  <div class="absolute w-[400px] h-[400px] rounded-full bg-indigo-500/10 blur-[100px] bottom-[-50px] right-[-50px] pointer-events-none animate-pulse"></div>
+
+  <!-- Content card -->
+  <div class="w-full max-w-5xl grid md:grid-cols-12 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl overflow-hidden shadow-2xl relative z-10">
+    
+    <!-- Left panel: Visual & Promo -->
+    <div class="md:col-span-5 bg-gradient-to-b from-primary-700 to-primary-900 p-8 md:p-12 text-white flex flex-col justify-between relative overflow-hidden">
+      <!-- Grid accent -->
+      <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent opacity-50"></div>
+      
+      <div>
+        <div class="flex items-center gap-2 mb-8">
+          <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center font-bold text-xl border border-white/10 shadow-inner">T</div>
+          <span class="text-2xl font-bold tracking-tight">TeleConnect</span>
+        </div>
+        <h1 class="text-3xl font-extrabold tracking-tight leading-tight mb-4">The Complete Service &amp; Account Portal</h1>
+        <p class="text-primary-100 font-light leading-relaxed">Manage your telecommunications subscriptions, line allocations, invoice runs, and NOC performance in one integrated operations center.</p>
+      </div>
+
+      <div class="mt-12 md:mt-0 pt-8 border-t border-white/10 flex flex-col gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-5 h-5 rounded-full bg-emerald-400/20 text-emerald-400 flex items-center justify-center text-xs">✓</div>
+          <span class="text-sm text-primary-100 font-light">6 Specialized RBAC Portals</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-5 h-5 rounded-full bg-emerald-400/20 text-emerald-400 flex items-center justify-center text-xs">✓</div>
+          <span class="text-sm text-primary-100 font-light">Real-Time Usage Notifications</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-5 h-5 rounded-full bg-emerald-400/20 text-emerald-400 flex items-center justify-center text-xs">✓</div>
+          <span class="text-sm text-primary-100 font-light">Automated Billing &amp; Dispute Workflows</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right panel: Credentials Input -->
+    <div class="md:col-span-7 p-8 md:p-12 flex flex-col justify-center bg-slate-950/80">
+      <div class="max-w-md mx-auto w-full">
+        <h2 class="text-2xl font-bold text-white mb-2">Welcome Back</h2>
+        <p class="text-slate-400 text-sm mb-8 font-light">Please sign in to access your administrative workspace or self-care portal.</p>
+
+        <!-- Credentials Form -->
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col gap-5">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Email Address</label>
+            <input 
+              type="email" 
+              formControlName="email"
+              placeholder="e.g. subscriber@teleconnect.com"
+              class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition duration-200"
+              [class.border-red-500]="loginForm.get('email')?.invalid && loginForm.get('email')?.touched"
+            />
+            <div *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched" class="text-red-500 text-xs mt-1">
+              Please enter a valid email address.
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Password</label>
+            <input 
+              type="password" 
+              formControlName="password"
+              placeholder="••••••••"
+              class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition duration-200"
+              [class.border-red-500]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+            />
+            <div *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched" class="text-red-500 text-xs mt-1">
+              Password must be at least 6 characters long.
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            [disabled]="loginForm.invalid || isLoading"
+            class="w-full mt-2 py-3.5 bg-primary-700 hover:bg-primary-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-lg shadow-primary-700/20 transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg *ngIf="isLoading" class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>{{ isLoading ? 'Authenticating...' : 'Sign In' }}</span>
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="flex items-center my-8">
+          <div class="flex-grow border-t border-slate-800"></div>
+          <span class="px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">Quick Login Demo Accounts</span>
+          <div class="flex-grow border-t border-slate-800"></div>
+        </div>
+
+        <!-- Quick Logins Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <button 
+            *ngFor="let user of demoUsers" 
+            (click)="quickLogin(user.email, user.password)"
+            [disabled]="isLoading"
+            class="px-3 py-2.5 rounded-xl text-white font-medium text-xs shadow-md transition duration-200 cursor-pointer text-center truncate {{user.color}} disabled:opacity-50"
+          >
+            {{ user.label }}
+          </button>
+        </div>
+        
+        <div class="text-center mt-6">
+          <span class="text-xs text-slate-500">Seeded password for all demo accounts: <strong class="text-slate-400">Password&#64;123</strong></span>
+        </div>
+
+        <div class="flex items-center my-6">
+          <div class="flex-grow border-t border-slate-800"></div>
+        </div>
+
+        <div class="text-center">
+          <span class="text-sm text-slate-400">Don't have an account?
+            <a routerLink="/register" class="text-primary-400 hover:text-primary-300 font-semibold transition duration-200 cursor-pointer">Register here</a>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

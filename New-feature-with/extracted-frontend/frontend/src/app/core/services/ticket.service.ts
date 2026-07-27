@@ -1,0 +1,93 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class TicketService {
+  private base = 'http://localhost:9090/teleConnect/fault';
+
+  constructor(private http: HttpClient) {}
+
+  // ── Fault Tickets ────────────────────────────────────────────────────────────
+
+  getFaultTickets(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/getAllTickets`);
+  }
+
+  getFaultTicket(ticketId: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/getTickets/${ticketId}`);
+  }
+
+  createFaultTicket(ticket: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/createTickets`, ticket);
+  }
+
+  updateFaultTicket(ticketId: number, data: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/updateTickets/${ticketId}`, data);
+  }
+
+  resolveFaultTicket(ticketId: number, resolution: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/resolveTickets/${ticketId}`, resolution);
+  }
+
+  /**
+   * Assign a fault ticket to an engineer.
+   * Components call: assignTicket(ticketId, engineerId)
+   */
+  assignTicket(ticketId: number, engineerId: number): Observable<any> {
+    return this.http.put<any>(`${this.base}/assignTickets/${ticketId}`, { engineerId });
+  }
+
+  /**
+   * Alias for NetOps portal: returns all fault tickets flagged as escalated.
+   * Backend has no separate escalation endpoint — returns all tickets for NOC review.
+   * Components call: getEscalatedTickets()
+   */
+  getEscalatedTickets(): Observable<any[]> {
+    return this.getFaultTickets();
+  }
+
+  updateFaultStatus(ticketId: number, status: string, reason?: string): Observable<any> {
+    return this.http.put<any>(`${this.base}/updateTickets/${ticketId}`, { status, reason });
+  }
+
+  // ── Service Requests ─────────────────────────────────────────────────────────
+
+  getServiceRequests(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.base}/getAllRequests`);
+  }
+
+  /** Alias used by agent and subscriber portals: getRequests() */
+  getRequests(): Observable<any[]> {
+    return this.getServiceRequests();
+  }
+
+  getServiceRequest(requestId: number): Observable<any> {
+    return this.http.get<any>(`${this.base}/getRequests/${requestId}`);
+  }
+
+  createServiceRequest(request: any): Observable<any> {
+    return this.http.post<any>(`${this.base}/createRequests`, request);
+  }
+
+  /** Alias used by subscriber portal: createRequest(data) */
+  createRequest(request: any): Observable<any> {
+    return this.createServiceRequest(request);
+  }
+
+  updateServiceRequest(requestId: number, data: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/updateRequests/${requestId}`, data);
+  }
+
+  /** Update a service request's status. Agent portal calls: updateRequestStatus(id, status) */
+  updateRequestStatus(requestId: number, status: string): Observable<any> {
+    return this.http.put<any>(`${this.base}/updateRequests/${requestId}`, { status });
+  }
+
+  /** Approve a NewConnection service request */
+  approveConnection(requestId: number): Observable<any> {
+    return this.http.post<any>(`${this.base}/requests/${requestId}/approve-connection`, {});
+  }
+}

@@ -1,0 +1,929 @@
+<div class="min-h-screen flex bg-slate-50 font-sans">
+
+  <!-- ========================================== -->
+  <!-- SIDEBAR                                    -->
+  <!-- ========================================== -->
+  <aside 
+    [class.w-64]="!isSidebarCollapsed()" 
+    [class.w-20]="isSidebarCollapsed()" 
+    class="bg-slate-900 text-white flex flex-col justify-between transition-all duration-300 ease-in-out border-r border-slate-800 shadow-xl shrink-0"
+  >
+    <div>
+      <!-- Brand Logo Header -->
+      <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+        <div class="flex items-center gap-2" *ngIf="!isSidebarCollapsed()">
+          <div class="w-8 h-8 rounded-lg bg-primary-700 flex items-center justify-center font-bold text-sm shadow-md">T</div>
+          <span class="font-bold text-lg tracking-tight">TeleConnect</span>
+        </div>
+        <div class="w-8 h-8 rounded-lg bg-primary-700 flex items-center justify-center font-bold text-sm mx-auto shadow-md" *ngIf="isSidebarCollapsed()">T</div>
+        <button (click)="toggleSidebar()" class="text-slate-400 hover:text-white transition duration-150 focus:outline-none cursor-pointer">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Navigation links -->
+      <nav class="mt-6 px-3 flex flex-col gap-1.5">
+        <!-- Plan -->
+        <button 
+          (click)="setTab('plan')"
+          [class.bg-primary-700]="activeTab() === 'plan'"
+          [class.text-white]="activeTab() === 'plan'"
+          [class.text-slate-400]="activeTab() !== 'plan'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Plan Details</span>
+        </button>
+
+        <!-- Usage -->
+        <button 
+          (click)="setTab('usage')"
+          [class.bg-primary-700]="activeTab() === 'usage'"
+          [class.text-white]="activeTab() === 'usage'"
+          [class.text-slate-400]="activeTab() !== 'usage'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2zm9 0v-8a2 2 0 00-2-2h-2a2 2 0 00-2 2v8a2 2 0 002 2h2a2 2 0 002-2z" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Usage Tracking</span>
+        </button>
+
+        <!-- New Connection -->
+        <button 
+          (click)="openNewConnectionModal()"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 hover:text-emerald-300 transition duration-150 cursor-pointer focus:outline-none border border-emerald-600/30"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">New Connection</span>
+        </button>
+
+        <!-- Invoices -->
+        <button 
+          (click)="setTab('billing')"
+          [class.bg-primary-700]="activeTab() === 'billing'"
+          [class.text-white]="activeTab() === 'billing'"
+          [class.text-slate-400]="activeTab() !== 'billing'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Bills &amp; Invoices</span>
+        </button>
+
+        <!-- Service Requests -->
+        <button
+          (click)="setTab('support')"
+          [class.bg-primary-700]="activeTab() === 'support'"
+          [class.text-white]="activeTab() === 'support'"
+          [class.text-slate-400]="activeTab() !== 'support'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Support Centre</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar footer Profile info -->
+    <div class="p-3 border-t border-slate-800">
+      <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-950/40 cursor-pointer hover:bg-slate-800/60 transition" (click)="isMyAccountOpen = true" *ngIf="!isSidebarCollapsed()">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">S</div>
+        <div class="min-w-0 flex-grow">
+          <p class="text-xs font-semibold text-slate-200 truncate">{{ user.name }}</p>
+          <p class="text-[10px] text-slate-500 truncate">{{ user.role }}</p>
+        </div>
+      </div>
+      <button (click)="logout()" class="w-full mt-2 flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-xl transition duration-150 cursor-pointer focus:outline-none">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span *ngIf="!isSidebarCollapsed()">Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE                             -->
+  <!-- ========================================== -->
+  <main class="flex-grow flex flex-col min-w-0 overflow-y-auto">
+    <!-- Header -->
+    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 shadow-sm relative z-30">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800 tracking-tight capitalize">{{ activeTab() }} Portal</h2>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <!-- Region Badge -->
+        <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
+          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+          {{ user.regionId }} Region
+        </span>
+
+        <!-- Notification Bell Dropdown -->
+        <div class="relative">
+          <button (click)="toggleNotifications()" class="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 transition duration-150 focus:outline-none relative cursor-pointer">
+            <svg [@shake]="notificationService.unreadCount() > 0 ? 'shake' : ''" class="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span *ngIf="notificationService.unreadCount() > 0" class="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] text-white flex items-center justify-center font-bold animate-bounce">{{ notificationService.unreadCount() }}</span>
+          </button>
+
+          <!-- Notifications Dropdown List -->
+          <div 
+            *ngIf="isNotificationOpen()" 
+            [@scaleIn]
+            class="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 py-1"
+          >
+            <div class="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <span class="font-bold text-xs text-slate-700">Notifications</span>
+              <button (click)="notificationService.markAllAsRead()" class="text-[10px] font-semibold text-primary-700 hover:underline cursor-pointer">Mark all read</button>
+            </div>
+            
+            <div class="max-h-64 overflow-y-auto">
+              <div *ngIf="notificationService.notifications().length === 0" class="p-6 text-center text-slate-400 text-xs font-light">No new alerts</div>
+              <div 
+                *ngFor="let n of notificationService.notifications()" 
+                [class.bg-blue-50]="n.status === 'Unread'"
+                class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 flex flex-col gap-1 transition"
+              >
+                <div class="flex justify-between items-start">
+                  <span 
+                    [class.bg-blue-100]="n.category === 'Usage'"
+                    [class.text-blue-700]="n.category === 'Usage'"
+                    [class.bg-emerald-100]="n.category === 'Billing'"
+                    [class.text-emerald-700]="n.category === 'Billing'"
+                    [class.bg-rose-100]="n.category === 'Fault'"
+                    [class.text-rose-700]="n.category === 'Fault'"
+                    class="px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider"
+                  >
+                    {{ n.category }}
+                  </span>
+                  <button (click)="notificationService.updateStatus(n.id, 'Dismissed')" class="text-slate-400 hover:text-slate-600 text-xs">×</button>
+                </div>
+                <p class="text-xs text-slate-700 font-light leading-snug">{{ n.message }}</p>
+                <span class="text-[9px] text-slate-400 font-light">{{ n.createdDate | date:'shortTime' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content Workspace -->
+    <div class="p-6 flex-grow min-w-0" *ngIf="!isLoading">
+
+      <!-- ========================================== -->
+      <!-- TAB: PLAN DETAILS & CATALOG                -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'plan'" [@fadeInUp] class="flex flex-col gap-6">
+        <!-- Current plan card -->
+        <div class="bg-gradient-to-br from-primary-700 to-indigo-900 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/10 via-transparent to-transparent"></div>
+          <div>
+            <span class="px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-semibold uppercase tracking-wider mb-3 inline-block">Active Plan Subscription</span>
+            <h3 class="text-3xl font-extrabold tracking-tight mb-2">{{ account360?.lines?.[0]?.activeSubscription?.plan?.name || 'Starter Plan' }}</h3>
+            <p class="text-indigo-200 text-sm font-light">Assigned Line: <strong class="text-white">+1-{{ account360?.lines?.[0]?.msisdn }}</strong> | Validity: {{ account360?.lines?.[0]?.activeSubscription?.plan?.validityDays }} Days</p>
+          </div>
+          <div class="text-left md:text-right shrink-0">
+            <p class="text-4xl font-extrabold">₹{{ account360?.lines?.[0]?.activeSubscription?.plan?.planPrice }}<span class="text-xs text-indigo-300 font-light">/cycle</span></p>
+            <span class="mt-2 inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-emerald-400/20 text-emerald-300 text-xs font-semibold uppercase border border-emerald-400/30">
+              ● {{ account360?.lines?.[0]?.activeSubscription?.renewalType }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Plan Catalog — Jio-style with Prepaid / Postpaid toggle -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+
+          <!-- Heading + toggle -->
+          <div class="text-center mb-6">
+            <h2 class="text-xl font-extrabold text-slate-900 mb-5">Let's find a plan that's right for you</h2>
+            <div class="inline-flex bg-slate-100 rounded-full p-1 gap-0.5">
+              <button
+                (click)="planFilter.set('Prepaid')"
+                [class.bg-primary-700]="planFilter() === 'Prepaid'"
+                [class.text-white]="planFilter() === 'Prepaid'"
+                [class.text-slate-500]="planFilter() !== 'Prepaid'"
+                class="px-10 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
+              >Prepaid</button>
+              <button
+                (click)="planFilter.set('Postpaid')"
+                [class.bg-white]="planFilter() === 'Postpaid'"
+                [class.shadow]="planFilter() === 'Postpaid'"
+                [class.text-slate-900]="planFilter() === 'Postpaid'"
+                [class.text-slate-500]="planFilter() !== 'Postpaid'"
+                class="px-10 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
+              >Postpaid</button>
+            </div>
+          </div>
+
+          <!-- Empty / loading state -->
+          <div *ngIf="filteredPlans().length === 0" class="text-center py-10 text-slate-400 text-sm">
+            <ng-container *ngIf="availablePlans().length === 0">
+              <svg class="w-10 h-10 mx-auto mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <p class="mb-2 font-medium text-slate-500">No plans loaded yet.</p>
+              <button (click)="loadData()" class="text-primary-700 underline text-xs cursor-pointer">Retry</button>
+            </ng-container>
+            <p *ngIf="availablePlans().length > 0" class="font-medium text-slate-500">No {{ planFilter() | lowercase }} plans available.</p>
+          </div>
+
+          <!-- Plan cards grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
+            <div
+              *ngFor="let p of filteredPlans()"
+              class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+            >
+              <div>
+                <!-- Price row -->
+                <div class="flex items-center justify-between mb-4">
+                  <span class="text-2xl font-extrabold text-slate-900">₹{{ p.planPrice }}</span>
+                  <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
+                </div>
+
+                <!-- Stats: validity, data, voice -->
+                <div class="flex gap-4 mb-3">
+                  <div>
+                    <p class="text-sm font-bold text-slate-800">{{ p.validityDays }}<span class="text-xs font-normal text-slate-500"> Days</span></p>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Validity</p>
+                  </div>
+                  <div class="border-l border-slate-200 pl-4">
+                    <p class="text-sm font-bold text-slate-800">{{ getDataPerDay(p) }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Data</p>
+                  </div>
+                  <div class="border-l border-slate-200 pl-4">
+                    <p class="text-sm font-bold text-slate-800">{{ p.voiceMinutes > 0 ? p.voiceMinutes + ' Min' : 'Unlimited' }}</p>
+                    <p class="text-[10px] text-slate-500 uppercase tracking-wide">Voice</p>
+                  </div>
+                </div>
+
+                <!-- Plan name badge -->
+                <span class="inline-block text-[10px] font-semibold uppercase tracking-wider text-primary-700 bg-primary-50 border border-primary-100 px-2 py-0.5 rounded-full mb-4">
+                  {{ p.name }}
+                </span>
+              </div>
+
+              <!-- CTA -->
+              <button
+                [disabled]="account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId"
+                (click)="openUpgradeModal(p)"
+                class="w-full py-2.5 bg-primary-700 text-white font-semibold rounded-xl text-sm hover:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed transition duration-150 cursor-pointer"
+              >
+                {{ account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId ? 'Current Plan' : 'Select Plan' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- View all link -->
+          <div *ngIf="filteredPlans().length > 0" class="text-center mt-6">
+            <span class="text-xs text-slate-500">Showing {{ filteredPlans().length }} {{ planFilter() | lowercase }} plans</span>
+          </div>
+        </div>
+
+        <!-- ── Add-Ons Section ── -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-100">
+            <h2 class="text-base font-bold text-slate-900">Available Add-Ons</h2>
+            <p class="text-xs text-slate-500 mt-0.5">Boost your plan with extra data, ISD packs, roaming, and more.</p>
+          </div>
+
+          <div *ngIf="addOns().length > 0; else noAddOns" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div *ngFor="let addOn of addOns()" class="border border-slate-200 rounded-xl p-4 flex flex-col gap-3 hover:shadow-md transition-shadow bg-slate-50/50">
+              <div class="flex items-center justify-between">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700">
+                  {{ getAddOnTypeLabel(addOn.type) }}
+                </span>
+                <span class="text-xs font-medium px-2 py-0.5 rounded-lg"
+                  [class.bg-emerald-50]="addOn.status === 'Active'"
+                  [class.text-emerald-700]="addOn.status === 'Active'"
+                  [class.bg-rose-50]="addOn.status !== 'Active'"
+                  [class.text-rose-700]="addOn.status !== 'Active'">
+                  {{ addOn.status }}
+                </span>
+              </div>
+              <h3 class="text-sm font-bold text-slate-800">{{ addOn.name }}</h3>
+              <div class="flex gap-3 text-xs text-slate-600">
+                <span class="bg-white border border-slate-100 rounded-lg px-2 py-1">{{ addOn.quota }} GB</span>
+                <span class="bg-white border border-slate-100 rounded-lg px-2 py-1">{{ addOn.validityDays }} days</span>
+              </div>
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
+                <span class="text-lg font-extrabold text-slate-900">₹{{ addOn.price }}</span>
+                <button
+                  (click)="openAddOnModal(addOn)"
+                  [disabled]="addOn.status !== 'Active'"
+                  class="px-3 py-1.5 bg-primary-700 text-white text-xs font-semibold rounded-lg hover:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shadow-sm"
+                >
+                  Add to Plan
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <ng-template #noAddOns>
+            <div class="p-8 text-center text-sm text-slate-400">No add-ons available at the moment.</div>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: USAGE DASHBOARD                       -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'usage'" [@fadeInUp] class="flex flex-col gap-6">
+        <!-- Warning Banner for >80% usage -->
+        <div
+          *ngIf="getDataPercentage() >= 80"
+          class="p-4 bg-amber-500/10 border border-amber-500/30 text-amber-800 rounded-2xl flex items-center gap-3 text-sm animate-pulse"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <p class="font-medium">Data warning threshold crossed. You have consumed over 80% of your allocated monthly data.</p>
+        </div>
+
+        <!-- 3 circular progress rings grid -->
+        <div class="grid md:grid-cols-3 gap-6">
+          <!-- Data -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Data Usage</span>
+              <p class="text-2xl font-extrabold text-slate-800 mt-2">{{ ((usageSummary?.dataUsedMb ?? 0) / 1024) | number:'1.1-1' }} GB</p>
+              <p class="text-xs text-slate-500 font-light mt-1">of {{ account360?.lines?.[0]?.activeSubscription?.plan?.dataGb }} GB plan</p>
+            </div>
+            <div class="relative w-24 h-24 flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90">
+                <circle cx="48" cy="48" r="40" stroke="#f1f5f9" stroke-width="8" fill="transparent"/>
+                <circle cx="48" cy="48" r="40" stroke="#3B4FE0" stroke-width="8" fill="transparent"
+                        [attr.stroke-dasharray]="251.2"
+                        [attr.stroke-dashoffset]="getDashOffset(getDataPercentage())"
+                        stroke-linecap="round"/>
+              </svg>
+              <span class="absolute text-sm font-bold text-slate-800">{{ getDataPercentage() }}%</span>
+            </div>
+          </div>
+
+          <!-- Voice -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Voice Usage</span>
+              <p class="text-2xl font-extrabold text-slate-800 mt-2">{{ usageSummary?.voiceUsedMin ?? 0 }} Min</p>
+              <p class="text-xs text-slate-500 font-light mt-1">of {{ account360?.lines?.[0]?.activeSubscription?.plan?.voiceMinutes }} Min plan</p>
+            </div>
+            <div class="relative w-24 h-24 flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90">
+                <circle cx="48" cy="48" r="40" stroke="#f1f5f9" stroke-width="8" fill="transparent"/>
+                <circle cx="48" cy="48" r="40" stroke="#10b981" stroke-width="8" fill="transparent"
+                        [attr.stroke-dasharray]="251.2"
+                        [attr.stroke-dashoffset]="getDashOffset(getVoicePercentage())"
+                        stroke-linecap="round"/>
+              </svg>
+              <span class="absolute text-sm font-bold text-slate-800">{{ getVoicePercentage() }}%</span>
+            </div>
+          </div>
+
+          <!-- SMS -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center justify-between">
+            <div>
+              <span class="text-xs text-slate-400 uppercase tracking-wider font-semibold">SMS Usage</span>
+              <p class="text-2xl font-extrabold text-slate-800 mt-2">{{ usageSummary?.smsUsed ?? 0 }} SMS</p>
+              <p class="text-xs text-slate-500 font-light mt-1">of {{ account360?.lines?.[0]?.activeSubscription?.plan?.smsCount }} SMS plan</p>
+            </div>
+            <div class="relative w-24 h-24 flex items-center justify-center">
+              <svg class="w-full h-full transform -rotate-90">
+                <circle cx="48" cy="48" r="40" stroke="#f1f5f9" stroke-width="8" fill="transparent"/>
+                <circle cx="48" cy="48" r="40" stroke="#f59e0b" stroke-width="8" fill="transparent"
+                        [attr.stroke-dasharray]="251.2"
+                        [attr.stroke-dashoffset]="getDashOffset(getSmsPercentage())"
+                        stroke-linecap="round"/>
+              </svg>
+              <span class="absolute text-sm font-bold text-slate-800">{{ getSmsPercentage() }}%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart line panel -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 class="text-base font-bold text-slate-800 tracking-tight mb-6">Daily Usage History (Data Consumption)</h3>
+          <div class="h-80 relative">
+            <canvas id="usageChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: INVOICES HISTORY                      -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'billing'" [@fadeInUp] class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+          <h3 class="text-base font-bold text-slate-800 tracking-tight">Invoice Billing Records</h3>
+          <div class="flex items-center gap-3">
+            <span class="text-xs text-slate-400">Total bills: {{ myInvoices.length }}</span>
+            <button (click)="loadInvoices()" class="text-xs font-semibold text-primary-600 hover:text-primary-800 px-3 py-1.5 rounded-lg bg-primary-50 hover:bg-primary-100 transition cursor-pointer">
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+                <th class="px-6 py-4">Invoice ID</th>
+                <th class="px-6 py-4">Total Amount</th>
+                <th class="px-6 py-4">Due Date</th>
+                <th class="px-6 py-4">Status</th>
+                <th class="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+              <ng-container *ngFor="let inv of myInvoices">
+                <tr class="hover:bg-slate-50/50 cursor-pointer" (click)="toggleInvoiceDetail(inv.invoiceId)">
+                  <td class="px-6 py-4 font-semibold text-slate-700">#{{ inv.invoiceId }}</td>
+                  <td class="px-6 py-4 font-bold text-slate-800">₹{{ inv.totalAmount }}</td>
+                  <td class="px-6 py-4 text-slate-500 font-light">{{ inv.dueDate | date:'mediumDate' }}</td>
+                  <td class="px-6 py-4">
+                    <span
+                      [class.bg-emerald-100]="inv.status === 'Paid'"
+                      [class.text-emerald-700]="inv.status === 'Paid'"
+                      [class.bg-amber-100]="inv.status === 'Sent' || inv.status === 'Generated'"
+                      [class.text-amber-700]="inv.status === 'Sent' || inv.status === 'Generated'"
+                      [class.bg-rose-100]="inv.status === 'Overdue'"
+                      [class.text-rose-700]="inv.status === 'Overdue'"
+                      [class.bg-purple-100]="inv.status === 'Disputed'"
+                      [class.text-purple-700]="inv.status === 'Disputed'"
+                      class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                    >
+                      {{ inv.status }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 text-right" (click)="$event.stopPropagation()">
+                    <button
+                      *ngIf="inv.status !== 'Paid'"
+                      (click)="payInvoice(inv)"
+                      class="px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow-sm transition mr-2 cursor-pointer"
+                    >
+                      Pay Now
+                    </button>
+                    <button
+                      *ngIf="inv.status !== 'Paid' && inv.status !== 'Disputed'"
+                      (click)="openDisputeModal(inv)"
+                      class="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold rounded-lg shadow-sm transition mr-2 cursor-pointer"
+                    >
+                      Dispute
+                    </button>
+                    <button
+                      (click)="downloadInvoice(inv.invoiceId)"
+                      class="px-3 py-1.5 bg-slate-700 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-sm transition cursor-pointer"
+                    >
+                      Download
+                    </button>
+                  </td>
+                </tr>
+
+                <!-- Expandable Invoice details -->
+                <tr *ngIf="activeInvoiceDetail === inv.invoiceId" class="bg-slate-50/50">
+                  <td colspan="5" class="px-6 py-4">
+                    <div class="grid md:grid-cols-4 gap-4 p-4 bg-white border border-slate-200 rounded-2xl shadow-inner text-xs">
+                      <div>
+                        <span class="text-slate-400 uppercase font-semibold">Plan Base Charges:</span>
+                        <p class="text-sm font-bold text-slate-800 mt-1">₹{{ inv.planCharges }}</p>
+                      </div>
+                      <div>
+                        <span class="text-slate-400 uppercase font-semibold">Excess Data/Voice Fees:</span>
+                        <p class="text-sm font-bold text-slate-800 mt-1">₹{{ inv.excessCharges }}</p>
+                      </div>
+                      <div>
+                        <span class="text-slate-400 uppercase font-semibold">Add-On Activations:</span>
+                        <p class="text-sm font-bold text-slate-800 mt-1">₹{{ inv.addOnCharges }}</p>
+                      </div>
+                      <div>
+                        <span class="text-slate-400 uppercase font-semibold">Tax Charges (15%):</span>
+                        <p class="text-sm font-bold text-rose-500 mt-1">₹{{ inv.taxes }}</p>
+                      </div>
+                      <div *ngIf="inv.assignedTo">
+                        <span class="text-slate-400 uppercase font-semibold">Billing Executive:</span>
+                        <p class="text-sm font-bold text-slate-800 mt-1">{{ inv.assignedTo }}</p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </ng-container>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: SUPPORT CENTRE & SERVICE REQUESTS     -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'support'" [@fadeInUp] class="flex flex-col gap-6">
+        <!-- Support options header buttons -->
+        <div class="flex gap-4">
+          <button (click)="openRequestModal()" class="px-4 py-3 bg-primary-700 text-white font-semibold rounded-xl text-xs hover:bg-primary-800 transition cursor-pointer shadow-lg shadow-primary-700/15">
+            + Raise Service Request
+          </button>
+          <button (click)="openTicketModal()" class="px-4 py-3 bg-slate-900 text-white font-semibold rounded-xl text-xs hover:bg-slate-800 transition cursor-pointer shadow-lg">
+            + Raise Fault Ticket
+          </button>
+        </div>
+
+        <!-- Service Requests with Stepper progress -->
+        <div class="grid gap-6">
+          <div *ngFor="let req of serviceRequests" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <div class="flex justify-between items-start mb-6">
+              <div>
+                <h4 class="text-base font-bold text-slate-800 tracking-tight">{{ req.requestType }} Request</h4>
+                <p class="text-xs text-slate-400 font-light mt-1">Ticket #SR-{{ req.id }} | Raised on {{ req.raisedDate | date:'mediumDate' }}</p>
+              </div>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                {{ req.status }}
+              </span>
+            </div>
+
+            <!-- Stepper visualization -->
+            <div class="relative flex items-center justify-between max-w-lg mx-auto py-4">
+              <!-- Connector line -->
+              <div class="absolute left-0 right-0 h-1 bg-slate-100 top-1/2 transform -translate-y-1/2 -z-10 rounded-full"></div>
+              
+              <!-- Step 1: Open -->
+              <div class="flex flex-col items-center gap-2 bg-white px-2">
+                <div class="w-7 h-7 rounded-full bg-primary-700 text-white flex items-center justify-center font-bold text-xs">1</div>
+                <span class="text-[10px] font-semibold text-slate-700">Open</span>
+              </div>
+              <!-- Step 2: InProgress -->
+              <div class="flex flex-col items-center gap-2 bg-white px-2">
+                <div 
+                  [class.bg-primary-700]="req.status === 'InProgress' || req.status === 'Completed'"
+                  [class.text-white]="req.status === 'InProgress' || req.status === 'Completed'"
+                  [class.bg-slate-100]="req.status === 'Open'"
+                  [class.text-slate-400]="req.status === 'Open'"
+                  class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs"
+                >
+                  2
+                </div>
+                <span class="text-[10px] font-semibold text-slate-700">Processing</span>
+              </div>
+              <!-- Step 3: Completed -->
+              <div class="flex flex-col items-center gap-2 bg-white px-2">
+                <div 
+                  [class.bg-primary-700]="req.status === 'Completed'"
+                  [class.text-white]="req.status === 'Completed'"
+                  [class.bg-slate-100]="req.status !== 'Completed'"
+                  [class.text-slate-400]="req.status !== 'Completed'"
+                  class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs"
+                >
+                  3
+                </div>
+                <span class="text-[10px] font-semibold text-slate-700">Completed</span>
+              </div>
+            </div>
+            
+            <div class="mt-4 p-3 bg-slate-50 rounded-xl text-xs text-slate-600 font-light">
+              <strong class="font-semibold text-slate-800">Additional Details:</strong> {{ req.additionalDetails }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- ========================================== -->
+<!-- MODALS                                     -->
+<!-- ========================================== -->
+
+<!-- 1. Plan Upgrade Modal -->
+<div *ngIf="isUpgradeModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="text-base font-bold text-slate-800">Request Plan Upgrade</h3>
+      <button (click)="closeUpgradeModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
+    </div>
+    
+    <form [formGroup]="changeRequestForm" (ngSubmit)="submitPlanChange()" class="p-6 flex flex-col gap-4">
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+        <span class="text-xs text-slate-400 font-semibold uppercase">Selected Plan</span>
+        <p class="text-lg font-bold text-slate-800 mt-1">{{ targetPlan?.name }}</p>
+        <p class="text-xs text-slate-500 mt-0.5">{{ targetPlan?.dataGb }} GB · {{ targetPlan?.validityDays }} Days · {{ targetPlan?.voiceMinutes }} Min</p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Activation Date</label>
+        <input
+          type="date"
+          formControlName="effectiveDate"
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Payment Method</label>
+        <div class="grid grid-cols-2 gap-2">
+          <label *ngFor="let method of ['UPI', 'Card', 'Wallet', 'NetBanking']"
+                 class="flex items-center gap-2 px-3 py-2.5 border rounded-xl cursor-pointer text-sm font-medium transition"
+                 [class.border-blue-500]="changeRequestForm.get('paymentMethod')?.value === method"
+                 [class.bg-blue-50]="changeRequestForm.get('paymentMethod')?.value === method"
+                 [class.text-blue-700]="changeRequestForm.get('paymentMethod')?.value === method"
+                 [class.border-slate-200]="changeRequestForm.get('paymentMethod')?.value !== method"
+                 [class.text-slate-600]="changeRequestForm.get('paymentMethod')?.value !== method">
+            <input type="radio" formControlName="paymentMethod" [value]="method" class="sr-only"/>
+            {{ method }}
+          </label>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-sm">
+        <div class="flex justify-between text-slate-600 mb-1.5">
+          <span>Plan Price</span>
+          <span>₹{{ targetPlan?.planPrice | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex justify-between text-slate-600 mb-1.5">
+          <span>GST (18%)</span>
+          <span>₹{{ (targetPlan?.planPrice * 0.18) | number:'1.2-2' }}</span>
+        </div>
+        <div class="flex justify-between font-bold text-slate-800 border-t border-slate-300 pt-2 mt-1">
+          <span>Total Amount</span>
+          <span class="text-blue-700">₹{{ (targetPlan?.planPrice * 1.18) | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-2">
+        <button type="button" (click)="closeUpgradeModal()" [disabled]="isProcessingPayment" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer disabled:opacity-50">Cancel</button>
+        <button type="submit" [disabled]="changeRequestForm.invalid || isProcessingPayment" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md transition">
+          <span *ngIf="!isProcessingPayment">Confirm &amp; Pay ₹{{ (targetPlan?.planPrice * 1.18) | number:'1.0-0' }}</span>
+          <span *ngIf="isProcessingPayment">Processing...</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 2. Raise Dispute Modal -->
+<div *ngIf="isDisputeModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="text-base font-bold text-slate-800">Raise Billing Dispute</h3>
+      <button (click)="closeDisputeModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
+    </div>
+    
+    <form [formGroup]="disputeForm" (ngSubmit)="submitDispute()" class="p-6 flex flex-col gap-4">
+      <div>
+        <span class="text-xs text-slate-400 font-semibold uppercase">Disputing Invoice ID:</span>
+        <p class="text-lg font-bold text-slate-800 mt-1">#{{ disputingInvoiceId }}</p>
+        <p class="text-xs text-slate-500 mt-0.5">Total Amount: ₹{{ disputingInvoiceTotal }}</p>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Disputed Amount</label>
+        <input 
+          type="number" 
+          formControlName="disputedAmount"
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
+        />
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Dispute Reason / Details</label>
+        <textarea 
+          formControlName="disputeReason"
+          rows="3"
+          placeholder="Please explain why the charges are incorrect..."
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
+        ></textarea>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-4">
+        <button type="button" (click)="closeDisputeModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+        <button type="submit" [disabled]="disputeForm.invalid" class="px-4 py-2.5 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Raise Dispute</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 3. Raise Service Request Modal -->
+<div *ngIf="isRequestModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="text-base font-bold text-slate-800">Raise New Service Request</h3>
+      <button (click)="closeRequestModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
+    </div>
+    
+    <form [formGroup]="newRequestForm" (ngSubmit)="submitServiceRequest()" class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Request Type</label>
+        <select 
+          formControlName="requestType"
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
+        >
+          <option value="PlanChange">Plan Change</option>
+          <option value="SIMReplacement">SIM Replacement</option>
+          <option value="PortingRequest">Porting Request</option>
+          <option value="AccountUpdate">Account Update</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Request Details / Instructions</label>
+        <textarea 
+          formControlName="additionalDetails"
+          rows="3"
+          placeholder="E.g., replacement for stolen SIM card, port-in Verizon phone number +1-999..."
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
+        ></textarea>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-4">
+        <button type="button" (click)="closeRequestModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+        <button type="submit" [disabled]="newRequestForm.invalid" class="px-4 py-2.5 bg-primary-700 hover:bg-primary-800 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Submit Request</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 4. Add-On Activation Modal -->
+<div *ngIf="isAddOnModalOpen && targetAddOn" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="text-base font-bold text-slate-800">Activate Add-On</h3>
+      <button (click)="closeAddOnModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
+    </div>
+    <div class="p-6 flex flex-col gap-5">
+      <!-- Add-on summary -->
+      <div class="bg-slate-50 rounded-xl p-4 flex flex-col gap-2">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-bold text-slate-800">{{ targetAddOn.name }}</span>
+          <span class="text-xs font-semibold px-2 py-1 bg-indigo-50 text-indigo-700 rounded-lg">{{ getAddOnTypeLabel(targetAddOn.type) }}</span>
+        </div>
+        <div class="grid grid-cols-3 gap-3 mt-1 text-center">
+          <div class="bg-white rounded-lg p-2 border border-slate-100">
+            <div class="text-xs text-slate-400">Quota</div>
+            <div class="text-sm font-bold text-slate-800">{{ targetAddOn.quota }} GB</div>
+          </div>
+          <div class="bg-white rounded-lg p-2 border border-slate-100">
+            <div class="text-xs text-slate-400">Validity</div>
+            <div class="text-sm font-bold text-slate-800">{{ targetAddOn.validityDays }}d</div>
+          </div>
+          <div class="bg-white rounded-lg p-2 border border-slate-100">
+            <div class="text-xs text-slate-400">Price</div>
+            <div class="text-sm font-bold text-slate-800">₹{{ targetAddOn.price }}</div>
+          </div>
+        </div>
+      </div>
+      <!-- Payment method -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Payment Method</label>
+        <select [(ngModel)]="addOnPaymentMethod" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500">
+          <option value="UPI">UPI</option>
+          <option value="CreditCard">Credit Card</option>
+          <option value="DebitCard">Debit Card</option>
+          <option value="NetBanking">Net Banking</option>
+        </select>
+      </div>
+      <!-- Total -->
+      <div class="flex items-center justify-between bg-indigo-50 rounded-xl px-4 py-3">
+        <span class="text-sm font-semibold text-slate-700">Total Payable</span>
+        <span class="text-xl font-extrabold text-indigo-700">₹{{ targetAddOn.price }}</span>
+      </div>
+      <!-- Actions -->
+      <div class="flex gap-3 justify-end">
+        <button type="button" (click)="closeAddOnModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+        <button type="button" (click)="submitAddOn()" class="px-4 py-2.5 bg-primary-700 hover:bg-primary-800 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">
+          Pay &amp; Activate
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Raise Fault Ticket Modal -->
+<div *ngIf="isTicketModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="text-base font-bold text-slate-800">Raise Fault Ticket (NOC Alert)</h3>
+      <button (click)="closeTicketModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
+    </div>
+    
+    <form [formGroup]="newTicketForm" (ngSubmit)="submitFaultTicket()" class="p-6 flex flex-col gap-4">
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Fault Classification</label>
+        <select 
+          formControlName="faultType"
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
+        >
+          <option value="NoCoverage">No Service / No Coverage</option>
+          <option value="CallDrops">Frequent Call Drops</option>
+          <option value="SlowData">Slow Data / Impaired Speeds</option>
+          <option value="BillingIssue">Billing Discrepancy</option>
+          <option value="Activation">Activation / Provisioning Fault</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Urgency Priority</label>
+        <select 
+          formControlName="priority"
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
+        >
+          <option value="Low">Low (7 days SLA)</option>
+          <option value="Medium">Medium (72 hours SLA)</option>
+          <option value="High">High (24 hours SLA)</option>
+          <option value="Critical">Critical (6 hours SLA)</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Issue Description</label>
+        <textarea 
+          formControlName="description"
+          rows="3"
+          placeholder="Please describe what you are experiencing..."
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
+        ></textarea>
+      </div>
+
+      <div class="flex gap-3 justify-end mt-4">
+        <button type="button" (click)="closeTicketModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+        <button type="submit" [disabled]="newTicketForm.invalid" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Register Ticket</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- 6. New Connection Request Modal -->
+<div *ngIf="isNewConnModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 border-b border-emerald-200 flex justify-between items-center">
+      <div>
+        <h3 class="text-lg font-bold text-slate-900">Request New Connection</h3>
+        <p class="text-xs text-slate-600 mt-0.5">Submit your details so the KYC team can verify and activate your service.</p>
+      </div>
+      <button type="button" (click)="closeNewConnectionModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-light cursor-pointer">×</button>
+    </div>
+
+    <form [formGroup]="newConnectionForm" (ngSubmit)="submitNewConnectionRequest()" class="space-y-0">
+      <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Account Type</label>
+          <select formControlName="accountType" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
+            <option value="Prepaid">Prepaid (Pay as you go)</option>
+            <option value="Postpaid">Postpaid (Monthly Billing)</option>
+            <option value="Enterprise">Enterprise (Corporate Line)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">ID Proof Document (KYC)</label>
+          <input type="text" formControlName="idProofReference" placeholder="e.g. Aadhar / Passport / Driver License #" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Preferred Telecom Plan</label>
+          <select formControlName="preferredPlanId" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
+            <option value="">Select a plan</option>
+            <option *ngFor="let p of availablePlans()" [value]="p.planId">
+              {{ p.name }} — ₹{{ p.planPrice }}/cycle ({{ p.dataGb }}GB Data, {{ p.validityDays }} Days)
+            </option>
+          </select>
+        </div>
+
+        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800">
+          <p class="font-semibold mb-2">📋 What happens next?</p>
+          <ul class="list-disc list-inside space-y-1 text-xs">
+            <li>Our KYC team will verify your identity documents</li>
+            <li>You will receive a confirmation call within 24–48 hours</li>
+            <li>Your SIM and plan will be activated after verification</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex gap-3 justify-end">
+        <button type="button" (click)="closeNewConnectionModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer transition">Cancel</button>
+        <button type="submit" [disabled]="isSubmittingNewConn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md flex items-center gap-2 transition">
+          <span *ngIf="isSubmittingNewConn" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+          <span>{{ isSubmittingNewConn ? 'Submitting...' : 'Submit Request' }}</span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- My Account Modal -->
+<app-my-account-modal
+  *ngIf="isMyAccountOpen"
+  [userId]="user.id"
+  (closed)="isMyAccountOpen = false">
+</app-my-account-modal>
+

@@ -1,0 +1,525 @@
+﻿<div class="min-h-screen flex bg-slate-50 font-sans">
+
+  <!-- ========================================== -->
+  <!-- SIDEBAR                                    -->
+  <!-- ========================================== -->
+  <aside 
+    [class.w-64]="!isSidebarCollapsed()" 
+    [class.w-20]="isSidebarCollapsed()" 
+    class="bg-slate-900 text-white flex flex-col justify-between transition-all duration-300 ease-in-out border-r border-slate-800 shadow-xl shrink-0"
+  >
+    <div>
+      <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+        <div class="flex items-center gap-2" *ngIf="!isSidebarCollapsed()">
+          <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-sm shadow-md">BL</div>
+          <span class="font-bold text-lg tracking-tight">BillingExec</span>
+        </div>
+        <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center font-bold text-sm mx-auto shadow-md" *ngIf="isSidebarCollapsed()">BL</div>
+        <button (click)="toggleSidebar()" class="text-slate-400 hover:text-white transition duration-150 focus:outline-none cursor-pointer">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="mt-6 px-3 flex flex-col gap-1.5">
+        <!-- Invoice Run Manager -->
+        <button 
+          (click)="setTab('runs')"
+          [class.bg-emerald-600]="activeTab() === 'runs'"
+          [class.text-white]="activeTab() === 'runs'"
+          [class.text-slate-400]="activeTab() !== 'runs'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Billing Runs</span>
+        </button>
+
+        <!-- Collection Tracker -->
+        <button 
+          (click)="setTab('tracker')"
+          [class.bg-emerald-600]="activeTab() === 'tracker'"
+          [class.text-white]="activeTab() === 'tracker'"
+          [class.text-slate-400]="activeTab() !== 'tracker'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2zm9 0v-8a2 2 0 00-2-2h-2a2 2 0 00-2 2v8a2 2 0 002 2h2a2 2 0 002-2z" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Collections</span>
+        </button>
+
+        <!-- Disputes queue -->
+        <button 
+          (click)="setTab('disputes')"
+          [class.bg-emerald-600]="activeTab() === 'disputes'"
+          [class.text-white]="activeTab() === 'disputes'"
+          [class.text-slate-400]="activeTab() !== 'disputes'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Disputes Queue</span>
+        </button>
+
+        <!-- Late Fee configuration -->
+        <button 
+          (click)="setTab('config')"
+          [class.bg-emerald-600]="activeTab() === 'config'"
+          [class.text-white]="activeTab() === 'config'"
+          [class.text-slate-400]="activeTab() !== 'config'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Late Fees Config</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar Profile -->
+    <div class="p-3 border-t border-slate-800">
+      <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-950/40 cursor-pointer hover:bg-slate-800/60 transition" (click)="isMyAccountOpen = true" *ngIf="!isSidebarCollapsed()">
+        <div class="w-8 h-8 rounded-lg bg-emerald-600/20 text-emerald-400 flex items-center justify-center font-bold text-sm">B</div>
+        <div class="min-w-0 flex-grow">
+          <p class="text-xs font-semibold text-slate-200 truncate">{{ user.name }}</p>
+          <p class="text-[10px] text-slate-500 truncate">{{ user.role }}</p>
+        </div>
+      </div>
+      <button (click)="logout()" class="w-full mt-2 flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-xl transition duration-150 cursor-pointer focus:outline-none">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span *ngIf="!isSidebarCollapsed()">Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE                             -->
+  <!-- ========================================== -->
+  <main class="flex-grow flex flex-col min-w-0 overflow-y-auto">
+    <!-- Header -->
+    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 shadow-sm relative z-30">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800 tracking-tight capitalize">{{ activeTab() }} Workspace</h2>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-medium border border-emerald-200">
+          Billing Operations Console
+        </span>
+
+        <!-- Notifications dropdown bell -->
+        <div class="relative">
+          <button (click)="toggleNotifications()" class="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 transition duration-150 focus:outline-none relative cursor-pointer">
+            <svg [@shake]="notificationService.unreadCount() > 0 ? 'shake' : ''" class="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span *ngIf="notificationService.unreadCount() > 0" class="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] text-white flex items-center justify-center font-bold animate-bounce">{{ notificationService.unreadCount() }}</span>
+          </button>
+
+          <!-- Dropdown List -->
+          <div *ngIf="isNotificationOpen()" [@scaleIn] class="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 py-1">
+            <div class="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <span class="font-bold text-xs text-slate-700">Notifications</span>
+              <button (click)="notificationService.markAllAsRead()" class="text-[10px] font-semibold text-primary-700 hover:underline cursor-pointer">Mark all read</button>
+            </div>
+            
+            <div class="max-h-64 overflow-y-auto">
+              <div *ngIf="notificationService.notifications().length === 0" class="p-6 text-center text-slate-400 text-xs font-light">No notifications</div>
+              <div *ngFor="let n of notificationService.notifications()" [class.bg-blue-50]="n.status === 'Unread'" class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 flex flex-col gap-1 transition">
+                <p class="text-xs text-slate-700 font-light leading-snug">{{ n.message }}</p>
+                <span class="text-[9px] text-slate-400 font-light">{{ n.createdDate | date:'shortTime' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Workspace contents -->
+    <div class="p-6 flex-grow min-w-0">
+
+      <!-- ========================================== -->
+      <!-- TAB: INVOICE RUN MANAGER                   -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'runs'" [@fadeInUp] class="flex flex-col gap-6">
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800 tracking-tight">Invoice Run Manager</h3>
+            <p class="text-xs text-slate-400 font-light mt-0.5">Automated batch creation of monthly invoices for active postpaid subscribers.</p>
+          </div>
+          
+          <button 
+            [disabled]="isRunActive || pendingRuns.length === 0"
+            (click)="triggerInvoiceRun()"
+            class="px-5 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs cursor-pointer shadow-lg shadow-emerald-600/15"
+          >
+            {{ isRunActive ? 'Processing Batch Run...' : 'Trigger Invoice Batch Run' }}
+          </button>
+        </div>
+
+        <!-- Progress indicator -->
+        <div *ngIf="isRunActive" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col gap-3" [@fadeInUp]>
+          <div class="flex justify-between items-center text-xs font-bold text-slate-700">
+            <span>Invoice Generation Progress</span>
+            <span>{{ runProgress }}%</span>
+          </div>
+          <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+            <div class="h-full bg-emerald-500 transition-all duration-300 ease-out" [style.width.%]="runProgress"></div>
+          </div>
+        </div>
+
+        <!-- Pending Runs list -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <span class="text-xs font-bold text-slate-600">Pending Billing Cycles list</span>
+          </div>
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+                <th class="px-6 py-3">Cycle ID</th>
+                <th class="px-6 py-3">Subscriber</th>
+                <th class="px-6 py-3">Cycle Range</th>
+                <th class="px-6 py-3">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let run of pendingRuns">
+                <td class="px-6 py-3 font-semibold text-slate-700">#BC-{{ run.cycleId }}</td>
+                <td class="px-6 py-3 font-bold text-slate-800">{{ run.name }}</td>
+                <td class="px-6 py-3 text-slate-500 font-light">{{ run.start | date:'mediumDate' }} - {{ run.end | date:'mediumDate' }}</td>
+                <td class="px-6 py-3">
+                  <span 
+                    [class.bg-amber-100]="run.status === 'Pending'"
+                    [class.text-amber-700]="run.status === 'Pending'"
+                    [class.bg-emerald-100]="run.status === 'Completed'"
+                    [class.text-emerald-700]="run.status === 'Completed'"
+                    class="px-2 py-0.5 rounded text-xs font-semibold"
+                  >
+                    {{ run.status }}
+                  </span>
+                </td>
+              </tr>
+              <tr *ngIf="pendingRuns.length === 0">
+                <td colspan="4" class="px-6 py-8 text-center text-slate-400 font-light">No billing runs pending in database.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: COLLECTION TRACKER & DATA HISTORY     -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'tracker'" [@fadeInUp] class="flex flex-col gap-6">
+        <!-- KPIs Grid -->
+        <div class="grid md:grid-cols-4 gap-6">
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Total Billed</span>
+            <p class="text-3xl font-extrabold text-slate-800 mt-2">₹{{ kpiStats.totalBilled }}</p>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Total Collected</span>
+            <p class="text-3xl font-extrabold text-emerald-600 mt-2">₹{{ kpiStats.totalPaid }}</p>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Outstanding Overdue</span>
+            <p class="text-3xl font-extrabold text-rose-600 mt-2">₹{{ kpiStats.totalOverdue }}</p>
+          </div>
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <span class="text-xs text-slate-400 font-semibold uppercase">Collection Efficiency</span>
+            <p class="text-3xl font-extrabold text-indigo-600 mt-2">{{ kpiStats.efficiency }}%</p>
+          </div>
+        </div>
+
+        <!-- Aging buckets graph -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 class="text-base font-bold text-slate-800 tracking-tight mb-6">Collections Outstanding Aging Buckets</h3>
+          <div class="h-80 relative">
+            <canvas id="collectionsChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Invoices List for custom payments -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-100 bg-slate-50">
+            <span class="text-xs font-bold text-slate-600">All Postpaid Invoices</span>
+          </div>
+
+          <table class="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr class="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+                <th class="px-6 py-3">Invoice ID</th>
+                <th class="px-6 py-3">Account ID</th>
+                <th class="px-6 py-3">Total Amount</th>
+                <th class="px-6 py-3">Status</th>
+                <th class="px-6 py-3 text-right">Payment</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <tr *ngFor="let inv of invoices" class="hover:bg-slate-50/20">
+                <td class="px-6 py-3 font-semibold text-slate-700">#INV-{{ inv.id }}</td>
+                <td class="px-6 py-3 font-medium text-slate-600">#{{ inv.account.id }}</td>
+                <td class="px-6 py-3 font-bold text-slate-800">₹{{ inv.totalAmount }}</td>
+                <td class="px-6 py-3">
+                  <span 
+                    [class.bg-emerald-100]="inv.status === 'Paid'"
+                    [class.text-emerald-700]="inv.status === 'Paid'"
+                    [class.bg-amber-100]="inv.status === 'Sent' || inv.status === 'Generated'"
+                    [class.text-amber-700]="inv.status === 'Sent' || inv.status === 'Generated'"
+                    [class.bg-rose-100]="inv.status === 'Overdue'"
+                    [class.text-rose-700]="inv.status === 'Overdue'"
+                    [class.bg-purple-100]="inv.status === 'Disputed'"
+                    [class.text-purple-700]="inv.status === 'Disputed'"
+                    class="px-2 py-0.5 rounded text-xs font-semibold"
+                  >
+                    {{ inv.status }}
+                  </span>
+                </td>
+                <td class="px-6 py-3 text-right">
+                  <button 
+                    *ngIf="inv.status !== 'Paid'"
+                    (click)="collectPayment(inv.id)"
+                    class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow cursor-pointer"
+                  >
+                    Record Payment
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: DISPUTES QUEUE                        -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'disputes'" [@fadeInUp] class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+          <h3 class="text-base font-bold text-slate-800 tracking-tight">Invoice Disputes Queue</h3>
+          <span class="text-xs text-slate-400 font-light">Unresolved disputes: {{ disputes.length }}</span>
+        </div>
+
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+              <th class="px-6 py-3">Dispute ID</th>
+              <th class="px-6 py-3">Invoice</th>
+              <th class="px-6 py-3">Disputed Amount</th>
+              <th class="px-6 py-3">Status</th>
+              <th class="px-6 py-3">Raised Date</th>
+              <th class="px-6 py-3 text-right">Decision</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr *ngFor="let disp of disputes" class="hover:bg-slate-50/20">
+              <td class="px-6 py-3 font-semibold text-slate-700">#BD-{{ disp.id }}</td>
+              <td class="px-6 py-3 text-slate-600 font-medium">#INV-{{ disp.invoice.id }}</td>
+              <td class="px-6 py-3 font-bold text-slate-800">₹{{ disp.disputedAmount }}</td>
+              <td class="px-6 py-3">
+                <span 
+                  [class.bg-blue-100]="disp.status === 'Open'"
+                  [class.text-blue-700]="disp.status === 'Open'"
+                  [class.bg-amber-100]="disp.status === 'UnderReview'"
+                  [class.text-amber-700]="disp.status === 'UnderReview'"
+                  [class.bg-emerald-100]="disp.status === 'Resolved'"
+                  [class.text-emerald-700]="disp.status === 'Resolved'"
+                  [class.bg-rose-100]="disp.status === 'Rejected'"
+                  [class.text-rose-700]="disp.status === 'Rejected'"
+                  class="px-2 py-0.5 rounded text-xs font-semibold"
+                >
+                  {{ disp.status }}
+                </span>
+              </td>
+              <td class="px-6 py-3 text-slate-500 font-light">{{ disp.raisedDate | date:'mediumDate' }}</td>
+              <td class="px-6 py-3 text-right">
+                <button 
+                  *ngIf="disp.status !== 'Resolved' && disp.status !== 'Rejected'"
+                  (click)="openDisputeResolution(disp)"
+                  class="px-3.5 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-semibold rounded-lg shadow cursor-pointer"
+                >
+                  Approve/Reject
+                </button>
+              </td>
+            </tr>
+            <tr *ngIf="disputes.length === 0">
+              <td colspan="6" class="px-6 py-8 text-center text-slate-400 font-light">No billing dispute tickets registered.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: LATE FEES CONFIG & JOB                -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'config'" [@fadeInUp] class="grid md:grid-cols-12 gap-6 max-w-4xl mx-auto">
+        <!-- Configuration form -->
+        <div class="md:col-span-8 bg-white border border-slate-200 rounded-2xl shadow-sm p-6">
+          <h3 class="text-base font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6">Late Fee &amp; Tariff Configuration</h3>
+          
+          <form [formGroup]="lateFeeForm" (ngSubmit)="saveConfig()" class="flex flex-col gap-4">
+            <!-- Late Fee flat / percentage -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Late Fee Flat Rate (₹)</label>
+                <input 
+                  type="number" 
+                  formControlName="lateFeeFlat"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Late Fee Percentage (%)</label>
+                <input 
+                  type="number" 
+                  step="0.1"
+                  formControlName="lateFeePercentage"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <!-- Grace days / Suspend days -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Payment Grace Days</label>
+                <input 
+                  type="number" 
+                  formControlName="lateFeeGraceDays"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Non-Payment Suspend Days</label>
+                <input 
+                  type="number" 
+                  formControlName="autoSuspendDays"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <!-- Tariff Config (Taxes & Excess Rates) -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Government Tax Rate (%)</label>
+                <input 
+                  type="number" 
+                  formControlName="taxPercentage"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Excess Data Rate (per MB)</label>
+                <input 
+                  type="number" 
+                  step="0.01"
+                  formControlName="excessDataRateMb"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+                />
+              </div>
+            </div>
+
+            <button 
+              type="submit" 
+              [disabled]="lateFeeForm.invalid"
+              class="w-full mt-4 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/15 cursor-pointer"
+            >
+              Save Configuration Settings
+            </button>
+          </form>
+        </div>
+
+        <!-- Late Fee application execution block -->
+        <div class="md:col-span-4 bg-white border border-slate-200 rounded-2xl shadow-sm p-6 flex flex-col justify-between">
+          <div>
+            <h4 class="text-sm font-bold text-slate-800 mb-2 uppercase tracking-wider">Apply Overdue Fees</h4>
+            <p class="text-xs text-slate-400 font-light leading-relaxed">Trigger an immediate calculation run to apply the late fee flat rate and percentage values to any unpaid postpaid invoices that have exceeded the grace period limit.</p>
+          </div>
+          
+          <button 
+            (click)="runLateFeeJob()"
+            class="w-full mt-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-lg"
+          >
+            Run Late Fee Batch Job
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<!-- Dispute resolution details modal -->
+<div *ngIf="activeDispute" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+      <h3 class="text-base font-bold text-slate-800">Resolve Dispute #{{ activeDispute.id }}</h3>
+      <button (click)="activeDispute = null" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
+    </div>
+    
+    <div class="p-6 flex flex-col gap-4">
+      <div class="text-xs font-light bg-slate-50 border border-slate-100 p-3 rounded-xl flex flex-col gap-1.5">
+        <div class="flex justify-between">
+          <span class="text-slate-400">Subscriber Name:</span>
+          <span class="font-bold text-slate-800">{{ activeDispute.subscriber.name }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Disputed Invoice:</span>
+          <span class="font-bold text-slate-800">#INV-{{ activeDispute.invoice.id }}</span>
+        </div>
+        <div class="flex justify-between">
+          <span class="text-slate-400">Claim Amount:</span>
+          <span class="font-bold text-slate-800 text-rose-500">₹{{ activeDispute.disputedAmount }}</span>
+        </div>
+        <div class="border-t border-slate-200 my-1 pt-1">
+          <span class="text-slate-400 font-semibold">Dispute Reason:</span>
+          <p class="text-slate-600 mt-1 leading-normal italic">"{{ activeDispute.disputeReason }}"</p>
+        </div>
+      </div>
+
+      <form [formGroup]="resolutionForm" (ngSubmit)="submitResolution()" class="flex flex-col gap-4 border-t border-slate-100 pt-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Resolution Decision</label>
+          <select 
+            formControlName="status"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+          >
+            <option value="Resolved">Approve Dispute (Credit invoice amount)</option>
+            <option value="Rejected">Reject Dispute (Enforce original charge)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Resolution Remarks</label>
+          <textarea 
+            formControlName="remarks"
+            rows="3"
+            placeholder="Provide feedback remarks for the subscriber..."
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-emerald-500"
+          ></textarea>
+        </div>
+
+        <div class="flex gap-3 justify-end mt-2">
+          <button type="button" (click)="activeDispute = null" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+          <button type="submit" [disabled]="resolutionForm.invalid" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Submit Decision</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- My Account Modal -->
+<app-my-account-modal
+  *ngIf="isMyAccountOpen"
+  [userId]="user.id"
+  (closed)="isMyAccountOpen = false">
+</app-my-account-modal>
+

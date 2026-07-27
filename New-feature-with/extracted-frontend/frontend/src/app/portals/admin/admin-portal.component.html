@@ -1,0 +1,1244 @@
+<div class="min-h-screen flex bg-slate-50 font-sans">
+
+  <!-- ========================================== -->
+  <!-- SIDEBAR                                    -->
+  <!-- ========================================== -->
+  <aside
+    [class.w-64]="!isSidebarCollapsed()"
+    [class.w-20]="isSidebarCollapsed()"
+    class="bg-slate-900 text-white flex flex-col justify-between transition-all duration-300 ease-in-out border-r border-slate-800 shadow-xl shrink-0"
+  >
+    <div>
+      <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+        <div class="flex items-center gap-2" *ngIf="!isSidebarCollapsed()">
+          <div class="w-8 h-8 rounded-lg bg-rose-600 flex items-center justify-center font-bold text-sm shadow-md">AD</div>
+          <span class="font-bold text-lg tracking-tight">AdminConsole</span>
+        </div>
+        <div class="w-8 h-8 rounded-lg bg-rose-600 flex items-center justify-center font-bold text-sm mx-auto shadow-md" *ngIf="isSidebarCollapsed()">AD</div>
+        <button (click)="toggleSidebar()" class="text-slate-400 hover:text-white transition duration-150 focus:outline-none cursor-pointer">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      </div>
+
+      <nav class="mt-6 px-3 flex flex-col gap-1.5">
+        <!-- Plan Catalog -->
+        <button (click)="setTab('catalog')"
+          [class.bg-rose-600]="activeTab() === 'catalog'" [class.text-white]="activeTab() === 'catalog'"
+          [class.text-slate-400]="activeTab() !== 'catalog'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span class="font-medium text-sm" *ngIf="!isSidebarCollapsed()">Plan Catalog</span>
+        </button>
+
+        <!-- Tariff Settings -->
+        <button (click)="setTab('config')"
+          [class.bg-rose-600]="activeTab() === 'config'" [class.text-white]="activeTab() === 'config'"
+          [class.text-slate-400]="activeTab() !== 'config'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="font-medium text-sm" *ngIf="!isSidebarCollapsed()">Tariff Settings</span>
+        </button>
+
+        <!-- User Manager -->
+        <button (click)="setTab('users')"
+          [class.bg-rose-600]="activeTab() === 'users'" [class.text-white]="activeTab() === 'users'"
+          [class.text-slate-400]="activeTab() !== 'users'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="font-medium text-sm" *ngIf="!isSidebarCollapsed()">User Manager</span>
+        </button>
+
+        <!-- Customer 360 -->
+        <button (click)="setTab('customer360')"
+          [class.bg-rose-600]="activeTab() === 'customer360'" [class.text-white]="activeTab() === 'customer360'"
+          [class.text-slate-400]="activeTab() !== 'customer360'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <span class="font-medium text-sm" *ngIf="!isSidebarCollapsed()">Customer 360°</span>
+        </button>
+
+        <!-- Audit Logs -->
+        <button (click)="setTab('auditLogs')"
+          [class.bg-rose-600]="activeTab() === 'auditLogs'" [class.text-white]="activeTab() === 'auditLogs'"
+          [class.text-slate-400]="activeTab() !== 'auditLogs'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none">
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span class="font-medium text-sm" *ngIf="!isSidebarCollapsed()">Audit Logs</span>
+        </button>
+      </nav>
+    </div>
+
+    <!-- Sidebar Profile -->
+    <div class="p-3 border-t border-slate-800">
+      <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-950/40 cursor-pointer hover:bg-slate-800/60 transition" (click)="isMyAccountOpen = true" *ngIf="!isSidebarCollapsed()">
+        <div class="w-8 h-8 rounded-lg bg-rose-600/20 text-rose-400 flex items-center justify-center font-bold text-sm">A</div>
+        <div class="min-w-0 flex-grow">
+          <p class="text-xs font-semibold text-slate-200 truncate">{{ user.name }}</p>
+          <p class="text-[10px] text-slate-500 truncate">{{ user.role }}</p>
+        </div>
+      </div>
+      <button (click)="logout()" class="w-full mt-2 flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-xl transition duration-150 cursor-pointer focus:outline-none">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        <span *ngIf="!isSidebarCollapsed()">Sign Out</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ========================================== -->
+  <!-- MAIN WORKSPACE                             -->
+  <!-- ========================================== -->
+  <main class="flex-grow flex flex-col min-w-0 overflow-y-auto">
+    <!-- Header -->
+    <header class="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 shadow-sm relative z-30">
+      <div>
+        <h2 class="text-lg font-bold text-slate-800 tracking-tight">
+          <span *ngIf="activeTab() === 'catalog'">Plan Catalog</span>
+          <span *ngIf="activeTab() === 'config'">Tariff Settings</span>
+          <span *ngIf="activeTab() === 'users'">User Manager</span>
+          <span *ngIf="activeTab() === 'auditLogs'">Audit Logs</span>
+        </h2>
+        <p class="text-xs text-slate-400 font-light">
+          <span *ngIf="activeTab() === 'users'">Control users, create staff accounts, manage roles and verify status</span>
+          <span *ngIf="activeTab() === 'auditLogs'">Compliance and security logs tracking system access and administrative actions</span>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-4">
+        <span class="px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-medium border border-rose-200">Administrator Workspace</span>
+        <div class="relative">
+          <button (click)="toggleNotifications()" class="w-10 h-10 rounded-full hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-800 transition duration-150 focus:outline-none relative cursor-pointer">
+            <svg [@shake]="notificationService.unreadCount() > 0 ? 'shake' : ''" class="w-5.5 h-5.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span *ngIf="notificationService.unreadCount() > 0" class="absolute top-1 right-1 w-4 h-4 rounded-full bg-rose-500 text-[10px] text-white flex items-center justify-center font-bold animate-bounce">{{ notificationService.unreadCount() }}</span>
+          </button>
+          <div *ngIf="isNotificationOpen()" [@scaleIn] class="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden z-50 py-1">
+            <div class="px-4 py-2.5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+              <span class="font-bold text-xs text-slate-700">Notifications</span>
+              <button (click)="notificationService.markAllAsRead()" class="text-[10px] font-semibold text-primary-700 hover:underline cursor-pointer">Mark all read</button>
+            </div>
+            <div class="max-h-64 overflow-y-auto">
+              <div *ngIf="notificationService.notifications().length === 0" class="p-6 text-center text-slate-400 text-xs">No notifications</div>
+              <div *ngFor="let n of notificationService.notifications()" [class.bg-blue-50]="n.status === 'Unread'" class="px-4 py-3 border-b border-slate-100 hover:bg-slate-50 flex flex-col gap-1 transition">
+                <p class="text-xs text-slate-700 font-light leading-snug">{{ n.message }}</p>
+                <span class="text-[9px] text-slate-400">{{ n.createdDate | date:'shortTime' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Workspace -->
+    <div class="p-6 flex-grow min-w-0">
+
+      <!-- ========================================== -->
+      <!-- TAB: PLAN CATALOG                          -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'catalog'" [@fadeInUp] class="flex flex-col gap-6">
+        <div class="flex justify-between items-center bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800 tracking-tight">Active Plan Catalogs</h3>
+            <p class="text-xs text-slate-400 font-light mt-0.5">Manage regional postpaid and prepaid plan limits, pricing, and availability states.</p>
+          </div>
+          <button (click)="openCreatePlanModal()" class="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl text-xs cursor-pointer shadow-lg shadow-rose-600/15">
+            + Create New Plan
+          </button>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6" [@staggerFadeIn]>
+          <div *ngFor="let p of plansList" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow transition duration-150 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <h4 class="text-base font-bold text-slate-800">{{ p.name }}</h4>
+                  <span class="text-[10px] text-slate-400 uppercase tracking-wider font-bold">{{ p.type }}</span>
+                </div>
+                <span [class.bg-emerald-100]="p.status === 'A'" [class.text-emerald-700]="p.status === 'A'"
+                      [class.bg-rose-100]="p.status !== 'A'" [class.text-rose-700]="p.status !== 'A'"
+                      class="px-2 py-0.5 rounded text-[10px] font-semibold">
+                  {{ p.status === 'A' ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <div class="my-4 border-t border-slate-100 pt-4 flex flex-col gap-1.5 text-xs text-slate-500 font-light">
+                <div class="flex justify-between"><span>Data:</span><span class="font-semibold text-slate-700">{{ p.dataGb }} GB</span></div>
+                <div class="flex justify-between"><span>Voice:</span><span class="font-semibold text-slate-700">{{ p.voiceMinutes }} Mins</span></div>
+                <div class="flex justify-between"><span>SMS:</span><span class="font-semibold text-slate-700">{{ p.smsCount }} SMS</span></div>
+              </div>
+            </div>
+            <div class="border-t border-slate-100 pt-4 mt-2 flex justify-between items-center">
+              <span class="text-xl font-extrabold text-slate-850">₹{{ p.planPrice }}</span>
+              <button (click)="openEditPlanModal(p)" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold cursor-pointer">Edit Catalog</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: SYSTEM CONFIG                         -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'config'" [@fadeInUp] class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 max-w-2xl mx-auto">
+        <h3 class="text-base font-bold text-slate-800 border-b border-slate-100 pb-4 mb-6">Global Tariff &amp; SLA Configuration</h3>
+        <form [formGroup]="configForm" (ngSubmit)="saveConfig()" class="flex flex-col gap-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Government Tax Rate (%)</label>
+              <input type="number" formControlName="taxPercentage" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Excess Data Rate (₹ per MB)</label>
+              <input type="number" step="0.01" formControlName="excessDataRateMb" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Excess Voice Rate (₹ per Min)</label>
+              <input type="number" step="0.01" formControlName="excessVoiceRateMin" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Excess SMS Rate (₹ per SMS)</label>
+              <input type="number" step="0.01" formControlName="excessSmsRateCount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-4 border-t border-slate-100 pt-4 mt-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Late Fee Flat (₹)</label>
+              <input type="number" formControlName="lateFeeFlat" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Late Fee Rate (%)</label>
+              <input type="number" step="0.1" formControlName="lateFeePercentage" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Grace Period (Days)</label>
+              <input type="number" formControlName="lateFeeGraceDays" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none" />
+            </div>
+          </div>
+          <button type="submit" [disabled]="configForm.invalid" class="w-full mt-4 py-3 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs cursor-pointer shadow-lg shadow-rose-600/15">
+            Save Configuration Changes
+          </button>
+        </form>
+      </div>
+
+      <!-- ========================================== -->
+      <!-- TAB: USER MANAGER                          -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'users'" [@fadeInUp] class="flex flex-col gap-5">
+
+        <!-- Sub-tab navigation -->
+        <div class="flex items-center gap-1 bg-white border border-slate-200 rounded-2xl p-2 shadow-sm w-fit">
+          <button (click)="setUserManagerTab('directory')"
+            [class.bg-rose-600]="userManagerTab() === 'directory'" [class.text-white]="userManagerTab() === 'directory'"
+            [class.text-slate-500]="userManagerTab() !== 'directory'"
+            class="px-4 py-2 rounded-xl text-sm font-semibold transition duration-150 cursor-pointer focus:outline-none flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            User Directory
+          </button>
+          <button (click)="setUserManagerTab('createStaff')"
+            [class.bg-rose-600]="userManagerTab() === 'createStaff'" [class.text-white]="userManagerTab() === 'createStaff'"
+            [class.text-slate-500]="userManagerTab() !== 'createStaff'"
+            class="px-4 py-2 rounded-xl text-sm font-semibold transition duration-150 cursor-pointer focus:outline-none flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            Create Staff Account
+          </button>
+          <button (click)="setUserManagerTab('roles')"
+            [class.bg-rose-600]="userManagerTab() === 'roles'" [class.text-white]="userManagerTab() === 'roles'"
+            [class.text-slate-500]="userManagerTab() !== 'roles'"
+            class="px-4 py-2 rounded-xl text-sm font-semibold transition duration-150 cursor-pointer focus:outline-none flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+            Roles &amp; Permissions
+          </button>
+        </div>
+
+        <!-- ── User Directory ── -->
+        <ng-container *ngIf="userManagerTab() === 'directory'">
+          <!-- Filter Search -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <h4 class="font-bold text-slate-700 text-sm mb-4">Filter Search</h4>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Name</label>
+                <input [(ngModel)]="searchName" placeholder="Search by name" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Email</label>
+                <input [(ngModel)]="searchEmail" placeholder="Search by email" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Phone</label>
+                <input [(ngModel)]="searchPhone" placeholder="Search by phone" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Role</label>
+                <select [(ngModel)]="searchRole" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400">
+                  <option value="">All Roles</option>
+                  <option value="A">Admin</option>
+                  <option value="CS">CS Agent</option>
+                  <option value="B">Billing</option>
+                  <option value="N">Network Ops</option>
+                  <option value="C">Compliance</option>
+                  <option value="S">Subscriber</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Status</label>
+                <select [(ngModel)]="searchStatus" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400">
+                  <option value="">All Statuses</option>
+                  <option value="A">Active</option>
+                  <option value="S">Suspended</option>
+                  <option value="I">Inactive</option>
+                </select>
+              </div>
+            </div>
+            <div class="flex gap-3 mt-4">
+              <button (click)="searchUsers()" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition">Search</button>
+              <button (click)="clearSearch()" class="px-5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl cursor-pointer transition">Clear</button>
+            </div>
+          </div>
+
+          <!-- User Table -->
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <h4 class="font-bold text-slate-700 text-sm">All Users <span class="text-slate-400 font-normal">({{ iamUsers.length }} total)</span></h4>
+              <button
+                (click)="openRegisterModal()"
+                class="flex items-center gap-2 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl shadow-md shadow-rose-600/20 transition cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+                Register New Subscriber
+              </button>
+            </div>
+            <div class="overflow-x-auto min-h-[300px]">
+              <table class="w-full text-left border-collapse text-sm">
+                <thead>
+                  <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+                    <th class="px-4 py-3">ID</th>
+                    <th class="px-4 py-3">Name</th>
+                    <th class="px-4 py-3">Email</th>
+                    <th class="px-4 py-3">Phone</th>
+                    <th class="px-4 py-3">Role</th>
+                    <th class="px-4 py-3">Status</th>
+                    <th class="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                  <tr *ngFor="let u of paginatedUsers" class="hover:bg-slate-50/30 transition">
+                    <td class="px-4 py-3 text-slate-500 text-xs font-mono">#{{ u.userId }}</td>
+                    <td class="px-4 py-3 font-semibold text-slate-800">{{ u.name }}</td>
+                    <td class="px-4 py-3 text-slate-500 text-xs">{{ u.email }}</td>
+                    <td class="px-4 py-3 text-slate-500 text-xs">{{ u.phone }}</td>
+                    <td class="px-4 py-3">
+                      <div class="flex items-center gap-2">
+                        <div [class]="getRoleBadgeClasses(u.roleName)">{{ u.roleName }}</div>
+                        <span class="text-xs text-slate-600 font-medium">{{ getRoleLabel(u.roleName) }}</span>
+                      </div>
+                    </td>
+                    <td class="px-4 py-3">
+                      <span [class]="getStatusBadgeClasses(u.status)">{{ getStatusLabel(u.status) }}</span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <div class="relative inline-block text-left">
+                        <!-- Action Dropdown Button -->
+                        <button (click)="toggleActionDropdown(u.userId, $event)"
+                          class="px-2.5 py-1 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg cursor-pointer transition flex items-center gap-1.5 font-semibold text-xs border border-slate-200 shadow-xs">
+                          <span>Actions</span>
+                          <svg class="w-3.5 h-3.5 text-slate-400 transition-transform duration-150" [class.rotate-180]="activeActionDropdownId === u.userId" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+
+                        <!-- Action Dropdown Menu -->
+                        <div *ngIf="activeActionDropdownId === u.userId"
+                          (click)="$event.stopPropagation()"
+                          class="absolute right-0 mt-1 w-48 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1.5 text-xs text-slate-700 animate-in fade-in duration-100">
+                          
+                          <!-- Activate -->
+                          <button *ngIf="u.status === 'S' || u.status === 'I'"
+                            (click)="updateUserStatus(u.userId, 'A')"
+                            class="w-full text-left px-3.5 py-2 hover:bg-emerald-50 text-emerald-700 font-medium flex items-center gap-2 transition cursor-pointer">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Activate User
+                          </button>
+
+                          <!-- Suspend -->
+                          <button *ngIf="u.status === 'A'"
+                            (click)="updateUserStatus(u.userId, 'S')"
+                            class="w-full text-left px-3.5 py-2 hover:bg-amber-50 text-amber-700 font-medium flex items-center gap-2 transition cursor-pointer">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Suspend User
+                          </button>
+
+                          <!-- Deactivate -->
+                          <button *ngIf="u.status === 'A'"
+                            (click)="updateUserStatus(u.userId, 'I')"
+                            class="w-full text-left px-3.5 py-2 hover:bg-rose-50 text-rose-700 font-medium flex items-center gap-2 transition cursor-pointer">
+                            <svg class="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                            </svg>
+                            Deactivate User
+                          </button>
+
+                          <!-- Change Role -->
+                          <button (click)="openChangeRoleModal(u)"
+                            class="w-full text-left px-3.5 py-2 hover:bg-blue-50 text-blue-700 font-medium flex items-center gap-2 transition cursor-pointer">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Change Role
+                          </button>
+
+                          <!-- Create Subscriber Account (For Subscriber role) -->
+                          <button *ngIf="u.roleName === 'S' || u.roleName === 'Subscriber'"
+                            (click)="openCreateAccountModal(u)"
+                            class="w-full text-left px-3.5 py-2 hover:bg-teal-50 text-teal-700 font-medium flex items-center gap-2 transition cursor-pointer">
+                            <svg class="w-4 h-4 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Create Account
+                          </button>
+
+
+                          <!-- Divider before Reset Password if role allows -->
+                          <div *ngIf="canResetPassword(u)" class="my-1 border-t border-slate-100"></div>
+
+                          <!-- Reset Password (Only for non-Subscriber roles) -->
+                          <ng-container *ngIf="canResetPassword(u)">
+                            <!-- Enabled State (mustChangePassword is 0 / false) -->
+                            <button *ngIf="!isResetPasswordDisabled(u)"
+                              (click)="resetPassword(u.userId)"
+                              class="w-full text-left px-3.5 py-2 hover:bg-slate-100 text-slate-800 font-medium flex items-center gap-2 transition cursor-pointer">
+                              <svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                              </svg>
+                              Reset Pass
+                            </button>
+
+                            <!-- Disabled State (mustChangePassword is 1 / true) -->
+                            <button *ngIf="isResetPasswordDisabled(u)"
+                              disabled
+                              title="Password reset requested. User must change password on next login."
+                              class="w-full text-left px-3.5 py-2 text-slate-400 font-medium flex items-center justify-between opacity-60 cursor-not-allowed bg-slate-50/50">
+                              <span class="flex items-center gap-2">
+                                <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                Reset Pass
+                              </span>
+                              <span class="text-[9px] font-semibold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">Pending</span>
+                            </button>
+                          </ng-container>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr *ngIf="iamUsers.length === 0">
+                    <td colspan="7" class="px-6 py-12 text-center text-slate-400 text-sm">No users found.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <!-- Pagination -->
+            <div *ngIf="userTotalPages > 1" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+              <button (click)="userPrevPage()" [disabled]="userPage === 0"
+                class="px-4 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-40 cursor-pointer transition">
+                ← Previous
+              </button>
+              <span class="text-xs text-slate-500">Page {{ userPage + 1 }} of {{ userTotalPages }} &nbsp;·&nbsp; {{ iamUsers.length }} users total</span>
+              <button (click)="userNextPage()" [disabled]="userPage >= userTotalPages - 1"
+                class="px-4 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-40 cursor-pointer transition">
+                Next →
+              </button>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- ── Create Staff Account ── -->
+        <ng-container *ngIf="userManagerTab() === 'createStaff'">
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 max-w-lg">
+            <h4 class="font-bold text-slate-800 text-base mb-1">Create Staff Account</h4>
+            <p class="text-xs text-slate-400 font-light mb-6">Create internal staff members like Customer Service Agents or Network Operators.</p>
+
+            <form [formGroup]="staffForm" (ngSubmit)="submitStaffForm()" class="flex flex-col gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Full Name</label>
+                <input type="text" formControlName="name" placeholder="Jane Doe"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400"
+                  [class.border-red-400]="staffForm.get('name')?.invalid && staffForm.get('name')?.touched" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Email Address</label>
+                <input type="email" formControlName="email" placeholder="jane@teleconnect.com"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400"
+                  [class.border-red-400]="staffForm.get('email')?.invalid && staffForm.get('email')?.touched" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Phone Number</label>
+                <input type="text" formControlName="phone" placeholder="+1234567890"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400"
+                  [class.border-red-400]="staffForm.get('phone')?.invalid && staffForm.get('phone')?.touched" />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Role</label>
+                <select formControlName="roleName"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400"
+                  [class.border-red-400]="staffForm.get('roleName')?.invalid && staffForm.get('roleName')?.touched">
+                  <option value="">Select Staff Role</option>
+                  <option value="A">Admin</option>
+                  <option value="CS">Customer Service Agent</option>
+                  <option value="B">Billing Executive</option>
+                  <option value="N">Network Operations</option>
+                  <option value="C">Compliance Officer</option>
+                </select>
+              </div>
+
+              <button type="submit" [disabled]="staffForm.invalid || isCreatingStaff"
+                class="mt-2 w-full py-3 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-xl text-sm cursor-pointer shadow-lg flex items-center justify-center gap-2">
+                <svg *ngIf="isCreatingStaff" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                {{ isCreatingStaff ? 'Creating...' : 'Create Account' }}
+              </button>
+            </form>
+          </div>
+        </ng-container>
+
+        <!-- ── Roles & Permissions ── -->
+        <ng-container *ngIf="userManagerTab() === 'roles'">
+          <div class="grid md:grid-cols-3 gap-5">
+            <!-- Roles list -->
+            <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+              <h4 class="font-bold text-slate-700 text-sm mb-1">Roles</h4>
+              <p class="text-xs text-slate-400 mb-4">Click a role to view assigned permissions</p>
+              <div class="flex flex-col gap-2">
+                <button *ngFor="let r of roles" (click)="selectRole(r)"
+                  [class.border-rose-500]="selectedRoleData?.roleName === r.roleName"
+                  [class.bg-rose-50]="selectedRoleData?.roleName === r.roleName"
+                  [class.text-rose-700]="selectedRoleData?.roleName === r.roleName"
+                  class="w-full flex items-center justify-between px-4 py-3 rounded-xl border border-slate-200 hover:border-rose-300 hover:bg-rose-50 text-slate-700 text-sm font-semibold cursor-pointer transition">
+                  <span>{{ r.roleName }}</span>
+                  <svg class="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                </button>
+                <div *ngIf="roles.length === 0" class="text-center text-slate-400 text-xs py-6">No roles loaded.</div>
+              </div>
+            </div>
+
+            <!-- Permissions panel -->
+            <div class="md:col-span-2 bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+              <div *ngIf="!selectedRoleData" class="flex items-center justify-center h-full py-16 text-slate-400 text-sm">
+                Select a role to view its permissions.
+              </div>
+              <div *ngIf="selectedRoleData">
+                <h4 class="font-bold text-slate-700 text-sm mb-4">Permissions for <span class="text-rose-600">{{ selectedRoleData.roleName }}</span></h4>
+                <div class="grid grid-cols-1 gap-2 max-h-[420px] overflow-y-auto pr-1">
+                  <div *ngFor="let p of selectedRoleData.permissions"
+                    class="flex items-start gap-3 px-4 py-3 bg-slate-50 border border-slate-100 rounded-xl hover:border-slate-200 transition">
+                    <div class="w-7 h-7 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                    </div>
+                    <div>
+                      <p class="text-xs font-bold text-slate-700">{{ p.permissionName }}</p>
+                      <p *ngIf="p.description" class="text-[10px] text-slate-400">{{ p.description }}</p>
+                    </div>
+                  </div>
+                  <div *ngIf="!selectedRoleData.permissions || selectedRoleData.permissions.length === 0" class="text-slate-400 text-xs text-center py-8">No permissions assigned to this role.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ng-container>
+
+      </div><!-- end users tab -->
+
+      <!-- ========================================== -->
+      <!-- TAB: CUSTOMER 360                          -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'customer360'" [@fadeInUp] class="flex flex-col gap-6">
+        <!-- Search bar -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row gap-3">
+          <input
+            type="text"
+            [(ngModel)]="search360Query"
+            placeholder="Search by MSISDN, Account ID, Line ID, or subscriber name..."
+            class="flex-grow bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500"
+            (keyup.enter)="onSearch360()"
+          />
+          <button (click)="onSearch360()" [disabled]="isSearching360" class="px-6 py-3 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-lg shadow-rose-600/15">
+            {{ isSearching360 ? 'Searching...' : 'Search Subscriber' }}
+          </button>
+        </div>
+
+        <!-- Search results from name search -->
+        <div *ngIf="search360Results.length > 0 && !selected360Account" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden" [@fadeInUp]>
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="text-xs font-semibold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+                <th class="px-6 py-4">Name</th>
+                <th class="px-6 py-4">Email</th>
+                <th class="px-6 py-4">Role</th>
+                <th class="px-6 py-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 text-sm">
+              <tr *ngFor="let u of search360Results" class="hover:bg-slate-50/40">
+                <td class="px-6 py-4 font-bold text-slate-800">{{ u.name }}</td>
+                <td class="px-6 py-4 text-slate-500 font-light">{{ u.email }}</td>
+                <td class="px-6 py-4 font-medium text-slate-600">{{ u.roleName }}</td>
+                <td class="px-6 py-4 text-right">
+                  <button (click)="loadAccount360Profile(u.userId)" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow cursor-pointer">
+                    View 360° Profile
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 360 Profile panel -->
+        <div *ngIf="selected360Account" [@fadeInUp] class="flex flex-col gap-6">
+          <div class="flex items-center justify-between">
+            <button (click)="selected360Account = null; search360Results = []" class="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 cursor-pointer">
+              ← Back to search
+            </button>
+            <div class="flex items-center gap-3">
+              <h3 class="text-base font-bold text-slate-800">Account #{{ selected360Account.accountId }} — 360° Profile</h3>
+              <button (click)="deleteAccount360(selected360Account.accountId)"
+                class="flex items-center gap-1.5 px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg shadow cursor-pointer transition">
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete Account
+              </button>
+            </div>
+          </div>
+
+          <!-- Account details card -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm grid md:grid-cols-4 gap-6">
+            <div>
+              <span class="text-xs text-slate-400 font-semibold uppercase">Subscriber</span>
+              <p class="text-base font-bold text-slate-800 mt-1">{{ selected360Account.subscriber?.name || 'Unknown' }}</p>
+              <p class="text-xs text-slate-500 font-light mt-0.5">ID: #{{ selected360Account.subscriberId }}</p>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 font-semibold uppercase">Email &amp; Phone</span>
+              <p class="text-xs font-medium text-slate-700 mt-1 truncate">{{ selected360Account.subscriber?.email || '—' }}</p>
+              <p class="text-xs text-slate-500 font-light mt-0.5">{{ selected360Account.subscriber?.phone || '—' }}</p>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 font-semibold uppercase">KYC Status</span>
+              <p class="text-xs font-semibold mt-1">
+                <span
+                  [class.bg-emerald-100]="selected360Account.kycStatus === 'Verified'"
+                  [class.text-emerald-700]="selected360Account.kycStatus === 'Verified'"
+                  [class.bg-amber-100]="selected360Account.kycStatus === 'Pending'"
+                  [class.text-amber-700]="selected360Account.kycStatus === 'Pending'"
+                  [class.bg-rose-100]="selected360Account.kycStatus === 'Expired'"
+                  [class.text-rose-700]="selected360Account.kycStatus === 'Expired'"
+                  class="px-2.5 py-0.5 rounded-full">{{ selected360Account.kycStatus }}</span>
+              </p>
+              <div class="flex gap-1.5 mt-2 flex-wrap">
+                <button *ngIf="selected360Account.kycStatus !== 'Verified'"
+                  (click)="updateKyc360(selected360Account.accountId, 'Verified')"
+                  class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition">
+                  Verify KYC
+                </button>
+                <button *ngIf="selected360Account.kycStatus !== 'Expired'"
+                  (click)="updateKyc360(selected360Account.accountId, 'Expired')"
+                  class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition">
+                  Expire KYC
+                </button>
+              </div>
+            </div>
+            <div>
+              <span class="text-xs text-slate-400 font-semibold uppercase">Account Status</span>
+              <p class="text-xs font-semibold mt-1">
+                <span
+                  [class.bg-emerald-100]="selected360Account.status === 'Active'"
+                  [class.text-emerald-700]="selected360Account.status === 'Active'"
+                  [class.bg-amber-100]="selected360Account.status === 'Suspended'"
+                  [class.text-amber-700]="selected360Account.status === 'Suspended'"
+                  [class.bg-rose-100]="selected360Account.status === 'Terminated'"
+                  [class.text-rose-700]="selected360Account.status === 'Terminated'"
+                  class="px-2.5 py-0.5 rounded-full">{{ selected360Account.status }}</span>
+              </p>
+              <div class="flex gap-1.5 mt-2">
+                <button *ngIf="selected360Account.status !== 'Active'"
+                  (click)="updateStatus360(selected360Account.accountId, 'Active')"
+                  class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition">
+                  Activate
+                </button>
+                <button *ngIf="selected360Account.status === 'Active'"
+                  (click)="updateStatus360(selected360Account.accountId, 'Suspended')"
+                  class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-lg cursor-pointer transition">
+                  Suspend
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SIM Lines -->
+          <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+            <h4 class="text-sm font-bold text-slate-800 mb-4 uppercase tracking-wider">SIM Lines</h4>
+            <div *ngIf="!selected360Account.lines?.length" class="text-center py-6 text-slate-400 text-xs font-light">No SIM lines on this account.</div>
+            <div class="flex flex-col gap-4">
+              <div *ngFor="let line of selected360Account.lines"
+                class="p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+                <div>
+                  <div class="flex items-center gap-2 mb-1">
+                    <p class="text-base font-bold text-slate-800 font-mono">{{ line.msisdn }}</p>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
+                      [class.bg-emerald-100]="line.status === 'Active'"
+                      [class.text-emerald-700]="line.status === 'Active'"
+                      [class.bg-amber-100]="line.status === 'Suspended'"
+                      [class.text-amber-700]="line.status === 'Suspended'"
+                      [class.bg-rose-100]="line.status === 'Deactivated'"
+                      [class.text-rose-700]="line.status === 'Deactivated'">{{ line.status }}</span>
+                  </div>
+                  <p class="text-xs text-slate-500 font-light">ICCID: {{ line.iccid }} | Type: <strong class="font-semibold text-slate-700">{{ line.serviceType }}</strong> | Line ID: #{{ line.lineId }}</p>
+                </div>
+                <div class="flex items-center gap-2 flex-wrap shrink-0">
+                  <button *ngIf="line.status === 'Active'"
+                    (click)="updateSimStatus360(selected360Account.accountId, line.lineId, 'Suspended')"
+                    class="px-2.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-lg cursor-pointer transition">
+                    Suspend SIM
+                  </button>
+                  <button *ngIf="line.status === 'Suspended'"
+                    (click)="updateSimStatus360(selected360Account.accountId, line.lineId, 'Active')"
+                    class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition">
+                    Reactivate SIM
+                  </button>
+                  <button (click)="deleteSimLine360(selected360Account.accountId, line.lineId)"
+                    class="flex items-center gap-1 px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-lg cursor-pointer transition">
+                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Line
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- end customer360 tab -->
+
+      <!-- ========================================== -->
+      <!-- TAB: AUDIT LOGS                            -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'auditLogs'" [@fadeInUp] class="flex flex-col gap-5">
+
+        <!-- Filter Bar -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm p-5">
+          <h4 class="font-bold text-slate-700 text-sm mb-4">Search &amp; Filter Logs</h4>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">User ID (Optional)</label>
+              <input type="number" [(ngModel)]="filterAuditUser" placeholder="Filter by User ID"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Action</label>
+              <input type="text" [(ngModel)]="filterAuditAction" placeholder="e.g. USER_LOGIN"
+                class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1.5">Module</label>
+              <select [(ngModel)]="filterAuditModule" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-rose-400">
+                <option value="">All Modules</option>
+                <option value="IAM">IAM</option>
+                <option value="PLAN">PLAN</option>
+                <option value="BILLING">BILLING</option>
+                <option value="USAGE">USAGE</option>
+                <option value="SUBSCRIBER">SUBSCRIBER</option>
+              </select>
+            </div>
+            <div class="flex items-end gap-2">
+              <button (click)="applyAuditFilters()" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl cursor-pointer transition">Filter</button>
+              <button (click)="resetAuditFilters()" class="flex-1 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl cursor-pointer transition">Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logs Table -->
+        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+            <h4 class="font-bold text-slate-700 text-sm">
+              Audit Trail
+              <span *ngIf="auditTotalElements > 0" class="text-slate-400 font-normal"> ({{ auditTotalElements }} logs total)</span>
+            </h4>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-sm">
+              <thead>
+                <tr class="text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50 border-b border-slate-100">
+                  <th class="px-5 py-3">Audit ID</th>
+                  <th class="px-5 py-3">User ID</th>
+                  <th class="px-5 py-3">Action Performed</th>
+                  <th class="px-5 py-3">Module</th>
+                  <th class="px-5 py-3">IP Address</th>
+                  <th class="px-5 py-3">Timestamp</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <tr *ngFor="let log of auditLogs" class="hover:bg-slate-50/30 transition">
+                  <td class="px-5 py-3 font-mono text-xs text-slate-500">#{{ log.auditId ?? log.id }}</td>
+                  <td class="px-5 py-3">
+                    <span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-semibold">User {{ log.userId }}</span>
+                  </td>
+                  <td class="px-5 py-3 font-semibold text-slate-800 text-xs">{{ log.action }}</td>
+                  <td class="px-5 py-3">
+                    <span class="bg-slate-100 text-slate-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">{{ log.module }}</span>
+                  </td>
+                  <td class="px-5 py-3 text-slate-500 text-xs font-mono">{{ log.ipAddress }}</td>
+                  <td class="px-5 py-3 text-slate-500 text-xs">{{ log.timestamp | date:'MMM d, y, h:mm:ss a' }}</td>
+                </tr>
+                <tr *ngIf="auditLogs.length === 0">
+                  <td colspan="6" class="px-6 py-12 text-center text-slate-400 text-sm">No audit logs found.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination -->
+          <div *ngIf="auditTotalPages > 1" class="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-slate-50">
+            <button (click)="auditPrevPage()" [disabled]="auditPage === 0"
+              class="px-4 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+              ← Previous
+            </button>
+            <span class="text-xs text-slate-500">Page {{ auditPage + 1 }} of {{ auditTotalPages }}</span>
+            <button (click)="auditNextPage()" [disabled]="auditPage >= auditTotalPages - 1"
+              class="px-4 py-1.5 text-xs font-semibold bg-white border border-slate-200 rounded-lg hover:bg-slate-100 disabled:opacity-40 cursor-pointer">
+              Next →
+            </button>
+          </div>
+        </div>
+
+      </div><!-- end auditLogs tab -->
+
+    </div>
+  </main>
+</div>
+
+<!-- ========================================== -->
+<!-- CHANGE ROLE MODAL                          -->
+<!-- ========================================== -->
+<div *ngIf="isChangeRoleModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-sm rounded-2xl shadow-2xl border border-slate-100 p-6">
+    <h3 class="text-base font-bold text-slate-800 mb-1">Change User Role</h3>
+    <p class="text-xs text-slate-400 mb-5">Update role for <strong class="text-slate-700">{{ changingRoleUser?.name }}</strong></p>
+
+    <div class="mb-5">
+      <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">New Role</label>
+      <select [(ngModel)]="selectedNewRole" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400">
+        <option value="A">Admin</option>
+        <option value="CS">Customer Service Agent</option>
+        <option value="B">Billing Executive</option>
+        <option value="N">Network Operations</option>
+        <option value="C">Compliance Officer</option>
+        <option value="S">Subscriber</option>
+      </select>
+    </div>
+
+    <div class="flex gap-3">
+      <button (click)="closeChangeRoleModal()" class="flex-1 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+      <button (click)="confirmChangeRole()" [disabled]="!selectedNewRole" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs cursor-pointer">Confirm Change</button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- CREATE/EDIT PLAN MODAL                     -->
+<!-- ========================================== -->
+<div *ngIf="isPlanModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden grid md:grid-cols-2">
+    <div class="p-6 md:p-8 flex flex-col gap-6">
+      <div>
+        <h3 class="text-lg font-bold text-slate-800">{{ editingPlanId ? 'Edit Plan Catalog' : 'Create New Plan Catalog' }}</h3>
+        <p class="text-xs text-slate-400 font-light mt-0.5">Define plan entitlements, parameters, prices, and status.</p>
+      </div>
+      <form [formGroup]="planForm" (ngSubmit)="submitPlanForm()" class="flex flex-col gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Plan Name</label>
+          <input type="text" formControlName="name" placeholder="E.g. Pro-Data Pack" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-500" />
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Validity Days</label>
+            <input type="number" formControlName="validityDays" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-500" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Tariff Price (₹)</label>
+            <input type="number" step="0.01" formControlName="planPrice" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-500" />
+          </div>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Data (GB)</label>
+            <input type="number" formControlName="dataGb" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Voice (Mins)</label>
+            <input type="number" formControlName="voiceMinutes" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">SMS Count</label>
+            <input type="number" formControlName="smsCount" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none" />
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer mt-2">
+          <input type="checkbox" formControlName="activeStatus" class="rounded text-rose-600 focus:ring-rose-500" />
+          Active status in catalogue
+        </label>
+        <div class="flex gap-3 justify-end mt-4">
+          <button type="button" (click)="closePlanModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+          <button type="submit" [disabled]="planForm.invalid" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs cursor-pointer shadow-md">Save Plan</button>
+        </div>
+      </form>
+    </div>
+    <!-- Live Preview -->
+    <div class="bg-gradient-to-br from-rose-950 via-slate-900 to-slate-950 p-6 md:p-8 flex flex-col justify-center items-center relative overflow-hidden border-l border-slate-800">
+      <div class="absolute w-64 h-64 rounded-full bg-rose-500/10 blur-[80px] top-[-50px] right-[-50px] pointer-events-none"></div>
+      <span class="text-[10px] font-bold text-rose-400 uppercase tracking-wider mb-6 absolute top-6">Live Preview Card</span>
+      <div class="w-full max-w-sm bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 shadow-2xl text-white flex flex-col justify-between min-h-[260px] relative">
+        <div class="absolute right-6 top-6 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 uppercase border border-emerald-500/30" *ngIf="planForm.value.activeStatus !== false">Active</div>
+        <div class="absolute right-6 top-6 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/20 text-rose-400 uppercase border border-rose-500/30" *ngIf="planForm.value.activeStatus === false">Inactive</div>
+        <div>
+          <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{{ planForm.value.type }} Package</span>
+          <h4 class="text-2xl font-extrabold text-white mt-1.5 tracking-tight truncate">{{ planForm.value.name || 'Untitled Plan' }}</h4>
+          <div class="my-5 flex flex-col gap-2 font-light text-xs text-slate-300">
+            <div class="flex justify-between"><span>Data:</span><span class="font-bold text-white">{{ planForm.value.dataGb || 0 }} GB</span></div>
+            <div class="flex justify-between"><span>Voice:</span><span class="font-bold text-white">{{ planForm.value.voiceMinutes || 0 }} Mins</span></div>
+            <div class="flex justify-between"><span>SMS:</span><span class="font-bold text-white">{{ planForm.value.smsCount || 0 }} SMS</span></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-baseline mt-4 border-t border-slate-800 pt-4">
+          <span class="text-xs text-slate-400 font-light">Validity: {{ planForm.value.validityDays || 0 }} Days</span>
+          <p class="text-3xl font-extrabold text-white">₹{{ planForm.value.planPrice || '0.00' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- My Account Modal -->
+<app-my-account-modal
+  *ngIf="isMyAccountOpen"
+  [userId]="user.id"
+  (closed)="isMyAccountOpen = false">
+</app-my-account-modal>
+
+<!-- ================================================ -->
+<!-- REGISTER NEW SUBSCRIBER MODAL                    -->
+<!-- ================================================ -->
+<div
+  *ngIf="showRegisterModal"
+  class="fixed inset-0 z-50 flex items-center justify-center p-4"
+  (click)="closeRegisterModal()"
+>
+  <!-- Backdrop -->
+  <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
+
+  <!-- Modal Card -->
+  <div
+    class="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Modal Header -->
+    <div class="bg-gradient-to-r from-rose-600 to-rose-500 px-6 py-5 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-white tracking-tight">Register New Subscriber</h3>
+          <p class="text-rose-100 text-xs font-light mt-0.5">Create a new subscriber account directly</p>
+        </div>
+      </div>
+      <button
+        (click)="closeRegisterModal()"
+        class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition cursor-pointer focus:outline-none"
+      >
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <form [formGroup]="registerForm" (ngSubmit)="submitRegisterUser()" class="px-6 py-6 flex flex-col gap-4">
+
+      <!-- Name -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+          Full Name <span class="text-rose-500">*</span>
+        </label>
+        <input
+          type="text"
+          formControlName="name"
+          placeholder="e.g. John Smith"
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400 transition"
+          [class.border-rose-400]="registerForm.get('name')?.invalid && registerForm.get('name')?.touched"
+        />
+        <p *ngIf="registerForm.get('name')?.invalid && registerForm.get('name')?.touched" class="mt-1 text-xs text-rose-500">Name is required (min 2 characters).</p>
+      </div>
+
+      <!-- Email -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+          Email Address <span class="text-rose-500">*</span>
+        </label>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="e.g. john.smith@example.com"
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400 transition"
+          [class.border-rose-400]="registerForm.get('email')?.invalid && registerForm.get('email')?.touched"
+        />
+        <p *ngIf="registerForm.get('email')?.invalid && registerForm.get('email')?.touched" class="mt-1 text-xs text-rose-500">A valid email address is required.</p>
+      </div>
+
+      <!-- Password -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+          Password <span class="text-rose-500">*</span>
+        </label>
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="Min. 8 characters"
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400 transition"
+          [class.border-rose-400]="registerForm.get('password')?.invalid && registerForm.get('password')?.touched"
+        />
+        <p *ngIf="registerForm.get('password')?.invalid && registerForm.get('password')?.touched" class="mt-1 text-xs text-rose-500">Password must be at least 8 characters.</p>
+      </div>
+
+      <!-- Phone + Region ID -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Phone Number</label>
+          <input
+            type="tel"
+            formControlName="phone"
+            placeholder="e.g. 9876543210"
+            maxlength="10"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400 transition"
+            [class.border-rose-400]="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched"
+          />
+          <p *ngIf="registerForm.get('phone')?.invalid && registerForm.get('phone')?.touched" class="mt-1 text-xs text-rose-500">Phone number must be exactly 10 digits.</p>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Region ID</label>
+          <input
+            type="number"
+            formControlName="regionId"
+            placeholder="e.g. 1"
+            min="1"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-rose-400 focus:ring-1 focus:ring-rose-400 transition"
+          />
+        </div>
+      </div>
+
+      <!-- Info note -->
+      <div class="flex items-start gap-2.5 bg-rose-50 border border-rose-100 rounded-xl px-4 py-3">
+        <svg class="w-4 h-4 text-rose-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p class="text-xs text-rose-700 font-light leading-relaxed">
+          The new subscriber will be registered with <strong class="font-semibold">Subscriber</strong> role and will appear in the User Directory immediately. To create a staff member, use the <strong class="font-semibold">Create Staff</strong> tab instead.
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex gap-3 pt-2">
+        <button
+          type="button"
+          (click)="closeRegisterModal()"
+          class="flex-1 py-3 border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold rounded-xl text-xs transition cursor-pointer focus:outline-none"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          [disabled]="isRegisteringUser"
+          class="flex-1 py-3 bg-rose-600 hover:bg-rose-700 disabled:opacity-60 text-white font-bold rounded-xl text-xs shadow-lg shadow-rose-600/20 transition cursor-pointer focus:outline-none flex items-center justify-center gap-2"
+        >
+          <svg *ngIf="isRegisteringUser" class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <svg *ngIf="!isRegisteringUser" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          {{ isRegisteringUser ? 'Registering...' : 'Register Subscriber' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL 1: CREATE SUBSCRIBER ACCOUNT        -->
+<!-- ========================================== -->
+<div *ngIf="showCreateAccountModal" [@fadeInUp] class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 relative border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+    <button (click)="closeCreateAccountModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <h3 class="text-lg font-bold text-slate-800 tracking-tight">Create Subscriber Account</h3>
+    <p class="text-xs text-slate-500 mt-1 mb-5">Links a telecom account to the selected user.</p>
+
+    <!-- Selected User Info Box -->
+    <div class="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 flex items-center justify-between mb-5">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-teal-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
+          {{ selectedSubscriberUser?.name?.charAt(0) || 'S' }}
+        </div>
+        <div>
+          <p class="font-bold text-slate-800 text-sm leading-tight">{{ selectedSubscriberUser?.name }}</p>
+          <p class="text-xs text-slate-500 mt-0.5">{{ selectedSubscriberUser?.email }}</p>
+        </div>
+      </div>
+      <span class="text-[11px] font-mono font-medium text-teal-700 bg-teal-50 border border-teal-200/60 px-2.5 py-1 rounded-lg">
+        subscriberId = {{ selectedSubscriberUser?.userId }}
+      </span>
+    </div>
+
+    <!-- Form -->
+    <form [formGroup]="createAccountForm" (ngSubmit)="submitCreateAccount()" class="flex flex-col gap-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Account Type <span class="text-rose-500">*</span></label>
+          <select formControlName="accountType" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:border-teal-500">
+            <option value="Prepaid">Prepaid</option>
+            <option value="Postpaid">Postpaid</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">KYC Status</label>
+          <select formControlName="kycStatus" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:border-teal-500">
+            <option value="Pending">Pending</option>
+            <option value="Verified">Verified</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-4">
+        <button type="button" (click)="closeCreateAccountModal()" class="px-5 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold rounded-xl transition cursor-pointer">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="isCreatingAccount" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-teal-600/20 cursor-pointer disabled:opacity-60 flex items-center gap-1.5">
+          <svg *ngIf="isCreatingAccount" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ isCreatingAccount ? 'Creating...' : '+ Create Account' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL 2: ACCOUNT CREATED SUCCESS BANNER   -->
+<!-- ========================================== -->
+<div *ngIf="showAccountCreatedSuccessModal" [@fadeInUp] class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-sm w-full p-6 text-center border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+    <div class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto mb-4">
+      <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+
+    <h3 class="text-base font-bold text-slate-800 tracking-tight">Account created</h3>
+    <p class="text-xs text-slate-500 mt-1 mb-6">
+      New account <strong class="font-bold text-slate-700">#{{ createdAccountId }}</strong> is ready. Add a SIM line now?
+    </p>
+
+    <div class="flex items-center justify-center gap-3">
+      <button (click)="closeSuccessModal()" class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition cursor-pointer">
+        Later
+      </button>
+      <button (click)="openAddSimModalFromSuccess()" class="w-1/2 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-teal-600/20 cursor-pointer">
+        + Add SIM Line
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ========================================== -->
+<!-- MODAL 3: ADD SIM LINE                     -->
+<!-- ========================================== -->
+<div *ngIf="showAddSimModal" [@fadeInUp] class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+  <div class="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6 relative border border-slate-100 animate-in fade-in zoom-in-95 duration-150">
+    <button (click)="closeAddSimModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition cursor-pointer">
+      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+
+    <h3 class="text-lg font-bold text-slate-800 tracking-tight">Add SIM Line</h3>
+    <p class="text-xs text-slate-500 mt-1 mb-5">Activates a SIM on <strong class="font-semibold text-slate-700">Account #{{ createdAccountId }}</strong>.</p>
+
+    <form [formGroup]="simForm" (ngSubmit)="submitAddSimLine()" class="flex flex-col gap-4">
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">MSISDN <span class="text-rose-500">*</span></label>
+          <input formControlName="msisdn" type="text" readonly class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-600 cursor-not-allowed" />
+          <p class="text-[10px] text-slate-400 mt-1">Mobile number — auto-filled</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-700 mb-1.5">Service Type</label>
+          <select formControlName="serviceType" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:border-teal-500">
+            <option value="VoiceData">VoiceData</option>
+            <option value="Voice">Voice</option>
+            <option value="Data">Data</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-700 mb-1.5">ICCID <span class="text-rose-500">*</span></label>
+        <input formControlName="iccid" type="text" placeholder="8991000000000000001" maxlength="22" class="w-full bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-medium text-slate-800 focus:outline-none focus:border-teal-500" />
+        <p class="text-[10px] text-slate-400 mt-1">SIM chip serial — max 22 chars, must be unique</p>
+      </div>
+
+      <div class="flex justify-end gap-3 mt-4">
+        <button type="button" (click)="closeAddSimModal()" class="px-5 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 text-xs font-semibold rounded-xl transition cursor-pointer">
+          Cancel
+        </button>
+        <button type="submit" [disabled]="simForm.invalid || isActivatingSim" class="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-bold rounded-xl transition shadow-md shadow-teal-600/20 cursor-pointer disabled:opacity-60 flex items-center gap-1.5">
+          <svg *ngIf="isActivatingSim" class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          {{ isActivatingSim ? 'Activating...' : 'Activate SIM' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

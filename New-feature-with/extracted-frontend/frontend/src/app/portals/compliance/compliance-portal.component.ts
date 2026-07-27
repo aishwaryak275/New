@@ -1,0 +1,214 @@
+import { Component, OnInit, signal, effect } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Chart } from 'chart.js/auto';
+import { AuthService, User } from '../../core/services/auth.service';
+import { AccountService } from '../../core/services/account.service';
+import { BillingService } from '../../core/services/billing.service';
+import { IamService } from '../../core/services/iam.service';
+import { NotificationService } from '../../core/services/notification.service';
+import { ToastService } from '../../core/services/toast.service';
+import { fadeInUp, staggerFadeIn, shake, scaleIn } from '../../shared/animations';
+import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+
+@Component({
+  selector: 'app-compliance-portal',
+  standalone: true,
+  imports: [CommonModule, FormsModule, MyAccountModalComponent],
+  templateUrl: './compliance-portal.component.html',
+  styleUrls: ['./compliance-portal.component.css'],
+  animations: [fadeInUp, staggerFadeIn, shake, scaleIn]
+})
+export class CompliancePortalComponent implements OnInit {
+  activeTab = signal<string>('filings');
+  isSidebarCollapsed = signal<boolean>(false);
+  isNotificationOpen = signal<boolean>(false);
+  isMyAccountOpen = false;
+
+  // User session
+  user!: User;
+
+  // Filings Tracker
+  filings = [
+    { name: 'Q2 Telecom Data Usage Report', due: '2026-07-20', status: 'Pending', desc: 'Mandatory filing of network metrics to FCC/TRAI.' },
+    { name: 'Annual Security & Cryptographic Compliance Filing', due: '2026-06-30', status: 'Overdue', desc: 'Cryptographic audit report validation.' },
+    { name: 'Monthly Customer SLA Adherence Report', due: '2026-07-15', status: 'Filed', desc: 'Regional resolution times summary.' },
+    { name: 'Telecom Subscriber KYC Audit Registry', due: '2026-07-31', status: 'Pending', desc: 'Data registry of verified line IDs.' }
+  ];
+
+  // KYC compliance
+  accounts: any[] = [];
+  nonCompliantAccounts: any[] = [];
+  expiredKycAccounts: any[] = [];
+  private kycChart: Chart | null = null;
+
+  constructor(
+    public authService: AuthService,
+    private accountService: AccountService,
+    private billingService: BillingService,
+    public notificationService: NotificationService,
+    private toastService: ToastService,
+    private iamService: IamService
+  ) {
+    // Render KYC donut chart when tab changes to kyc
+    effect(() => {
+      if (this.activeTab() === 'kyc') {
+        setTimeout(() => this.renderKycChart(), 100);
+      }
+    });
+  }
+
+  ngOnInit(): void {
+    this.user = this.authService.currentUser()!;
+    this.loadAccounts();
+    this.loadExpiredKyc();
+  }
+
+  loadAccounts(): void {
+    this.accountService.getAllAccounts().subscribe({
+      next: (data: any[]) => {
+        this.accounts = data;
+        const nonCompliant = data.filter((a: any) => a.kycStatus === 'Pending' || a.kycStatus === 'Expired');
+        if (nonCompliant.length === 0) {
+          this.nonCompliantAccounts = [];
+          if (this.activeTab() === 'kyc') this.renderKycChart();
+          return;
+        }
+        let remaining = nonCompliant.length;
+        const done = () => {
+          remaining--;
+          if (remaining === 0) {
+            this.nonCompliantAccounts = [...nonCompliant];
+            if (this.activeTab() === 'kyc') this.renderKycChart();
+          }
+        };
+        nonCompliant.forEach((acc: any) => {
+          this.iamService.getUser(acc.subscriberId).subscribe({
+            next: (user) => { acc.subscriberName = user.name; acc.subscriberEmail = user.email; done(); },
+            error: () => { acc.subscriberName = `Subscriber #${acc.subscriberId}`; acc.subscriberEmail = ''; done(); }
+          });
+        });
+      },
+      error: () => this.toastService.error('Failed to load account data.')
+    });
+  }
+
+  loadExpiredKyc(): void {
+    this.accountService.getExpiredKyc().subscribe({
+      next: (data: any[]) => {
+        this.expiredKycAccounts = data || [];
+      },
+      error: () => {}
+    });
+  }
+
+  // ==========================================
+  // Layout Navigation
+  // ==========================================
+  setTab(tab: string): void {
+    this.activeTab.set(tab);
+    this.isNotificationOpen.set(false);
+  }
+
+  toggleSidebar(): void {
+    this.isSidebarCollapsed.set(!this.isSidebarCollapsed());
+  }
+
+  toggleNotifications(): void {
+    this.isNotificationOpen.set(!this.isNotificationOpen());
+    if (this.isNotificationOpen()) {
+      this.notificationService.refreshNotifications();
+    }
+  }
+
+  logout(): void {
+    this.authService.logout();
+  }
+
+
+  fileReport(filing: any): void {
+    filing.status = 'Filed';
+    this.iamService.recordAudit('FILING_SUBMITTED', 'COMPLIANCE');
+    this.toastService.success('Filing uploaded to regulator registry.');
+  }
+
+  // ==========================================
+  // KYC Verification Workflows
+  // ==========================================
+  verifyKyc(accountId: number): void {
+    this.accountService.updateKycStatus(accountId, 'Verified').subscribe({
+      next: () => {
+        this.iamService.recordAudit('KYC_VERIFIED', 'COMPLIANCE');
+        this.toastService.success(`Account #${accountId} KYC status updated to Verified.`);
+        this.loadAccounts();
+      },
+      error: () => this.toastService.error('Verification failed.')
+    });
+  }
+
+  expireKyc(accountId: number): void {
+    this.accountService.updateKycStatus(accountId, 'Expired').subscribe({
+      next: () => {
+        this.iamService.recordAudit('KYC_EXPIRED', 'COMPLIANCE');
+        this.toastService.success(`Account #${accountId} KYC status updated to Expired.`);
+        this.loadAccounts();
+      },
+      error: () => this.toastService.error('KYC update failed.')
+    });
+  }
+
+  // ==========================================
+  // Chart Render
+  // ==========================================
+  renderKycChart(): void {
+    const ctx = document.getElementById('kycChart') as HTMLCanvasElement;
+    if (!ctx) return;
+
+    if (this.kycChart) {
+      this.kycChart.destroy();
+    }
+
+    let verified = 0;
+    let pending = 0;
+    let expired = 0;
+
+    this.accounts.forEach(a => {
+      if (a.kycStatus === 'Verified') verified++;
+      else if (a.kycStatus === 'Pending') pending++;
+      else if (a.kycStatus === 'Expired') expired++;
+    });
+
+    // Seed defaults if data empty
+    if (verified === 0 && pending === 0 && expired === 0) {
+      verified = 12;
+      pending = 3;
+      expired = 2;
+    }
+
+    this.kycChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Verified', 'Pending Verification', 'Expired KYC'],
+        datasets: [
+          {
+            data: [verified, pending, expired],
+            backgroundColor: ['#059669', '#d97706', '#dc2626'], // emerald green, amber, red
+            borderWidth: 0,
+            hoverOffset: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { boxWidth: 12, font: { size: 11 } }
+          }
+        }
+      }
+    });
+  }
+}
+

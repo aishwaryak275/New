@@ -58,14 +58,22 @@ export class IamService {
     return this.http.get<any>(`${this.base}/roles/${roleId}/permissions`);
   }
 
-  getAuditLogs(params: { userId?: number; module?: string; action?: string; page?: number; size?: number }): Observable<any> {
+  getAuditLogs(params: { module?: string; action?: string; page?: number; size?: number }): Observable<any> {
     let p = new HttpParams();
-    if (params.userId !== undefined && params.userId !== null) p = p.set('userId', String(params.userId));
     if (params.module)  p = p.set('module', params.module);
     if (params.action)  p = p.set('action', params.action);
     if (params.page !== undefined) p = p.set('page', String(params.page));
     if (params.size !== undefined)  p = p.set('size', String(params.size));
     return this.http.get<any>(`${this.base}/auditLogs`, { params: p });
+  }
+
+  getAuditLogsByUser(userId: number, params: { module?: string; action?: string; page?: number; size?: number }): Observable<any> {
+    let p = new HttpParams();
+    if (params.module)  p = p.set('module', params.module);
+    if (params.action)  p = p.set('action', params.action);
+    if (params.page !== undefined) p = p.set('page', String(params.page));
+    if (params.size !== undefined)  p = p.set('size', String(params.size));
+    return this.http.get<any>(`${this.base}/auditLogs/user/${userId}`, { params: p });
   }
 
   recordAudit(action: string, module: string): void {

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect } from '@angular/core';
+import { Component, OnInit, signal, effect, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Chart } from 'chart.js/auto';
@@ -25,6 +25,7 @@ export class CompliancePortalComponent implements OnInit {
   isSidebarCollapsed = signal<boolean>(false);
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
+  isProfileDropdownOpen = false;
 
   // User session
   user!: User;
@@ -136,6 +137,17 @@ export class CompliancePortalComponent implements OnInit {
     if (this.isNotificationOpen()) {
       this.notificationService.refreshNotifications();
     }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.isNotificationOpen.set(false);
+    this.isProfileDropdownOpen = false;
+  }
+
+  toggleProfileDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
   }
 
   logout(): void {

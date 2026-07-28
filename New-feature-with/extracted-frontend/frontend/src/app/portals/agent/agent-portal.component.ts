@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component, OnInit, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService, User } from '../../core/services/auth.service';
@@ -25,6 +25,17 @@ export class AgentPortalComponent implements OnInit {
   isSidebarCollapsed = signal<boolean>(false);
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
+  isProfileDropdownOpen = false;
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.isProfileDropdownOpen = false;
+  }
+
+  toggleProfileDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
+  }
 
   // User session
   user!: User;

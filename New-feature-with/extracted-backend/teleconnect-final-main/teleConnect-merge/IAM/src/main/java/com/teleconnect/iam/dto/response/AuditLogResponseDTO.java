@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 public class AuditLogResponseDTO {
     private Long auditId;
     private Long userId;
+    private String userName;
     private String action;
     private String module;
     private String ipAddress;

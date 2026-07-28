@@ -6,17 +6,17 @@
   <aside 
     [class.w-64]="!isSidebarCollapsed()" 
     [class.w-20]="isSidebarCollapsed()" 
-    class="bg-slate-900 text-white flex flex-col justify-between transition-all duration-300 ease-in-out border-r border-slate-800 shadow-xl shrink-0"
+    class="bg-white text-slate-700 flex flex-col justify-between transition-all duration-300 ease-in-out border-r border-sky-200 shadow-sm shrink-0"
   >
     <div>
       <!-- Brand Logo Header -->
-      <div class="h-16 flex items-center justify-between px-4 border-b border-slate-800">
+      <div class="h-16 flex items-center justify-between px-4 border-b border-sky-100">
         <div class="flex items-center gap-2" *ngIf="!isSidebarCollapsed()">
           <div class="w-8 h-8 rounded-lg bg-primary-700 flex items-center justify-center font-bold text-sm shadow-md">T</div>
           <span class="font-bold text-lg tracking-tight">TeleConnect</span>
         </div>
         <div class="w-8 h-8 rounded-lg bg-primary-700 flex items-center justify-center font-bold text-sm mx-auto shadow-md" *ngIf="isSidebarCollapsed()">T</div>
-        <button (click)="toggleSidebar()" class="text-slate-400 hover:text-white transition duration-150 focus:outline-none cursor-pointer">
+        <button (click)="toggleSidebar()" class="text-slate-400 hover:text-sky-600 transition duration-150 focus:outline-none cursor-pointer">
           <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
@@ -28,10 +28,10 @@
         <!-- Plan -->
         <button 
           (click)="setTab('plan')"
-          [class.bg-primary-700]="activeTab() === 'plan'"
-          [class.text-white]="activeTab() === 'plan'"
-          [class.text-slate-400]="activeTab() !== 'plan'"
-          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+          [class.bg-sky-100]="activeTab() === 'plan'"
+          [class.text-sky-700]="activeTab() === 'plan'"
+          [class.text-slate-500]="activeTab() !== 'plan'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-sky-50 hover:text-sky-700 transition duration-150 cursor-pointer focus:outline-none"
         >
           <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -42,10 +42,10 @@
         <!-- Usage -->
         <button 
           (click)="setTab('usage')"
-          [class.bg-primary-700]="activeTab() === 'usage'"
-          [class.text-white]="activeTab() === 'usage'"
-          [class.text-slate-400]="activeTab() !== 'usage'"
-          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+          [class.bg-sky-100]="activeTab() === 'usage'"
+          [class.text-sky-700]="activeTab() === 'usage'"
+          [class.text-slate-500]="activeTab() !== 'usage'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-sky-50 hover:text-sky-700 transition duration-150 cursor-pointer focus:outline-none"
         >
           <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2zm9 0v-8a2 2 0 00-2-2h-2a2 2 0 00-2 2v8a2 2 0 002 2h2a2 2 0 002-2z" />
@@ -56,7 +56,7 @@
         <!-- New Connection -->
         <button 
           (click)="openNewConnectionModal()"
-          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 hover:text-emerald-300 transition duration-150 cursor-pointer focus:outline-none border border-emerald-600/30"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 transition duration-150 cursor-pointer focus:outline-none border border-sky-200"
         >
           <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -67,10 +67,10 @@
         <!-- Invoices -->
         <button 
           (click)="setTab('billing')"
-          [class.bg-primary-700]="activeTab() === 'billing'"
-          [class.text-white]="activeTab() === 'billing'"
-          [class.text-slate-400]="activeTab() !== 'billing'"
-          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+          [class.bg-sky-100]="activeTab() === 'billing'"
+          [class.text-sky-700]="activeTab() === 'billing'"
+          [class.text-slate-500]="activeTab() !== 'billing'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-sky-50 hover:text-sky-700 transition duration-150 cursor-pointer focus:outline-none"
         >
           <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -81,10 +81,10 @@
         <!-- Service Requests -->
         <button
           (click)="setTab('support')"
-          [class.bg-primary-700]="activeTab() === 'support'"
-          [class.text-white]="activeTab() === 'support'"
-          [class.text-slate-400]="activeTab() !== 'support'"
-          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+          [class.bg-sky-100]="activeTab() === 'support'"
+          [class.text-sky-700]="activeTab() === 'support'"
+          [class.text-slate-500]="activeTab() !== 'support'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-sky-50 hover:text-sky-700 transition duration-150 cursor-pointer focus:outline-none"
         >
           <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -94,22 +94,6 @@
       </nav>
     </div>
 
-    <!-- Sidebar footer Profile info -->
-    <div class="p-3 border-t border-slate-800">
-      <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-950/40 cursor-pointer hover:bg-slate-800/60 transition" (click)="isMyAccountOpen = true" *ngIf="!isSidebarCollapsed()">
-        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-sm">S</div>
-        <div class="min-w-0 flex-grow">
-          <p class="text-xs font-semibold text-slate-200 truncate">{{ user.name }}</p>
-          <p class="text-[10px] text-slate-500 truncate">{{ user.role }}</p>
-        </div>
-      </div>
-      <button (click)="logout()" class="w-full mt-2 flex items-center justify-center gap-2 py-2 px-3 text-xs font-semibold text-rose-400 hover:bg-rose-500/10 rounded-xl transition duration-150 cursor-pointer focus:outline-none">
-        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-        </svg>
-        <span *ngIf="!isSidebarCollapsed()">Sign Out</span>
-      </button>
-    </div>
   </aside>
 
   <!-- ========================================== -->
@@ -125,7 +109,7 @@
       <div class="flex items-center gap-4">
         <!-- Region Badge -->
         <span class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-medium border border-slate-200">
-          <span class="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-sky-500"></span>
           {{ user.regionId }} Region
         </span>
 
@@ -174,6 +158,31 @@
                 <span class="text-[9px] text-slate-400 font-light">{{ n.createdDate | date:'shortTime' }}</span>
               </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Profile Dropdown -->
+        <div class="relative">
+          <button (click)="toggleProfileDropdown($event)" class="flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-xl hover:bg-slate-100 transition cursor-pointer focus:outline-none">
+            <div class="w-8 h-8 rounded-lg bg-sky-500 text-white flex items-center justify-center font-bold text-sm">{{ user?.name?.charAt(0)?.toUpperCase() }}</div>
+            <div class="hidden sm:block text-left">
+              <p class="text-xs font-semibold text-slate-700 leading-tight">{{ user?.name }}</p>
+              <p class="text-[10px] text-slate-400">{{ user?.role }}</p>
+            </div>
+            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          <div *ngIf="isProfileDropdownOpen" class="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-xl shadow-xl z-50 py-1.5">
+            <button (click)="isMyAccountOpen = true; isProfileDropdownOpen = false" class="w-full text-left px-3.5 py-2.5 hover:bg-slate-50 text-xs text-slate-700 font-medium flex items-center gap-2.5 transition cursor-pointer">
+              <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+              My Profile
+            </button>
+            <div class="border-t border-slate-100 mx-2 my-1"></div>
+            <button (click)="logout()" class="w-full text-left px-3.5 py-2.5 hover:bg-rose-50 text-xs text-rose-600 font-medium flex items-center gap-2.5 transition cursor-pointer">
+              <svg class="w-4 h-4 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+              Sign Out
+            </button>
           </div>
         </div>
       </div>
@@ -348,7 +357,7 @@
                 (click)="onSelectPlan(p)"
                 [title]="hasActivePlan ? 'Your current plan must expire before activating a new one' : 'Select this plan'"
                 class="w-full py-2.5 font-semibold rounded-xl text-sm transition duration-150 cursor-pointer"
-                [ngClass]="hasActivePlan ? (account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId ? 'bg-emerald-600 text-white opacity-80 cursor-not-allowed' : 'bg-slate-300 text-slate-500 cursor-not-allowed') : 'bg-primary-700 text-white hover:bg-primary-800'"
+                [ngClass]="hasActivePlan ? (account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId ? 'bg-emerald-600 text-white opacity-80 cursor-not-allowed' : 'bg-slate-300 text-slate-500 cursor-not-allowed') : 'bg-sky-600 text-white hover:bg-sky-700'"
               >
                 {{ account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId ? 'Current Plan' : (hasActivePlan ? 'Plan Active' : 'Select Plan') }}
               </button>
@@ -426,7 +435,7 @@
                   [disabled]="(addOn.status !== 'Active' && addOn.status !== 'A') || !!activeSubscriptionAddOn || !hasActivePlan"
                   [title]="!hasActivePlan ? 'Activate a plan first' : (activeSubscriptionAddOn ? 'You already have an active add-on' : 'Add to your plan')"
                   class="px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition cursor-pointer shadow-sm"
-                  [ngClass]="activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'bg-indigo-500 cursor-not-allowed opacity-80' : (!!activeSubscriptionAddOn || !hasActivePlan ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-primary-700 hover:bg-primary-800')"
+                  [ngClass]="activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'bg-indigo-500 cursor-not-allowed opacity-80' : (!!activeSubscriptionAddOn || !hasActivePlan ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-sky-600 hover:bg-sky-700')"
                 >
                   {{ activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'Active' : 'Add to Plan' }}
                 </button>
@@ -606,7 +615,7 @@
                     <button
                       *ngIf="inv.status !== 'Paid' && inv.status !== 'Disputed'"
                       (click)="openDisputeModal(inv)"
-                      class="px-3 py-1.5 bg-rose-500 hover:bg-rose-600 text-white text-xs font-semibold rounded-lg shadow-sm transition mr-2 cursor-pointer"
+                      class="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-lg shadow-sm transition mr-2 cursor-pointer"
                     >
                       Dispute
                     </button>
@@ -658,7 +667,7 @@
       <div *ngIf="activeTab() === 'support'" [@fadeInUp] class="flex flex-col gap-6">
         <!-- Support options header buttons -->
         <div class="flex gap-4">
-          <button (click)="openRequestModal()" class="px-4 py-3 bg-primary-700 text-white font-semibold rounded-xl text-xs hover:bg-primary-800 transition cursor-pointer shadow-lg shadow-primary-700/15">
+          <button (click)="openRequestModal()" class="px-4 py-3 bg-sky-600 text-white font-semibold rounded-xl text-xs hover:bg-sky-700 transition cursor-pointer shadow-lg shadow-sky-600/15">
             + Raise Service Request
           </button>
           <button (click)="openTicketModal()" class="px-4 py-3 bg-slate-900 text-white font-semibold rounded-xl text-xs hover:bg-slate-800 transition cursor-pointer shadow-lg">
@@ -686,13 +695,13 @@
               
               <!-- Step 1: Open -->
               <div class="flex flex-col items-center gap-2 bg-white px-2">
-                <div class="w-7 h-7 rounded-full bg-primary-700 text-white flex items-center justify-center font-bold text-xs">1</div>
+                <div class="w-7 h-7 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-xs">1</div>
                 <span class="text-[10px] font-semibold text-slate-700">Open</span>
               </div>
               <!-- Step 2: InProgress -->
               <div class="flex flex-col items-center gap-2 bg-white px-2">
                 <div 
-                  [class.bg-primary-700]="req.status === 'InProgress' || req.status === 'Completed'"
+                  [class.bg-sky-600]="req.status === 'InProgress' || req.status === 'Completed'"
                   [class.text-white]="req.status === 'InProgress' || req.status === 'Completed'"
                   [class.bg-slate-100]="req.status === 'Open'"
                   [class.text-slate-400]="req.status === 'Open'"
@@ -705,7 +714,7 @@
               <!-- Step 3: Completed -->
               <div class="flex flex-col items-center gap-2 bg-white px-2">
                 <div 
-                  [class.bg-primary-700]="req.status === 'Completed'"
+                  [class.bg-sky-600]="req.status === 'Completed'"
                   [class.text-white]="req.status === 'Completed'"
                   [class.bg-slate-100]="req.status !== 'Completed'"
                   [class.text-slate-400]="req.status !== 'Completed'"
@@ -788,7 +797,6 @@
       </div>
 
       <div class="flex gap-3 justify-end mt-2">
-        <button type="button" (click)="closeUpgradeModal()" [disabled]="isProcessingPayment" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer disabled:opacity-50">Cancel</button>
         <button type="submit" [disabled]="changeRequestForm.invalid || isProcessingPayment" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md transition">
           <span *ngIf="!isProcessingPayment">Confirm &amp; Pay ₹{{ (targetPlan?.planPrice * 1.18) | number:'1.0-0' }}</span>
           <span *ngIf="isProcessingPayment">Processing...</span>
@@ -833,8 +841,7 @@
       </div>
 
       <div class="flex gap-3 justify-end mt-4">
-        <button type="button" (click)="closeDisputeModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
-        <button type="submit" [disabled]="disputeForm.invalid" class="px-4 py-2.5 bg-rose-500 hover:bg-rose-600 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Raise Dispute</button>
+        <button type="submit" [disabled]="disputeForm.invalid" class="px-4 py-2.5 bg-sky-500 hover:bg-sky-600 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Raise Dispute</button>
       </div>
     </form>
   </div>
@@ -873,8 +880,7 @@
       </div>
 
       <div class="flex gap-3 justify-end mt-4">
-        <button type="button" (click)="closeRequestModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
-        <button type="submit" [disabled]="newRequestForm.invalid" class="px-4 py-2.5 bg-primary-700 hover:bg-primary-800 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Submit Request</button>
+        <button type="submit" [disabled]="newRequestForm.invalid" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Submit Request</button>
       </div>
     </form>
   </div>
@@ -926,8 +932,7 @@
       </div>
       <!-- Actions -->
       <div class="flex gap-3 justify-end">
-        <button type="button" (click)="closeAddOnModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
-        <button type="button" (click)="submitAddOn()" class="px-4 py-2.5 bg-primary-700 hover:bg-primary-800 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">
+        <button type="button" (click)="submitAddOn()" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">
           Pay &amp; Activate
         </button>
       </div>
@@ -982,8 +987,7 @@
       </div>
 
       <div class="flex gap-3 justify-end mt-4">
-        <button type="button" (click)="closeTicketModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
-        <button type="submit" [disabled]="newTicketForm.invalid" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Register Ticket</button>
+        <button type="submit" [disabled]="newTicketForm.invalid" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Register Ticket</button>
       </div>
     </form>
   </div>
@@ -1037,7 +1041,6 @@
       </div>
 
       <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex gap-3 justify-end">
-        <button type="button" (click)="closeNewConnectionModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-100 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer transition">Cancel</button>
         <button type="submit" [disabled]="isSubmittingNewConn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md flex items-center gap-2 transition">
           <span *ngIf="isSubmittingNewConn" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           <span>{{ isSubmittingNewConn ? 'Submitting...' : 'Submit Request' }}</span>

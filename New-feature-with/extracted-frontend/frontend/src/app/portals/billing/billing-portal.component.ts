@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, effect } from '@angular/core';
+import { Component, OnInit, signal, effect, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Chart } from 'chart.js/auto';
@@ -62,6 +62,7 @@ export class BillingPortalComponent implements OnInit {
   section = signal<Section>('invoices');
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
+  isProfileDropdownOpen = false;
   billingPeriod = 'Jul 2024';
   user!: User;
 
@@ -334,6 +335,17 @@ export class BillingPortalComponent implements OnInit {
     if (this.isNotificationOpen()) {
       this.notificationService.refreshNotifications();
     }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.isNotificationOpen.set(false);
+    this.isProfileDropdownOpen = false;
+  }
+
+  toggleProfileDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
   }
 
   openMyAccount(): void {

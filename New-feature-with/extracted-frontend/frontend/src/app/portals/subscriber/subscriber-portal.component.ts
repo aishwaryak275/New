@@ -1,4 +1,4 @@
-import { Component, OnInit, AfterViewInit, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, AfterViewInit, signal, computed, effect, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -29,6 +29,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
   isSidebarCollapsed = signal<boolean>(false);
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
+  isProfileDropdownOpen = false;
   isNewConnModalOpen = false;
 
   // User details
@@ -384,6 +385,17 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     if (this.isNotificationOpen()) {
       this.notificationService.refreshNotifications();
     }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.isNotificationOpen.set(false);
+    this.isProfileDropdownOpen = false;
+  }
+
+  toggleProfileDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
   }
 
   openNewConnectionModal(): void {

@@ -24,6 +24,7 @@ export class AdminPortalComponent implements OnInit {
   isSidebarCollapsed = signal<boolean>(false);
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
+  isProfileDropdownOpen = false;
 
   user!: User;
 
@@ -407,6 +408,7 @@ export class AdminPortalComponent implements OnInit {
   @HostListener('document:click')
   onDocumentClick(): void {
     this.activeActionDropdownId = null;
+    this.isProfileDropdownOpen = false;
   }
 
   toggleActionDropdown(userId: number, event: Event): void {
@@ -416,6 +418,24 @@ export class AdminPortalComponent implements OnInit {
 
   closeActionDropdown(): void {
     this.activeActionDropdownId = null;
+  }
+
+  toggleProfileDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
+  }
+
+  exportUsers(): void {
+    const headers = ['ID', 'Name', 'Email', 'Phone', 'Role', 'Status'];
+    const rows = this.iamUsers.map(u => [
+      u.userId, u.name, u.email, u.phone || '', u.roleName, u.status
+    ]);
+    const csv = [headers, ...rows].map(r => r.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'users.csv'; a.click();
+    URL.revokeObjectURL(url);
   }
 
   canResetPassword(u: any): boolean {
@@ -512,13 +532,16 @@ export class AdminPortalComponent implements OnInit {
 
   // ── Audit Logs ────────────────────────────────────────────────────────────────
   loadAuditLogs(): void {
-    this.iamService.getAuditLogs({
-      userId: this.filterAuditUser ?? undefined,
+    const params = {
       module: this.filterAuditModule || undefined,
       action: this.filterAuditAction || undefined,
       page: this.auditPage,
       size: this.auditSize
-    }).subscribe({
+    };
+    const obs$ = this.filterAuditUser
+      ? this.iamService.getAuditLogsByUser(this.filterAuditUser, params)
+      : this.iamService.getAuditLogs(params);
+    obs$.subscribe({
       next: (data: any) => {
         this.auditLogs = Array.isArray(data) ? data : (data?.content ?? []);
         this.auditTotalPages = data?.totalPages ?? 1;
@@ -537,6 +560,46 @@ export class AdminPortalComponent implements OnInit {
 
   auditNextPage(): void { if (this.auditPage < this.auditTotalPages - 1) { this.auditPage++; this.loadAuditLogs(); } }
   auditPrevPage(): void { if (this.auditPage > 0) { this.auditPage--; this.loadAuditLogs(); } }
+
+  exportAuditLogs(): void {
+    const params = {
+      module: this.filterAuditModule || undefined,
+      action: this.filterAuditAction || undefined,
+      page: 0,
+      size: 99999
+    };
+    const obs$ = this.filterAuditUser
+      ? this.iamService.getAuditLogsByUser(this.filterAuditUser, params)
+      : this.iamService.getAuditLogs(params);
+    obs$.subscribe({
+      next: (data: any) => {
+        const logs: any[] = Array.isArray(data) ? data : (data?.content ?? []);
+        const headers = ['Action', 'User Name', 'Module', 'IP Address', 'Timestamp'];
+        const rows = logs.map(log => [
+          log.action ?? '',
+          this.getUserName(log.userId),
+          log.module ?? '',
+          log.ipAddress ?? '',
+          log.timestamp ? new Date(log.timestamp).toLocaleString() : ''
+        ]);
+        const csv = [headers, ...rows]
+          .map(r => r.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+          .join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = 'audit_logs.csv'; a.click();
+        URL.revokeObjectURL(url);
+      },
+      error: () => this.toastService.error('Failed to export audit logs.')
+    });
+  }
+
+  getUserName(userId: number | null): string {
+    if (!userId) return 'Unknown';
+    const found = this.iamUsers.find((u: any) => u.userId === userId || u.userId === Number(userId));
+    return found?.name ?? (found?.userName ?? `User ${userId}`);
+  }
 
   // ── Display Helpers ───────────────────────────────────────────────────────────
   getRoleBadgeClasses(role: string): string {

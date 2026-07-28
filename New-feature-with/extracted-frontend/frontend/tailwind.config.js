@@ -7,47 +7,47 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#f5f6ff',
-          100: '#ebedff',
-          200: '#dadcff',
-          300: '#c0c3ff',
-          400: '#9fa1ff',
-          500: '#7574ff',
-          600: '#534eff',
-          700: '#3B4FE0', // Deep Indigo primary
-          800: '#313eb6',
-          900: '#2c3690',
-          950: '#1b1d54',
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+          950: '#082f49',
         },
         subscriber: {
-          light: '#eef2ff',
-          main: '#3B4FE0',
-          dark: '#312e81'
+          light: '#f0f9ff',
+          main: '#0ea5e9',
+          dark: '#0369a1'
         },
         agent: {
-          light: '#f0fdfa',
-          main: '#0d9488',
-          dark: '#115e59'
+          light: '#f0f9ff',
+          main: '#0ea5e9',
+          dark: '#0369a1'
         },
         billing: {
-          light: '#ecfdf5',
-          main: '#059669',
-          dark: '#065f46'
+          light: '#f0f9ff',
+          main: '#0ea5e9',
+          dark: '#0369a1'
         },
         netops: {
-          light: '#f5f3ff',
-          main: '#7c3aed',
-          dark: '#5b21b6'
+          light: '#f0f9ff',
+          main: '#0ea5e9',
+          dark: '#0369a1'
         },
         compliance: {
-          light: '#fffbeb',
-          main: '#d97706',
-          dark: '#92400e'
+          light: '#f0f9ff',
+          main: '#0ea5e9',
+          dark: '#0369a1'
         },
         admin: {
-          light: '#fff5f5',
-          main: '#e11d48',
-          dark: '#9f1239'
+          light: '#f0f9ff',
+          main: '#0ea5e9',
+          dark: '#0369a1'
         }
       },
       fontFamily: {

@@ -53,7 +53,7 @@
                 class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition duration-200"
                 [class.border-red-500]="f['name'].invalid && f['name'].touched"
               />
-              <div *ngIf="f['name'].invalid && f['name'].touched" class="text-red-400 text-xs mt-1">
+              <div class="text-red-400 text-xs mt-1" [class.invisible]="!(f['name'].invalid && f['name'].touched)">
                 Name must be at least 2 characters.
               </div>
             </div>
@@ -68,7 +68,7 @@
                 class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition duration-200"
                 [class.border-red-500]="f['email'].invalid && f['email'].touched"
               />
-              <div *ngIf="f['email'].invalid && f['email'].touched" class="text-red-400 text-xs mt-1">
+              <div class="text-red-400 text-xs mt-1" [class.invisible]="!(f['email'].invalid && f['email'].touched)">
                 Please enter a valid email address.
               </div>
             </div>
@@ -83,7 +83,7 @@
                 class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition duration-200"
                 [class.border-red-500]="f['phone'].invalid && f['phone'].touched"
               />
-              <div *ngIf="f['phone'].invalid && f['phone'].touched" class="text-red-400 text-xs mt-1">
+              <div class="text-red-400 text-xs mt-1" [class.invisible]="!(f['phone'].invalid && f['phone'].touched)">
                 Enter a valid phone number (7–15 digits).
               </div>
             </div>
@@ -109,7 +109,7 @@
                   </svg>
                 </button>
               </div>
-              <div *ngIf="f['password'].invalid && f['password'].touched" class="text-red-400 text-xs mt-1">
+              <div class="text-red-400 text-xs mt-1" [class.invisible]="!(f['password'].invalid && f['password'].touched)">
                 Min 8 chars with at least one uppercase letter, one number, and one special character.
               </div>
             </div>
@@ -124,7 +124,7 @@
                 class="w-full bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 transition duration-200"
                 [class.border-red-500]="f['confirmPassword'].touched && registerForm.hasError('passwordMismatch')"
               />
-              <div *ngIf="f['confirmPassword'].touched && registerForm.hasError('passwordMismatch')" class="text-red-400 text-xs mt-1">
+              <div class="text-red-400 text-xs mt-1" [class.invisible]="!(f['confirmPassword'].touched && registerForm.hasError('passwordMismatch'))">
                 Passwords do not match.
               </div>
             </div>

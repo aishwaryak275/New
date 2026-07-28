@@ -4,6 +4,7 @@ import com.teleconnect.iam.dto.request.AuditLogFilterDTO;
 import com.teleconnect.iam.dto.response.AuditLogResponseDTO;
 import com.teleconnect.iam.entity.AuditLog;
 import com.teleconnect.iam.repository.AuditLogRepository;
+import com.teleconnect.iam.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -19,9 +20,11 @@ import java.util.stream.Collectors;
 public class AuditLogService {
 
     private final AuditLogRepository repo;
+    private final UserRepository userRepo;
 
-    public AuditLogService(AuditLogRepository repo) {
+    public AuditLogService(AuditLogRepository repo, UserRepository userRepo) {
         this.repo = repo;
+        this.userRepo = userRepo;
     }
 
     public void log(Long userId, String action, String module, String ip) {
@@ -77,6 +80,10 @@ public class AuditLogService {
         AuditLogResponseDTO dto = new AuditLogResponseDTO();
         dto.setAuditId(l.getAuditId());
         dto.setUserId(l.getUserId());
+        String name = userRepo.findById(l.getUserId())
+                .map(u -> u.getName())
+                .orElse("User " + l.getUserId());
+        dto.setUserName(name);
         dto.setAction(l.getAction());
         dto.setModule(l.getModule());
         dto.setIpAddress(l.getIpAddress());

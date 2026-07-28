@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, User } from '../../core/services/auth.service';
@@ -24,6 +24,7 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
   isSidebarCollapsed = signal<boolean>(false);
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
+  isProfileDropdownOpen = false;
 
   // User details
   user!: User;
@@ -190,6 +191,17 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
     if (this.isNotificationOpen()) {
       this.notificationService.refreshNotifications();
     }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.isNotificationOpen.set(false);
+    this.isProfileDropdownOpen = false;
+  }
+
+  toggleProfileDropdown(event: Event): void {
+    event.stopPropagation();
+    this.isProfileDropdownOpen = !this.isProfileDropdownOpen;
   }
 
   logout(): void {

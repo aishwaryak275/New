@@ -186,6 +186,45 @@
             </div>
           </div>
         </div>
+
+        <!-- ── Add-On Catalog ── -->
+        <div class="flex justify-between items-center bg-white border border-slate-200 rounded-2xl p-6 shadow-sm mt-2">
+          <div>
+            <h3 class="text-lg font-bold text-slate-800 tracking-tight">Add-On Catalog</h3>
+            <p class="text-xs text-slate-400 font-light mt-0.5">Create and manage data top-ups, ISD packs, roaming, and SMS bundles subscribers can purchase.</p>
+          </div>
+          <button (click)="openCreateAddOnModal()" class="px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs cursor-pointer shadow-lg shadow-indigo-600/15">
+            + Create Add-On
+          </button>
+        </div>
+
+        <div *ngIf="addOnsList.length === 0" class="bg-white border border-dashed border-slate-300 rounded-2xl p-10 text-center text-slate-400 text-sm">
+          No add-ons created yet. Click <strong>+ Create Add-On</strong> to add one.
+        </div>
+
+        <div *ngIf="addOnsList.length > 0" class="grid md:grid-cols-3 gap-6" [@staggerFadeIn]>
+          <div *ngFor="let a of addOnsList" class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm hover:shadow transition duration-150 flex flex-col justify-between">
+            <div>
+              <div class="flex justify-between items-start mb-3">
+                <span class="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-indigo-50 text-indigo-700">{{ getAddOnTypeLabel(a.type) }}</span>
+                <span [class.bg-emerald-100]="a.status === 'A'" [class.text-emerald-700]="a.status === 'A'"
+                      [class.bg-rose-100]="a.status !== 'A'" [class.text-rose-700]="a.status !== 'A'"
+                      class="px-2 py-0.5 rounded text-[10px] font-semibold">
+                  {{ a.status === 'A' ? 'Active' : 'Inactive' }}
+                </span>
+              </div>
+              <h4 class="text-sm font-bold text-slate-800 mb-3">{{ a.name }}</h4>
+              <div class="flex flex-col gap-1.5 text-xs text-slate-500 font-light">
+                <div class="flex justify-between"><span>Quota:</span><span class="font-semibold text-slate-700">{{ a.quota }} GB</span></div>
+                <div class="flex justify-between"><span>Validity:</span><span class="font-semibold text-slate-700">{{ a.validityDays }} days</span></div>
+              </div>
+            </div>
+            <div class="border-t border-slate-100 pt-4 mt-4 flex justify-between items-center">
+              <span class="text-xl font-extrabold text-slate-850">₹{{ a.price }}</span>
+              <button (click)="openEditAddOnModal(a)" class="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold cursor-pointer">Edit Add-On</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- ========================================== -->
@@ -950,6 +989,84 @@
         <div class="flex justify-between items-baseline mt-4 border-t border-slate-800 pt-4">
           <span class="text-xs text-slate-400 font-light">Validity: {{ planForm.value.validityDays || 0 }} Days</span>
           <p class="text-3xl font-extrabold text-white">₹{{ planForm.value.planPrice || '0.00' }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add-On Create / Edit Modal -->
+<div *ngIf="isAddOnModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
+  <div [@scaleIn] class="bg-white w-full max-w-3xl rounded-3xl shadow-2xl border border-slate-100 overflow-hidden grid md:grid-cols-2">
+    <div class="p-6 md:p-8 flex flex-col gap-5">
+      <div>
+        <h3 class="text-lg font-bold text-slate-800">{{ editingAddOnId ? 'Edit Add-On' : 'Create New Add-On' }}</h3>
+        <p class="text-xs text-slate-400 font-light mt-0.5">Define the add-on type, quota, validity, and price.</p>
+      </div>
+      <form [formGroup]="addOnForm" (ngSubmit)="submitAddOnForm()" class="flex flex-col gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Add-On Name</label>
+          <input type="text" formControlName="name" placeholder="E.g. 10 GB Data Top-Up"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Type</label>
+          <select formControlName="type" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500">
+            <option value="DataTopup">Data Top-Up</option>
+            <option value="ISDPack">ISD Pack</option>
+            <option value="RoamingPack">Roaming Pack</option>
+            <option value="SMSPack">SMS Pack</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Quota (GB)</label>
+            <input type="number" step="0.1" formControlName="quota" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Validity (Days)</label>
+            <input type="number" formControlName="validityDays" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none" />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Price (₹)</label>
+            <input type="number" step="0.01" formControlName="price" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs focus:outline-none" />
+          </div>
+        </div>
+        <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer mt-1">
+          <input type="checkbox" formControlName="activeStatus" class="rounded text-indigo-600 focus:ring-indigo-500" />
+          Active (visible to subscribers)
+        </label>
+        <div class="flex gap-3 justify-end mt-2">
+          <button type="button" (click)="closeAddOnModal()" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">Cancel</button>
+          <button type="submit" [disabled]="addOnForm.invalid" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs cursor-pointer shadow-md">Save Add-On</button>
+        </div>
+      </form>
+    </div>
+    <!-- Live Preview -->
+    <div class="bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 p-6 md:p-8 flex flex-col justify-center items-center relative overflow-hidden border-l border-slate-800">
+      <div class="absolute w-64 h-64 rounded-full bg-indigo-500/10 blur-[80px] top-[-50px] right-[-50px] pointer-events-none"></div>
+      <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider mb-6 absolute top-6">Live Preview Card</span>
+      <div class="w-full max-w-sm bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 shadow-2xl text-white flex flex-col justify-between min-h-[220px] relative">
+        <div class="absolute right-5 top-5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold border"
+          [class.bg-emerald-500]="addOnForm.value.activeStatus !== false"
+          [class.text-white]="addOnForm.value.activeStatus !== false"
+          [class.border-emerald-500]="addOnForm.value.activeStatus !== false"
+          [class.bg-slate-700]="addOnForm.value.activeStatus === false"
+          [class.text-slate-400]="addOnForm.value.activeStatus === false"
+          [class.border-slate-600]="addOnForm.value.activeStatus === false">
+          {{ addOnForm.value.activeStatus !== false ? 'Active' : 'Inactive' }}
+        </div>
+        <div>
+          <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">{{ getAddOnTypeLabel(addOnForm.value.type) }}</span>
+          <h4 class="text-xl font-extrabold text-white mt-1.5 tracking-tight truncate">{{ addOnForm.value.name || 'Untitled Add-On' }}</h4>
+          <div class="my-4 flex flex-col gap-2 font-light text-xs text-slate-300">
+            <div class="flex justify-between"><span>Quota:</span><span class="font-bold text-white">{{ addOnForm.value.quota || 0 }} GB</span></div>
+            <div class="flex justify-between"><span>Validity:</span><span class="font-bold text-white">{{ addOnForm.value.validityDays || 0 }} days</span></div>
+          </div>
+        </div>
+        <div class="flex justify-between items-baseline border-t border-slate-800 pt-4">
+          <span class="text-xs text-slate-400 font-light">One-time charge</span>
+          <p class="text-3xl font-extrabold text-white">₹{{ addOnForm.value.price || '0' }}</p>
         </div>
       </div>
     </div>

@@ -64,6 +64,10 @@ public class ServiceSubscriptionService {
 
     public void createSubscription(ServiceSubscriptionRequest req) {
         log.info("Create subscription request received lineId={} planId={}", req.getLineId(), req.getPlanId());
+        if (req.getLineId() != null && repository.existsByLineIdAndStatus(req.getLineId(), ServiceSubscription.Status.A)) {
+            log.warn("Duplicate active subscription blocked lineId={}", req.getLineId());
+            throw new RuntimeException("An active subscription already exists for this SIM line. It must expire before activating a new plan.");
+        }
         ServiceSubscription sub = new ServiceSubscription();
         sub.setLineId(req.getLineId());
         sub.setPlanId(req.getPlanId());

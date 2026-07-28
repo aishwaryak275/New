@@ -33,6 +33,12 @@ export class AdminPortalComponent implements OnInit {
   editingPlanId: number | null = null;
   isPlanModalOpen = false;
 
+  // ── Add-On Catalog ────────────────────────────────────────────────────────────
+  addOnsList: any[] = [];
+  addOnForm!: FormGroup;
+  editingAddOnId: number | null = null;
+  isAddOnModalOpen = false;
+
   // ── System Config ─────────────────────────────────────────────────────────────
   configForm!: FormGroup;
 
@@ -115,6 +121,7 @@ export class AdminPortalComponent implements OnInit {
     this.user = this.authService.currentUser()!;
     this.initForms();
     this.loadPlans();
+    this.loadAddOns();
     this.loadSystemConfig();
     this.loadIamUsers();
   }
@@ -128,6 +135,15 @@ export class AdminPortalComponent implements OnInit {
       voiceMinutes: [0, [Validators.required, Validators.min(0)]],
       smsCount: [100, [Validators.required, Validators.min(0)]],
       planPrice: [299, [Validators.required, Validators.min(0)]],
+      activeStatus: [true]
+    });
+
+    this.addOnForm = this.fb.group({
+      name:         ['', Validators.required],
+      type:         ['DataTopup', Validators.required],
+      quota:        [1, [Validators.required, Validators.min(0.1)]],
+      validityDays: [28, [Validators.required, Validators.min(1)]],
+      price:        [19, [Validators.required, Validators.min(0)]],
       activeStatus: [true]
     });
 
@@ -225,6 +241,51 @@ export class AdminPortalComponent implements OnInit {
       next: () => { this.toastService.success(this.editingPlanId ? 'Plan updated.' : 'New plan created.'); this.closePlanModal(); this.loadPlans(); },
       error: () => this.toastService.error('Failed to save plan.')
     });
+  }
+
+  // ── Add-On Catalog ────────────────────────────────────────────────────────────
+  loadAddOns(): void {
+    this.planService.getAddOns().subscribe({
+      next: (data) => this.addOnsList = data,
+      error: () => {}
+    });
+  }
+
+  openCreateAddOnModal(): void {
+    this.editingAddOnId = null;
+    this.addOnForm.reset({ type: 'DataTopup', quota: 1, validityDays: 28, price: 19, activeStatus: true });
+    this.isAddOnModalOpen = true;
+  }
+
+  openEditAddOnModal(addOn: any): void {
+    this.editingAddOnId = addOn.addOnId;
+    this.addOnForm.patchValue({ name: addOn.name, type: addOn.type, quota: addOn.quota, validityDays: addOn.validityDays, price: addOn.price, activeStatus: addOn.status === 'A' });
+    this.isAddOnModalOpen = true;
+  }
+
+  closeAddOnModal(): void { this.isAddOnModalOpen = false; this.editingAddOnId = null; }
+
+  submitAddOnForm(): void {
+    if (this.addOnForm.invalid) return;
+    const v = this.addOnForm.value;
+    const payload = { name: v.name, type: v.type, quota: v.quota, validityDays: v.validityDays, price: v.price, status: v.activeStatus ? 'A' : 'I' };
+    const obs$ = this.editingAddOnId
+      ? this.planService.updateAddOn(this.editingAddOnId, payload)
+      : this.planService.createAddOn(payload);
+    obs$.subscribe({
+      next: () => {
+        this.iamService.recordAudit(this.editingAddOnId ? 'ADDON_UPDATED' : 'ADDON_CREATED', 'PLAN');
+        this.toastService.success(this.editingAddOnId ? 'Add-on updated.' : 'New add-on created.');
+        this.closeAddOnModal();
+        this.loadAddOns();
+      },
+      error: (err: any) => this.toastService.error(err.error?.message ?? 'Failed to save add-on.')
+    });
+  }
+
+  getAddOnTypeLabel(type: string): string {
+    const labels: Record<string, string> = { DataTopup: 'Data Top-Up', ISDPack: 'ISD Pack', RoamingPack: 'Roaming Pack', SMSPack: 'SMS Pack' };
+    return labels[type] ?? type;
   }
 
   // ── System Config ─────────────────────────────────────────────────────────────

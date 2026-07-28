@@ -5,12 +5,13 @@ import { Chart } from 'chart.js/auto';
 import { AuthService, User } from '../../core/services/auth.service';
 import { BillingService } from '../../core/services/billing.service';
 import { IamService } from '../../core/services/iam.service';
+import { PlanService } from '../../core/services/plan.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { fadeInUp, staggerFadeIn, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
 
-type Section = 'invoices' | 'payments' | 'disputes' | 'reports' | 'settings';
+type Section = 'invoices' | 'payments' | 'disputes' | 'reports' | 'settings' | 'catalog';
 
 interface Invoice {
   invoiceId: string;
@@ -69,8 +70,13 @@ export class BillingPortalComponent implements OnInit {
     payments: 'Payments',
     disputes: 'Disputes',
     reports: 'Reports',
-    settings: 'Settings'
+    settings: 'Settings',
+    catalog: 'Plan Catalog'
   };
+
+  // Plan Catalog (read-only reference)
+  catalogPlans: any[] = [];
+  catalogAddOns: any[] = [];
 
   // ── Invoices ──────────────────────────────────────────────────────────────
   invoices: Invoice[] = [];
@@ -118,6 +124,7 @@ export class BillingPortalComponent implements OnInit {
     public authService: AuthService,
     private billingService: BillingService,
     private iamService: IamService,
+    private planService: PlanService,
     public notificationService: NotificationService,
     private toastService: ToastService,
     private fb: FormBuilder
@@ -309,6 +316,17 @@ export class BillingPortalComponent implements OnInit {
     this.isNotificationOpen.set(false);
     this.openKebabId = null;
     this.openReportKebabId = null;
+    if (s === 'catalog') this.loadCatalog();
+  }
+
+  loadCatalog(): void {
+    this.planService.getPlans(false).subscribe({ next: (data) => this.catalogPlans = data, error: () => {} });
+    this.planService.getAddOns().subscribe({ next: (data) => this.catalogAddOns = data, error: () => {} });
+  }
+
+  getAddOnTypeLabel(type: string): string {
+    const labels: Record<string, string> = { DataTopup: 'Data Top-Up', ISDPack: 'ISD Pack', RoamingPack: 'Roaming Pack', SMSPack: 'SMS Pack' };
+    return labels[type] ?? type;
   }
 
   toggleNotifications(): void {

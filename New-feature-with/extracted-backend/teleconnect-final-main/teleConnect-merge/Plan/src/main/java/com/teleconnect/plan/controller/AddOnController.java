@@ -91,6 +91,23 @@ public class AddOnController {
         return ResponseEntity.ok(addOns);
     }
 
+    @PutMapping("/updateAddOns/{addOnId}")
+    @PreAuthorize("hasAuthority('MANAGE_PLANS')")
+    public ResponseEntity<?> updateAddOn(
+            @PathVariable Integer addOnId,
+            @RequestBody AddOnRequest req,
+            HttpServletRequest httpReq) {
+        log.info("Update add-on request addOnId={}", addOnId);
+        boolean updated = service.updateAddOn(addOnId, req);
+        if (!updated) {
+            log.warn("Add-on not found for update addOnId={}", addOnId);
+            return ResponseEntity.status(404).body(new MessageResponse("Add-on not found"));
+        }
+        auditClient.record(AuditAction.CREATE_ADDON, AuditModule.PLAN, httpReq);
+        log.info("Add-on updated successfully addOnId={}", addOnId);
+        return ResponseEntity.ok(new MessageResponse("Add-on updated successfully"));
+    }
+
     @GetMapping("/getAddOns/{addOnId}")
     @PreAuthorize("hasAuthority('VIEW_PLAN')")
     public ResponseEntity<?> getAddOnById(

@@ -61,4 +61,22 @@ public class AddOnService {
         }
         return toDTO(addOn);
     }
+
+    public boolean updateAddOn(Integer addOnId, AddOnRequest req) {
+        log.info("Update add-on requested id={}", addOnId);
+        AddOn addOn = repository.findById(addOnId).orElse(null);
+        if (addOn == null) {
+            log.warn("Add-on not found for update id={}", addOnId);
+            return false;
+        }
+        if (req.getName() != null)         addOn.setName(req.getName());
+        if (req.getType() != null)         addOn.setType(AddOn.AddOnType.valueOf(req.getType()));
+        if (req.getQuota() != null)        addOn.setQuota(req.getQuota());
+        if (req.getValidityDays() != null) addOn.setValidityDays(req.getValidityDays());
+        if (req.getPrice() != null)        addOn.setPrice(req.getPrice());
+        if (req.getStatus() != null)       addOn.setStatus(AddOn.AddOnStatus.valueOf(req.getStatus()));
+        repository.save(addOn);
+        log.info("Add-on updated successfully id={}", addOnId);
+        return true;
+    }
 }

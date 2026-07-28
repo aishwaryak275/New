@@ -51,6 +51,20 @@
           <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">KYC Dashboard</span>
         </button>
 
+        <!-- Plan Catalog -->
+        <button
+          (click)="setTab('catalog')"
+          [class.bg-amber-600]="activeTab() === 'catalog'"
+          [class.text-white]="activeTab() === 'catalog'"
+          [class.text-slate-400]="activeTab() !== 'catalog'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-slate-800 hover:text-white transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Plan Catalog</span>
+        </button>
+
       </nav>
     </div>
 
@@ -232,6 +246,75 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- TAB: PLAN CATALOG (read-only) -->
+      <div *ngIf="activeTab() === 'catalog'" [@fadeInUp] class="flex flex-col gap-6">
+
+        <!-- Plans -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h2 class="text-lg font-bold text-slate-800">Plan Catalog</h2>
+              <p class="text-xs text-slate-400 font-light mt-0.5">All available telecom plans — read-only reference</p>
+            </div>
+            <span class="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-semibold rounded-full">{{ catalogPlans.length }} plans</span>
+          </div>
+          <div *ngIf="catalogPlans.length === 0" class="text-center py-10 text-slate-400 text-sm">No plans loaded. Ensure the Plan service is running.</div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
+            <div *ngFor="let p of catalogPlans" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3">
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      [class.bg-blue-100]="p.type === 'Prepaid'" [class.text-blue-700]="p.type === 'Prepaid'"
+                      [class.bg-purple-100]="p.type === 'Postpaid'" [class.text-purple-700]="p.type === 'Postpaid'">{{ p.type }}</span>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      [class.bg-emerald-100]="p.status === 'A'" [class.text-emerald-700]="p.status === 'A'"
+                      [class.bg-rose-100]="p.status !== 'A'" [class.text-rose-700]="p.status !== 'A'">{{ p.status === 'A' ? 'Active' : 'Inactive' }}</span>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-slate-800">{{ p.name }}</p>
+                <p class="text-2xl font-extrabold text-slate-900 mt-1">₹{{ p.planPrice }}<span class="text-xs text-slate-400 font-normal">/cycle</span></p>
+              </div>
+              <div class="flex flex-col gap-1 text-xs text-slate-500 border-t border-slate-100 pt-3">
+                <div class="flex justify-between"><span>Data</span><span class="font-semibold text-slate-700">{{ p.dataGb }} GB</span></div>
+                <div class="flex justify-between"><span>Validity</span><span class="font-semibold text-slate-700">{{ p.validityDays }} days</span></div>
+                <div class="flex justify-between"><span>Voice</span><span class="font-semibold text-slate-700">{{ p.voiceMinutes }} min</span></div>
+                <div class="flex justify-between"><span>SMS</span><span class="font-semibold text-slate-700">{{ p.smsCount }}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add-Ons -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h2 class="text-lg font-bold text-slate-800">Add-On Catalog</h2>
+              <p class="text-xs text-slate-400 font-light mt-0.5">Available add-ons subscribers can activate — read-only reference</p>
+            </div>
+            <span class="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-semibold rounded-full">{{ catalogAddOns.length }} add-ons</span>
+          </div>
+          <div *ngIf="catalogAddOns.length === 0" class="text-center py-10 text-slate-400 text-sm">No add-ons loaded.</div>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
+            <div *ngFor="let a of catalogAddOns" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3">
+              <div class="flex justify-between items-start">
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">{{ getAddOnTypeLabel(a.type) }}</span>
+                <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                      [class.bg-emerald-100]="a.status === 'A'" [class.text-emerald-700]="a.status === 'A'"
+                      [class.bg-rose-100]="a.status !== 'A'" [class.text-rose-700]="a.status !== 'A'">{{ a.status === 'A' ? 'Active' : 'Inactive' }}</span>
+              </div>
+              <div>
+                <p class="text-sm font-bold text-slate-800">{{ a.name }}</p>
+                <p class="text-2xl font-extrabold text-slate-900 mt-1">₹{{ a.price }}</p>
+              </div>
+              <div class="flex flex-col gap-1 text-xs text-slate-500 border-t border-slate-100 pt-3">
+                <div class="flex justify-between"><span>Quota</span><span class="font-semibold text-slate-700">{{ a.quota }} GB</span></div>
+                <div class="flex justify-between"><span>Validity</span><span class="font-semibold text-slate-700">{{ a.validityDays }} days</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>

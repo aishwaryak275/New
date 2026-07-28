@@ -39,9 +39,17 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
   // Plan catalog & change request
   availablePlans = signal<any[]>([]);
   planFilter = signal<'Prepaid' | 'Postpaid'>('Prepaid');
-  filteredPlans = computed(() =>
-    this.availablePlans().filter((p: any) => p.type === this.planFilter())
-  );
+  planSearch = signal<string>('');
+  filteredPlans = computed(() => {
+    const plans = this.availablePlans().filter((p: any) => p.type === this.planFilter());
+    const q = this.planSearch().trim();
+    if (!q) return plans;
+    return plans.filter((p: any) =>
+      String(p.dataGb).includes(q) ||
+      String(p.validityDays).includes(q) ||
+      String(p.planPrice).includes(q)
+    );
+  });
   targetPlan: any = null;
   changeRequestForm!: FormGroup;
   isUpgradeModalOpen = false;
@@ -205,6 +213,17 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
   get hasAccount(): boolean {
     return !!(this.account360 && this.account360.accountId);
+  }
+
+  get hasActivePlan(): boolean {
+    return !!this.account360?.lines?.[0]?.activeSubscription?.subscriptionId;
+  }
+
+
+  get activeSubscriptionAddOn(): any {
+    const addOnId = this.account360?.lines?.[0]?.activeSubscription?.addOnId;
+    if (!addOnId) return null;
+    return this.addOns().find((a: any) => a.addOnId === addOnId) ?? null;
   }
 
   get pendingNewConnRequest(): any {
@@ -375,6 +394,13 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     this.isProcessingPayment = true;
 
     const line = this.account360?.lines?.[0];
+
+    if (line?.activeSubscription?.subscriptionId) {
+      this.isProcessingPayment = false;
+      this.toastService.error('You already have an active plan. It must expire before you can activate a new one.');
+      this.closeUpgradeModal();
+      return;
+    }
 
     if (line?.lineId) {
       // Normal path — SIM line already loaded
@@ -641,6 +667,11 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     const sub = line.activeSubscription;
     if (!sub?.subscriptionId) {
       this.toastService.error('No active plan found. Activate a plan first.');
+      return;
+    }
+    if (sub.addOnId) {
+      this.toastService.error('You already have an active add-on on this plan. Only one add-on per plan is allowed.');
+      this.closeAddOnModal();
       return;
     }
 

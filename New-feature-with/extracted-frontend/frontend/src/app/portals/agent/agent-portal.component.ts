@@ -83,6 +83,10 @@ export class AgentPortalComponent implements OnInit {
   selectedWizardLine: any = null;
   selectedWizardPlan: any = null;
 
+  // Plan Catalog (read-only reference)
+  catalogPlans: any[] = [];
+  catalogAddOns: any[] = [];
+
   constructor(
     public authService: AuthService,
     private accountService: AccountService,
@@ -155,6 +159,17 @@ export class AgentPortalComponent implements OnInit {
     this.activeTab.set(tab);
     this.isNotificationOpen.set(false);
     if (tab === 'users') this.loadIamUsers();
+    if (tab === 'catalog') this.loadCatalog();
+  }
+
+  loadCatalog(): void {
+    this.planService.getPlans(false).subscribe({ next: (data) => this.catalogPlans = data, error: () => {} });
+    this.planService.getAddOns().subscribe({ next: (data) => this.catalogAddOns = data, error: () => {} });
+  }
+
+  getAddOnTypeLabel(type: string): string {
+    const labels: Record<string, string> = { DataTopup: 'Data Top-Up', ISDPack: 'ISD Pack', RoamingPack: 'Roaming Pack', SMSPack: 'SMS Pack' };
+    return labels[type] ?? type;
   }
 
   toggleSidebar(): void {

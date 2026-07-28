@@ -43,6 +43,10 @@ export class PlanService {
     return this.http.post<any>(`${this.base}/createAddOns`, addOn);
   }
 
+  updateAddOn(addOnId: number, addOn: any): Observable<any> {
+    return this.http.put<any>(`${this.base}/updateAddOns/${addOnId}`, addOn);
+  }
+
   // ── Subscriptions ────────────────────────────────────────────────────────────
 
   getAllSubscriptions(): Observable<any[]> {

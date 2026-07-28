@@ -227,6 +227,28 @@
             </div>
           </div>
 
+          <!-- Search bar -->
+          <div class="flex justify-center mb-5">
+            <div class="relative w-full max-w-lg">
+              <svg class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                type="text"
+                [ngModel]="planSearch()"
+                (ngModelChange)="planSearch.set($event)"
+                placeholder="Search by data (GB), validity (days) or price (₹)…"
+                class="w-full pl-11 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-200"
+              />
+              <button *ngIf="planSearch()" (click)="planSearch.set('')"
+                class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
+                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+
           <!-- Empty / loading state -->
           <div *ngIf="filteredPlans().length === 0" class="text-center py-10 text-slate-400 text-sm">
             <ng-container *ngIf="availablePlans().length === 0">
@@ -236,7 +258,8 @@
               <p class="mb-2 font-medium text-slate-500">No plans loaded yet.</p>
               <button (click)="loadData()" class="text-primary-700 underline text-xs cursor-pointer">Retry</button>
             </ng-container>
-            <p *ngIf="availablePlans().length > 0" class="font-medium text-slate-500">No {{ planFilter() | lowercase }} plans available.</p>
+            <p *ngIf="availablePlans().length > 0 && !planSearch()" class="font-medium text-slate-500">No {{ planFilter() | lowercase }} plans available.</p>
+            <p *ngIf="availablePlans().length > 0 && planSearch()" class="font-medium text-slate-500">No {{ planFilter() | lowercase }} plans match "{{ planSearch() }}".</p>
           </div>
 
           <!-- Plan cards grid -->
@@ -278,11 +301,13 @@
 
               <!-- CTA -->
               <button
-                [disabled]="account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId"
-                (click)="openUpgradeModal(p)"
-                class="w-full py-2.5 bg-primary-700 text-white font-semibold rounded-xl text-sm hover:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed transition duration-150 cursor-pointer"
+                [disabled]="hasActivePlan"
+                (click)="!hasActivePlan && openUpgradeModal(p)"
+                [title]="hasActivePlan ? 'Your current plan must expire before activating a new one' : 'Select this plan'"
+                class="w-full py-2.5 font-semibold rounded-xl text-sm transition duration-150 cursor-pointer"
+                [ngClass]="hasActivePlan ? (account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId ? 'bg-emerald-600 text-white opacity-80 cursor-not-allowed' : 'bg-slate-300 text-slate-500 cursor-not-allowed') : 'bg-primary-700 text-white hover:bg-primary-800'"
               >
-                {{ account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId ? 'Current Plan' : 'Select Plan' }}
+                {{ account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId ? 'Current Plan' : (hasActivePlan ? 'Plan Active' : 'Select Plan') }}
               </button>
             </div>
           </div>
@@ -293,20 +318,41 @@
           </div>
         </div>
 
+        <!-- ── Active Add-On Banner ── -->
+        <div *ngIf="activeSubscriptionAddOn" class="bg-gradient-to-r from-indigo-600 to-violet-700 rounded-2xl p-5 text-white flex items-center justify-between shadow-md">
+          <div>
+            <span class="text-[10px] font-semibold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Active Add-On</span>
+            <h3 class="text-lg font-extrabold mt-1">{{ activeSubscriptionAddOn.name }}</h3>
+            <p class="text-indigo-200 text-xs mt-0.5">{{ getAddOnTypeLabel(activeSubscriptionAddOn.type) }} &nbsp;·&nbsp; {{ activeSubscriptionAddOn.quota }} GB &nbsp;·&nbsp; {{ activeSubscriptionAddOn.validityDays }} days</p>
+          </div>
+          <span class="text-2xl font-extrabold">₹{{ activeSubscriptionAddOn.price }}</span>
+        </div>
+
         <!-- ── Add-Ons Section ── -->
         <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="px-6 py-4 border-b border-slate-100">
-            <h2 class="text-base font-bold text-slate-900">Available Add-Ons</h2>
-            <p class="text-xs text-slate-500 mt-0.5">Boost your plan with extra data, ISD packs, roaming, and more.</p>
+          <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h2 class="text-base font-bold text-slate-900">Available Add-Ons</h2>
+              <p class="text-xs text-slate-500 mt-0.5">Boost your plan with extra data, ISD packs, roaming, and more.</p>
+            </div>
+            <span *ngIf="activeSubscriptionAddOn" class="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-3 py-1 font-semibold">
+              1 add-on active — remove it to add another
+            </span>
           </div>
 
           <div *ngIf="addOns().length > 0; else noAddOns" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div *ngFor="let addOn of addOns()" class="border border-slate-200 rounded-xl p-4 flex flex-col gap-3 hover:shadow-md transition-shadow bg-slate-50/50">
+            <div *ngFor="let addOn of addOns()"
+              class="border rounded-xl p-4 flex flex-col gap-3 transition-shadow"
+              [ngClass]="activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'border-indigo-300 bg-indigo-50/60 shadow-md' : 'border-slate-200 bg-slate-50/50 hover:shadow-md'">
               <div class="flex items-center justify-between">
                 <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700">
                   {{ getAddOnTypeLabel(addOn.type) }}
                 </span>
-                <span class="text-xs font-medium px-2 py-0.5 rounded-lg"
+                <span *ngIf="activeSubscriptionAddOn?.addOnId === addOn.addOnId"
+                  class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">
+                  Your Add-On
+                </span>
+                <span *ngIf="activeSubscriptionAddOn?.addOnId !== addOn.addOnId" class="text-xs font-medium px-2 py-0.5 rounded-lg"
                   [class.bg-emerald-50]="addOn.status === 'Active'"
                   [class.text-emerald-700]="addOn.status === 'Active'"
                   [class.bg-rose-50]="addOn.status !== 'Active'"
@@ -323,10 +369,12 @@
                 <span class="text-lg font-extrabold text-slate-900">₹{{ addOn.price }}</span>
                 <button
                   (click)="openAddOnModal(addOn)"
-                  [disabled]="addOn.status !== 'Active' && addOn.status !== 'A'"
-                  class="px-3 py-1.5 bg-primary-700 text-white text-xs font-semibold rounded-lg hover:bg-primary-800 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shadow-sm"
+                  [disabled]="(addOn.status !== 'Active' && addOn.status !== 'A') || !!activeSubscriptionAddOn || !hasActivePlan"
+                  [title]="!hasActivePlan ? 'Activate a plan first' : (activeSubscriptionAddOn ? 'You already have an active add-on' : 'Add to your plan')"
+                  class="px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition cursor-pointer shadow-sm"
+                  [ngClass]="activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'bg-indigo-500 cursor-not-allowed opacity-80' : (!!activeSubscriptionAddOn || !hasActivePlan ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-primary-700 hover:bg-primary-800')"
                 >
-                  Add to Plan
+                  {{ activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'Active' : 'Add to Plan' }}
                 </button>
               </div>
             </div>

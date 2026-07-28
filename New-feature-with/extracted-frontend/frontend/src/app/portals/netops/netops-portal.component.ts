@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthService, User } from '../../core/services/auth.service';
 import { IamService } from '../../core/services/iam.service';
+import { PlanService } from '../../core/services/plan.service';
 import { TicketService } from '../../core/services/ticket.service';
 import { AccountService } from '../../core/services/account.service';
 import { NotificationService } from '../../core/services/notification.service';
@@ -58,9 +59,14 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
   isLookingUp = false;
   lookupError = '';
 
+  // Plan Catalog (read-only reference)
+  catalogPlans: any[] = [];
+  catalogAddOns: any[] = [];
+
   constructor(
     public authService: AuthService,
     private iamService: IamService,
+    private planService: PlanService,
     private ticketService: TicketService,
     private accountService: AccountService,
     public notificationService: NotificationService,
@@ -162,6 +168,17 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
   setTab(tab: string): void {
     this.activeTab.set(tab);
     this.isNotificationOpen.set(false);
+    if (tab === 'catalog') this.loadCatalog();
+  }
+
+  loadCatalog(): void {
+    this.planService.getPlans(false).subscribe({ next: (data) => this.catalogPlans = data, error: () => {} });
+    this.planService.getAddOns().subscribe({ next: (data) => this.catalogAddOns = data, error: () => {} });
+  }
+
+  getAddOnTypeLabel(type: string): string {
+    const labels: Record<string, string> = { DataTopup: 'Data Top-Up', ISDPack: 'ISD Pack', RoamingPack: 'Roaming Pack', SMSPack: 'SMS Pack' };
+    return labels[type] ?? type;
   }
 
   toggleSidebar(): void {

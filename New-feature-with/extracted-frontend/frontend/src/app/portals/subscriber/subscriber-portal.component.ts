@@ -38,10 +38,13 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
   // Plan catalog & change request
   availablePlans = signal<any[]>([]);
-  planFilter = signal<'Prepaid' | 'Postpaid'>('Prepaid');
+  planFilter = signal<'All' | 'Prepaid' | 'Postpaid'>('All');
   planSearch = signal<string>('');
   filteredPlans = computed(() => {
-    const plans = this.availablePlans().filter((p: any) => p.type === this.planFilter());
+    const filter = this.planFilter();
+    const plans = filter === 'All'
+      ? this.availablePlans()
+      : this.availablePlans().filter((p: any) => p.type === filter);
     const q = this.planSearch().trim();
     if (!q) return plans;
     return plans.filter((p: any) =>
@@ -50,6 +53,27 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
       String(p.planPrice).includes(q)
     );
   });
+
+  get accountType(): string {
+    return this.account360?.accountType ?? '';
+  }
+
+  isPlanCompatible(p: any): boolean {
+    return !this.accountType || p.type === this.accountType;
+  }
+
+  get compatiblePlanCount(): number {
+    return this.filteredPlans().filter((p: any) => this.isPlanCompatible(p)).length;
+  }
+
+  onSelectPlan(p: any): void {
+    if (!this.isPlanCompatible(p)) {
+      this.toastService.error(`This is a ${this.accountType} account. You can only activate ${this.accountType} plans.`);
+      return;
+    }
+    if (this.hasActivePlan) return;
+    this.openUpgradeModal(p);
+  }
   targetPlan: any = null;
   changeRequestForm!: FormGroup;
   isUpgradeModalOpen = false;

@@ -207,14 +207,31 @@
 
           <!-- Heading + toggle -->
           <div class="text-center mb-6">
-            <h2 class="text-xl font-extrabold text-slate-900 mb-5">Let's find a plan that's right for you</h2>
+            <h2 class="text-xl font-extrabold text-slate-900 mb-2">Let's find a plan that's right for you</h2>
+            <p *ngIf="accountType" class="text-xs text-slate-500 mb-4">
+              Your account type is
+              <span class="font-semibold px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider"
+                    [class.bg-blue-100]="accountType === 'Prepaid'" [class.text-blue-700]="accountType === 'Prepaid'"
+                    [class.bg-purple-100]="accountType === 'Postpaid'" [class.text-purple-700]="accountType === 'Postpaid'">
+                {{ accountType }}
+              </span>
+              — you can only activate {{ accountType }} plans.
+            </p>
             <div class="inline-flex bg-slate-100 rounded-full p-1 gap-0.5">
               <button
+                (click)="planFilter.set('All')"
+                [class.bg-primary-700]="planFilter() === 'All'"
+                [class.text-white]="planFilter() === 'All'"
+                [class.text-slate-500]="planFilter() !== 'All'"
+                class="px-8 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
+              >All</button>
+              <button
                 (click)="planFilter.set('Prepaid')"
-                [class.bg-primary-700]="planFilter() === 'Prepaid'"
-                [class.text-white]="planFilter() === 'Prepaid'"
+                [class.bg-white]="planFilter() === 'Prepaid'"
+                [class.shadow]="planFilter() === 'Prepaid'"
+                [class.text-slate-900]="planFilter() === 'Prepaid'"
                 [class.text-slate-500]="planFilter() !== 'Prepaid'"
-                class="px-10 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
+                class="px-8 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
               >Prepaid</button>
               <button
                 (click)="planFilter.set('Postpaid')"
@@ -222,7 +239,7 @@
                 [class.shadow]="planFilter() === 'Postpaid'"
                 [class.text-slate-900]="planFilter() === 'Postpaid'"
                 [class.text-slate-500]="planFilter() !== 'Postpaid'"
-                class="px-10 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
+                class="px-8 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
               >Postpaid</button>
             </div>
           </div>
@@ -258,21 +275,33 @@
               <p class="mb-2 font-medium text-slate-500">No plans loaded yet.</p>
               <button (click)="loadData()" class="text-primary-700 underline text-xs cursor-pointer">Retry</button>
             </ng-container>
-            <p *ngIf="availablePlans().length > 0 && !planSearch()" class="font-medium text-slate-500">No {{ planFilter() | lowercase }} plans available.</p>
-            <p *ngIf="availablePlans().length > 0 && planSearch()" class="font-medium text-slate-500">No {{ planFilter() | lowercase }} plans match "{{ planSearch() }}".</p>
+            <p *ngIf="availablePlans().length > 0 && !planSearch()" class="font-medium text-slate-500">No {{ planFilter() === 'All' ? '' : (planFilter() | lowercase) + ' ' }}plans available.</p>
+            <p *ngIf="availablePlans().length > 0 && planSearch()" class="font-medium text-slate-500">No {{ planFilter() === 'All' ? '' : (planFilter() | lowercase) + ' ' }}plans match "{{ planSearch() }}".</p>
           </div>
 
           <!-- Plan cards grid -->
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
             <div
               *ngFor="let p of filteredPlans()"
-              class="bg-blue-50 border border-blue-100 rounded-2xl p-5 flex flex-col justify-between hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+              class="rounded-2xl p-5 flex flex-col justify-between transition-all duration-200"
+              [ngClass]="isPlanCompatible(p) ? 'bg-blue-50 border border-blue-100 hover:shadow-md hover:-translate-y-0.5' : 'bg-slate-50 border border-slate-200 opacity-80'"
             >
               <div>
-                <!-- Price row -->
+                <!-- Type + price row -->
                 <div class="flex items-center justify-between mb-4">
-                  <span class="text-2xl font-extrabold text-slate-900">₹{{ p.planPrice }}</span>
-                  <svg class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div class="flex items-center gap-2">
+                    <span class="text-2xl font-extrabold text-slate-900">₹{{ p.planPrice }}</span>
+                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
+                          [class.bg-blue-100]="p.type === 'Prepaid'" [class.text-blue-700]="p.type === 'Prepaid'"
+                          [class.bg-purple-100]="p.type === 'Postpaid'" [class.text-purple-700]="p.type === 'Postpaid'">
+                      {{ p.type }}
+                    </span>
+                  </div>
+                  <!-- Lock icon for incompatible plans -->
+                  <svg *ngIf="!isPlanCompatible(p)" class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                  </svg>
+                  <svg *ngIf="isPlanCompatible(p)" class="w-5 h-5 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                   </svg>
                 </div>
@@ -300,9 +329,23 @@
               </div>
 
               <!-- CTA -->
+              <!-- Incompatible plan type -->
               <button
+                *ngIf="!isPlanCompatible(p)"
+                (click)="onSelectPlan(p)"
+                [title]="'This is a ' + accountType + ' account. Only ' + accountType + ' plans can be activated.'"
+                class="w-full py-2.5 font-semibold rounded-xl text-sm transition duration-150 cursor-pointer bg-amber-100 text-amber-700 hover:bg-amber-200 flex items-center justify-center gap-1.5"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+                {{ p.type }} Only
+              </button>
+              <!-- Compatible plan type -->
+              <button
+                *ngIf="isPlanCompatible(p)"
                 [disabled]="hasActivePlan"
-                (click)="!hasActivePlan && openUpgradeModal(p)"
+                (click)="onSelectPlan(p)"
                 [title]="hasActivePlan ? 'Your current plan must expire before activating a new one' : 'Select this plan'"
                 class="w-full py-2.5 font-semibold rounded-xl text-sm transition duration-150 cursor-pointer"
                 [ngClass]="hasActivePlan ? (account360?.lines?.[0]?.activeSubscription?.plan?.planId === p.planId ? 'bg-emerald-600 text-white opacity-80 cursor-not-allowed' : 'bg-slate-300 text-slate-500 cursor-not-allowed') : 'bg-primary-700 text-white hover:bg-primary-800'"
@@ -312,9 +355,20 @@
             </div>
           </div>
 
-          <!-- View all link -->
+          <!-- Plan count -->
           <div *ngIf="filteredPlans().length > 0" class="text-center mt-6">
-            <span class="text-xs text-slate-500">Showing {{ filteredPlans().length }} {{ planFilter() | lowercase }} plans</span>
+            <span class="text-xs text-slate-500">
+              Showing {{ filteredPlans().length }} {{ planFilter() === 'All' ? '' : (planFilter() | lowercase) + ' ' }}plans
+              <ng-container *ngIf="accountType && planFilter() === 'All'">
+                &nbsp;·&nbsp;
+                <span class="font-semibold"
+                      [class.text-blue-600]="accountType === 'Prepaid'"
+                      [class.text-purple-600]="accountType === 'Postpaid'">
+                  {{ compatiblePlanCount }} compatible
+                </span>
+                with your {{ accountType }} account
+              </ng-container>
+            </span>
           </div>
         </div>
 

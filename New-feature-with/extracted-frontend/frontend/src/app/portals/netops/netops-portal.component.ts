@@ -8,6 +8,7 @@ import { TicketService } from '../../core/services/ticket.service';
 import { AccountService } from '../../core/services/account.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ReportService } from '../../core/services/report.service';
 import { fadeInUp, staggerFadeIn, shake, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
 import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
@@ -79,7 +80,8 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
     private ticketService: TicketService,
     private accountService: AccountService,
     public notificationService: NotificationService,
-    private toastService: ToastService
+    private toastService: ToastService,
+    private reportService: ReportService
   ) {}
 
   ngOnInit(): void {
@@ -355,6 +357,21 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
     this.isEscalateModalOpen = false;
     this.escalatingTicket = null;
     this.escalationReasonText = '';
+  }
+
+  // ==========================================
+  // SLA Report Generation
+  // ==========================================
+  generateSlaReport(): void {
+    const now = new Date();
+    const start = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+    const end = new Date(now.getFullYear(), now.getMonth()+1, 0);
+    const endStr = `${end.getFullYear()}-${String(end.getMonth()+1).padStart(2,'0')}-${String(end.getDate()).padStart(2,'0')}`;
+    const uid = this.authService.currentUser()?.id;
+    this.reportService.generateReport({ scope: 'PERIOD', scopeValue: 'Network SLA', periodStart: start, periodEnd: endStr, generatedBy: uid }).subscribe({
+      next: () => { this.iamService.recordAudit('SLA_REPORT_GENERATED','NETOPS'); this.toastService.success('SLA report sent to Compliance for review.'); },
+      error: () => this.toastService.error('Failed to generate SLA report.')
+    });
   }
 
   submitEscalation(): void {

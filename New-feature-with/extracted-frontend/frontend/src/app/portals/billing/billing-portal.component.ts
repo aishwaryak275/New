@@ -8,6 +8,7 @@ import { IamService } from '../../core/services/iam.service';
 import { PlanService } from '../../core/services/plan.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ReportService } from '../../core/services/report.service';
 import { fadeInUp, staggerFadeIn, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
 import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
@@ -136,6 +137,7 @@ export class BillingPortalComponent implements OnInit {
     private planService: PlanService,
     public notificationService: NotificationService,
     private toastService: ToastService,
+    private reportService: ReportService,
     private fb: FormBuilder
   ) {
     // Render the Reports charts whenever that section becomes active.
@@ -831,6 +833,19 @@ export class BillingPortalComponent implements OnInit {
   viewOverdue(row: any): void {
     this.openReportKebabId = null;
     this.toastService.info('Opening ' + row.invoice + ' for ' + row.customer + '.');
+  }
+
+  /** Post a compliance report for the current period to the analytics report store. */
+  generateComplianceReport(): void {
+    const now = new Date();
+    const start = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const endStr = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, '0')}-${String(end.getDate()).padStart(2, '0')}`;
+    const uid = this.authService.currentUser()?.id;
+    this.reportService.generateReport({ scope: 'PERIOD', scopeValue: 'Billing & Collections', periodStart: start, periodEnd: endStr, generatedBy: uid }).subscribe({
+      next: () => { this.iamService.recordAudit('BILLING_REPORT_GENERATED', 'BILLING'); this.toastService.success('Report sent to Compliance for review.'); },
+      error: () => this.toastService.error('Failed to generate report.')
+    });
   }
 
   private renderCharts(): void {

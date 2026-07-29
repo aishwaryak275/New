@@ -959,22 +959,31 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     return perDay >= 1 ? perDay.toFixed(1) + ' GB/Day' : (perDay * 1024).toFixed(0) + ' MB/Day';
   }
 
+  // The subscriber's currently-active plan is the single source of truth for
+  // usage entitlements — everything is measured against what the user selected.
+  get activePlan(): any {
+    return this.account360?.lines?.[0]?.activeSubscription?.plan ?? null;
+  }
+  private get planDataLimitMb(): number { return Number(this.activePlan?.dataGb ?? 0) * 1024; }
+  private get planVoiceLimitMin(): number { return Number(this.activePlan?.voiceMinutes ?? 0); }
+  private get planSmsLimit(): number { return Number(this.activePlan?.smsCount ?? 0); }
+
   getDataPercentage(): number {
-    if (!this.usageSummary?.dataUsedMb) return 0;
-    const total = this.usageSummary.dataUsedMb + (this.usageSummary.dataRemainingMb ?? 0);
-    return total === 0 ? 0 : Math.min(100, Math.round((this.usageSummary.dataUsedMb / total) * 100));
+    const limit = this.planDataLimitMb;
+    const used = Number(this.usageSummary?.dataUsedMb ?? 0);
+    return limit <= 0 ? 0 : Math.min(100, Math.round((used / limit) * 100));
   }
 
   getVoicePercentage(): number {
-    if (!this.usageSummary?.voiceUsedMin) return 0;
-    const total = this.usageSummary.voiceUsedMin + (this.usageSummary.voiceRemainingMin ?? 0);
-    return total === 0 ? 0 : Math.min(100, Math.round((this.usageSummary.voiceUsedMin / total) * 100));
+    const limit = this.planVoiceLimitMin;
+    const used = Number(this.usageSummary?.voiceUsedMin ?? 0);
+    return limit <= 0 ? 0 : Math.min(100, Math.round((used / limit) * 100));
   }
 
   getSmsPercentage(): number {
-    if (!this.usageSummary?.smsUsed) return 0;
-    const total = this.usageSummary.smsUsed + (this.usageSummary.smsRemaining ?? 0);
-    return total === 0 ? 0 : Math.min(100, Math.round((this.usageSummary.smsUsed / total) * 100));
+    const limit = this.planSmsLimit;
+    const used = Number(this.usageSummary?.smsUsed ?? 0);
+    return limit <= 0 ? 0 : Math.min(100, Math.round((used / limit) * 100));
   }
 
   getDashOffset(percentage: number): number {
@@ -1009,7 +1018,11 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
   // ── Usage forecast / insights ────────────────────────────────────────────────
   get dataUsedGb(): number { return (this.usageSummary?.dataUsedMb ?? 0) / 1024; }
-  get dataRemainingGb(): number { return (this.usageSummary?.dataRemainingMb ?? 0) / 1024; }
+  /** Remaining = selected plan's data allowance minus what's been used. */
+  get dataRemainingGb(): number {
+    const remMb = Math.max(0, this.planDataLimitMb - Number(this.usageSummary?.dataUsedMb ?? 0));
+    return remMb / 1024;
+  }
 
   /** Average data consumed per active day this cycle, in MB. */
   get avgDailyDataMb(): number {
@@ -1022,7 +1035,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
   /** Projected days until data runs out at the current pace (null if unknown). */
   get usageRunwayDays(): number | null {
-    const remainingMb = this.usageSummary?.dataRemainingMb ?? 0;
+    const remainingMb = Math.max(0, this.planDataLimitMb - Number(this.usageSummary?.dataUsedMb ?? 0));
     const avg = this.avgDailyDataMb;
     if (avg <= 0) return null;
     return Math.max(0, Math.round(remainingMb / avg));

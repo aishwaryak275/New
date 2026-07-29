@@ -23,8 +23,22 @@
       </div>
 
       <nav class="mt-6 px-3 flex flex-col gap-1.5">
+        <!-- Reports Inbox -->
+        <button
+          (click)="setTab('reports')"
+          [class.bg-sky-100]="activeTab() === 'reports'"
+          [class.text-sky-700]="activeTab() === 'reports'"
+          [class.text-slate-500]="activeTab() !== 'reports'"
+          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl hover:bg-sky-50 hover:text-sky-700 transition duration-150 cursor-pointer focus:outline-none"
+        >
+          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Reports Inbox</span>
+        </button>
+
         <!-- Regulatory filings -->
-        <button 
+        <button
           (click)="setTab('filings')"
           [class.bg-sky-100]="activeTab() === 'filings'"
           [class.text-sky-700]="activeTab() === 'filings'"
@@ -140,6 +154,55 @@
 
     <!-- Workspace contents -->
     <div class="p-6 flex-grow min-w-0">
+
+      <!-- ========================================== -->
+      <!-- TAB: REPORTS INBOX                         -->
+      <!-- ========================================== -->
+      <div *ngIf="activeTab() === 'reports'" [@fadeInUp]>
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-base font-bold text-slate-800">Reports Inbox</h3>
+            <p class="text-xs text-slate-400 font-light mt-0.5">SLA, usage &amp; billing reports submitted by Network Ops and Billing for compliance review.</p>
+          </div>
+          <button (click)="refreshReports()" class="text-sm text-slate-600 border border-slate-200 rounded-lg px-3 py-2 hover:bg-slate-50 flex items-center gap-1.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            Refresh
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div *ngFor="let r of reports | paginate: reportsPage : pageSize"
+               class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-4 flex-wrap">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold"
+                        [ngClass]="reportSourceLabel(r.scopeValue) === 'Network Ops' ? 'bg-sky-100 text-sky-700' : (reportSourceLabel(r.scopeValue) === 'Billing' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600')">
+                    {{ reportSourceLabel(r.scopeValue) }}
+                  </span>
+                  <h4 class="text-sm font-bold text-slate-800">{{ r.scopeValue }} <span class="text-slate-400 font-normal">· {{ r.scope }}</span></h4>
+                </div>
+                <p class="text-xs text-slate-400 font-light mt-1">
+                  Report #{{ r.reportId }} · Period {{ r.periodStart }} → {{ r.periodEnd }} · Generated {{ r.generatedDate | date:'medium' }}
+                </p>
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700">For Review</span>
+            </div>
+
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+              <div *ngFor="let m of r.parsed" class="bg-slate-50 rounded-lg px-3 py-2">
+                <p class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold capitalize">{{ m.key }}</p>
+                <p class="text-sm font-bold text-slate-800 mt-0.5">{{ m.value }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div *ngIf="reports.length === 0" class="bg-white border border-dashed border-slate-200 rounded-2xl p-10 text-center text-slate-400 font-light">
+            No reports submitted yet. Billing and Network Ops can generate reports for review.
+          </div>
+        </div>
+        <app-paginator [total]="reports.length" [page]="reportsPage" [size]="pageSize" (pageChange)="reportsPage = $event"></app-paginator>
+      </div>
 
       <!-- ========================================== -->
       <!-- TAB: FILINGS TRACKER                       -->

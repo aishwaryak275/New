@@ -266,6 +266,18 @@
       <!-- TAB: SLA TRACKER                           -->
       <!-- ========================================== -->
       <div *ngIf="activeTab() === 'sla'" [@fadeInUp] class="flex flex-col gap-6">
+        <!-- SLA tab header actions -->
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-bold text-slate-800 tracking-tight">SLA Monitor</h3>
+            <p class="text-xs text-slate-400 font-light mt-0.5">Track fault ticket SLA compliance and deadlines.</p>
+          </div>
+          <button (click)="generateSlaReport()"
+            class="px-5 py-2.5 bg-sky-500 hover:bg-sky-600 text-white font-semibold rounded-lg text-xs cursor-pointer transition shadow-md shadow-sky-500/15">
+            Generate SLA Report
+          </button>
+        </div>
+
         <!-- SLA compliance percentage gauge -->
         <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm flex items-center justify-between max-w-lg">
           <div>

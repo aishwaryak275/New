@@ -30,6 +30,9 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
   readonly pageSize = 8;
   invoicesPage = 1;
   requestsPage = 1;
+  planSubTab = 'plans';
+  plansPage = 1;
+  addOnsPage = 1;
 
   // Navigation
   activeTab = signal<string>('plan');

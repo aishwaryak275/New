@@ -82,6 +82,9 @@ export class BillingPortalComponent implements OnInit {
   // Plan Catalog (read-only reference)
   catalogPlans: any[] = [];
   catalogAddOns: any[] = [];
+  catalogSubTab = 'plans';
+  plansPage = 1;
+  addOnsPage = 1;
 
   // ── Invoices ──────────────────────────────────────────────────────────────
   invoices: Invoice[] = [];

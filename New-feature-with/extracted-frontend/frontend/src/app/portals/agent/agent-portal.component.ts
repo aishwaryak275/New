@@ -46,6 +46,9 @@ export class AgentPortalComponent implements OnInit {
   readonly pageSize = 8;
   searchResultsPage = 1;
   requestsPage = 1;
+  catalogSubTab = 'plans';
+  plansPage = 1;
+  addOnsPage = 1;
 
   // Search Screen
   searchQuery = '';
@@ -100,6 +103,13 @@ export class AgentPortalComponent implements OnInit {
   availablePlans: any[] = [];
   selectedWizardLine: any = null;
   selectedWizardPlan: any = null;
+
+  // Plan Provision Modal
+  isPlanProvisionOpen = false;
+  provisionLine: any = null;
+  provisionSelectedPlan: any = null;
+  provisionSelectedAddOn: any = null;
+  provisionAddOns: any[] = [];
 
   // Plan Catalog (read-only reference)
   catalogPlans: any[] = [];
@@ -472,17 +482,38 @@ export class AgentPortalComponent implements OnInit {
       next: (account) => {
         this.accountService.getSimLines(id).subscribe({
           next: (lines) => {
-            this.iamService.getUser(account.subscriberId).subscribe({
-              next: (user) => {
-                this.selectedAccount360 = { ...account, subscriber: user, lines, tickets: [] };
-                this.faultForm.patchValue({
-                  accountId: account.accountId,
-                  lineId: lines?.[0]?.lineId || ''
+            // Enrich lines with activeSubscription + plan (same as subscriber portal)
+            this.planService.getAllSubscriptions().subscribe({
+              next: (subs: any[]) => {
+                const enrichedLines = lines.map((line: any) => {
+                  const sub = subs.find((s: any) => s.lineId === line.lineId && s.status === 'A');
+                  if (!sub) return line;
+                  const plan = this.availablePlans.find((p: any) => p.planId === sub.planId) ?? { planId: sub.planId };
+                  return { ...line, activeSubscription: { ...sub, plan } };
+                });
+                this.iamService.getUser(account.subscriberId).subscribe({
+                  next: (user) => {
+                    this.selectedAccount360 = { ...account, subscriber: user, lines: enrichedLines, tickets: [] };
+                    this.faultForm.patchValue({ accountId: account.accountId, lineId: enrichedLines?.[0]?.lineId || '' });
+                  },
+                  error: () => {
+                    this.selectedAccount360 = { ...account, subscriber: null, lines: enrichedLines, tickets: [] };
+                    this.faultForm.patchValue({ accountId: account.accountId });
+                  }
                 });
               },
               error: () => {
-                this.selectedAccount360 = { ...account, subscriber: null, lines, tickets: [] };
-                this.faultForm.patchValue({ accountId: account.accountId });
+                // Fallback: use lines without subscription enrichment
+                this.iamService.getUser(account.subscriberId).subscribe({
+                  next: (user) => {
+                    this.selectedAccount360 = { ...account, subscriber: user, lines, tickets: [] };
+                    this.faultForm.patchValue({ accountId: account.accountId, lineId: lines?.[0]?.lineId || '' });
+                  },
+                  error: () => {
+                    this.selectedAccount360 = { ...account, subscriber: null, lines, tickets: [] };
+                    this.faultForm.patchValue({ accountId: account.accountId });
+                  }
+                });
               }
             });
           },
@@ -811,6 +842,61 @@ export class AgentPortalComponent implements OnInit {
     this.selectedWizardLine = null;
     this.selectedWizardPlan = null;
     this.wizardForm.reset();
+  }
+
+  // ==========================================
+  // Plan Provision Modal
+  // ==========================================
+  openPlanProvision(line: any): void {
+    this.provisionLine = line;
+    this.provisionSelectedPlan = null;
+    this.provisionSelectedAddOn = null;
+    this.provisionAddOns = [];
+    this.planService.getAddOns().subscribe({
+      next: (d) => this.provisionAddOns = d.filter((a: any) => a.status === 'A'),
+      error: () => {}
+    });
+    this.isPlanProvisionOpen = true;
+  }
+
+  closePlanProvision(): void {
+    this.isPlanProvisionOpen = false;
+    this.provisionLine = null;
+    this.provisionSelectedPlan = null;
+    this.provisionSelectedAddOn = null;
+  }
+
+  confirmPlanProvision(): void {
+    if (!this.provisionLine || !this.provisionSelectedPlan) return;
+    const planId = this.provisionSelectedPlan.planId;
+    const lineId = this.provisionLine.lineId;
+    const accountId = this.provisionLine.accountId ?? this.selectedAccount360?.accountId;
+    const today = new Date();
+    const activationDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const validityDays: number = this.provisionSelectedPlan.validityDays ?? 28;
+    const expiryDate = this.addDaysToDate(activationDate, validityDays);
+    const planPrice: number = this.provisionSelectedPlan.planPrice ?? 0;
+    const taxes = Math.round(planPrice * 0.18 * 100) / 100;
+
+    this.planService.createSubscription({ lineId, planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' }).subscribe({
+      next: (sub: any) => {
+        this.iamService.recordAudit('PLAN_PROVISIONED', 'AGENT');
+        const subscriptionId = sub?.subscriptionId ?? sub?.id;
+        if (this.provisionSelectedAddOn && subscriptionId) {
+          this.planService.updateSubscription(subscriptionId, { addOnId: this.provisionSelectedAddOn.addOnId }).subscribe({
+            next: () => {},
+            error: () => this.toastService.error('Add-on could not be attached.')
+          });
+        }
+        this.toastService.success(`Plan "${this.provisionSelectedPlan.name}" provisioned successfully!`);
+        if (accountId) this.autoCreateInvoice(accountId, planPrice, taxes, activationDate, expiryDate);
+        this.closePlanProvision();
+        if (this.selectedAccount360?.accountId) this.selectAccount(this.selectedAccount360.accountId);
+      },
+      error: (err: any) => {
+        this.toastService.error('Plan provision failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`));
+      }
+    });
   }
 
   // ── Create Account & SIM Line Modal Handlers ──────────────────────────────

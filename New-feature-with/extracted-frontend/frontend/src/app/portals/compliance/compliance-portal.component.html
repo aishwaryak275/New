@@ -325,19 +325,30 @@
       </div>
 
       <!-- TAB: PLAN CATALOG (read-only) -->
-      <div *ngIf="activeTab() === 'catalog'" [@fadeInUp] class="flex flex-col gap-6">
+      <div *ngIf="activeTab() === 'catalog'" [@fadeInUp] class="flex flex-col gap-4">
 
-        <!-- Plans -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <div class="flex items-center justify-between mb-5">
-            <div>
-              <h2 class="text-lg font-bold text-slate-800">Plan Catalog</h2>
-              <p class="text-xs text-slate-400 font-light mt-0.5">All available telecom plans — read-only reference</p>
-            </div>
-            <span class="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-semibold rounded-full">{{ catalogPlans.length }} plans</span>
-          </div>
+        <!-- Sub-tab toggle -->
+        <div class="flex gap-2">
+          <button (click)="catalogSubTab = 'plans'; plansPage = 1"
+            class="px-5 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+            [class.bg-sky-500]="catalogSubTab === 'plans'" [class.text-white]="catalogSubTab === 'plans'"
+            [class.bg-white]="catalogSubTab !== 'plans'" [class.text-slate-500]="catalogSubTab !== 'plans'"
+            [class.border]="catalogSubTab !== 'plans'" [class.border-slate-200]="catalogSubTab !== 'plans'">
+            Plan Catalog <span class="ml-1 text-xs opacity-75">({{ catalogPlans.length }})</span>
+          </button>
+          <button (click)="catalogSubTab = 'addons'; addOnsPage = 1"
+            class="px-5 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+            [class.bg-indigo-500]="catalogSubTab === 'addons'" [class.text-white]="catalogSubTab === 'addons'"
+            [class.bg-white]="catalogSubTab !== 'addons'" [class.text-slate-500]="catalogSubTab !== 'addons'"
+            [class.border]="catalogSubTab !== 'addons'" [class.border-slate-200]="catalogSubTab !== 'addons'">
+            Add-On Catalog <span class="ml-1 text-xs opacity-75">({{ catalogAddOns.length }})</span>
+          </button>
+        </div>
+
+        <!-- Plans panel -->
+        <div *ngIf="catalogSubTab === 'plans'" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <div *ngIf="catalogPlans.length === 0" class="text-center py-10 text-slate-400 text-sm">No plans loaded. Ensure the Plan service is running.</div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" [@staggerFadeIn]>
             <div *ngFor="let p of catalogPlans | paginate: plansPage : pageSize" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3">
               <div class="flex justify-between items-start">
                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
@@ -362,17 +373,10 @@
           <app-paginator [total]="catalogPlans.length" [page]="plansPage" [size]="pageSize" (pageChange)="plansPage = $event"></app-paginator>
         </div>
 
-        <!-- Add-Ons -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-          <div class="flex items-center justify-between mb-5">
-            <div>
-              <h2 class="text-lg font-bold text-slate-800">Add-On Catalog</h2>
-              <p class="text-xs text-slate-400 font-light mt-0.5">Available add-ons subscribers can activate — read-only reference</p>
-            </div>
-            <span class="px-3 py-1 bg-slate-100 text-slate-500 text-xs font-semibold rounded-full">{{ catalogAddOns.length }} add-ons</span>
-          </div>
+        <!-- Add-Ons panel -->
+        <div *ngIf="catalogSubTab === 'addons'" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
           <div *ngIf="catalogAddOns.length === 0" class="text-center py-10 text-slate-400 text-sm">No add-ons loaded.</div>
-          <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
+          <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" [@staggerFadeIn]>
             <div *ngFor="let a of catalogAddOns | paginate: addOnsPage : pageSize" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3">
               <div class="flex justify-between items-start">
                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">{{ getAddOnTypeLabel(a.type) }}</span>

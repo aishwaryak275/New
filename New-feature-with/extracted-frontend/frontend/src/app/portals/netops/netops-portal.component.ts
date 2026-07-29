@@ -27,6 +27,9 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
   readonly pageSize = 8;
   slaPage = 1;
   escalationsPage = 1;
+  catalogSubTab = 'plans';
+  plansPage = 1;
+  addOnsPage = 1;
 
   activeTab = signal<string>('kanban');
   isSidebarCollapsed = signal<boolean>(false);

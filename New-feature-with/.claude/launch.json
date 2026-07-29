@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "teleConnect-new",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "start", "--", "--port", "4202"],
+      "port": 4202,
+      "cwd": "extracted-frontend/frontend"
+    }
+  ]
+}

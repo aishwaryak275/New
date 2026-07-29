@@ -43,6 +43,17 @@ export class AdminPortalComponent implements OnInit {
 
   // ── Add-On Catalog ────────────────────────────────────────────────────────────
   addOnsList: any[] = [];
+  catalogSubTab = 'plans';
+  plansPage = 1;
+  addOnsPage = 1;
+
+  // ── Plan Provision Modal (Customer 360) ───────────────────────────────────────
+  isPlanProvisionOpen = false;
+  provisionLine: any = null;
+  provisionSelectedPlan: any = null;
+  provisionSelectedAddOn: any = null;
+  provisionPlans360: any[] = [];
+  provisionAddOns: any[] = [];
   addOnForm!: FormGroup;
   editingAddOnId: number | null = null;
   isAddOnModalOpen = false;
@@ -813,9 +824,25 @@ export class AdminPortalComponent implements OnInit {
       next: (account) => {
         this.accountService.getSimLines(id).subscribe({
           next: (lines) => {
-            this.iamService.getUser(account.subscriberId).subscribe({
-              next: (user) => { this.selected360Account = { ...account, subscriber: user, lines, tickets: [] }; this.search360Results = []; },
-              error: () => { this.selected360Account = { ...account, subscriber: null, lines, tickets: [] }; this.search360Results = []; }
+            this.planService.getAllSubscriptions().subscribe({
+              next: (subs: any[]) => {
+                const enrichedLines = lines.map((line: any) => {
+                  const sub = subs.find((s: any) => s.lineId === line.lineId && s.status === 'A');
+                  if (!sub) return line;
+                  const plan = this.plansList.find((p: any) => p.planId === sub.planId) ?? { planId: sub.planId };
+                  return { ...line, activeSubscription: { ...sub, plan } };
+                });
+                this.iamService.getUser(account.subscriberId).subscribe({
+                  next: (user) => { this.selected360Account = { ...account, subscriber: user, lines: enrichedLines, tickets: [] }; this.search360Results = []; },
+                  error: () => { this.selected360Account = { ...account, subscriber: null, lines: enrichedLines, tickets: [] }; this.search360Results = []; }
+                });
+              },
+              error: () => {
+                this.iamService.getUser(account.subscriberId).subscribe({
+                  next: (user) => { this.selected360Account = { ...account, subscriber: user, lines, tickets: [] }; this.search360Results = []; },
+                  error: () => { this.selected360Account = { ...account, subscriber: null, lines, tickets: [] }; this.search360Results = []; }
+                });
+              }
             });
           },
           error: () => { this.selected360Account = { ...account, subscriber: null, lines: [], tickets: [] }; this.search360Results = []; }
@@ -928,6 +955,84 @@ export class AdminPortalComponent implements OnInit {
         this.loadIamUsers();
       },
       error: () => this.toastService.error('Failed to delete SIM line.')
+    });
+  }
+
+  // ── Plan Provision (Customer 360) ─────────────────────────────────────────────
+  openPlanProvision360(line: any): void {
+    this.provisionLine = line;
+    this.provisionSelectedPlan = null;
+    this.provisionSelectedAddOn = null;
+    this.provisionPlans360 = [];
+    this.provisionAddOns = [];
+    this.planService.getPlans(true).subscribe({
+      next: (d) => this.provisionPlans360 = d,
+      error: () => {}
+    });
+    this.planService.getAddOns().subscribe({
+      next: (d) => this.provisionAddOns = d.filter((a: any) => a.status === 'A'),
+      error: () => {}
+    });
+    this.isPlanProvisionOpen = true;
+  }
+
+  closePlanProvision360(): void {
+    this.isPlanProvisionOpen = false;
+    this.provisionLine = null;
+    this.provisionSelectedPlan = null;
+    this.provisionSelectedAddOn = null;
+  }
+
+  confirmPlanProvision360(): void {
+    if (!this.provisionLine || !this.provisionSelectedPlan) return;
+    const planId = this.provisionSelectedPlan.planId;
+    const lineId = this.provisionLine.lineId;
+    const accountId = this.provisionLine.accountId ?? this.selected360Account?.accountId;
+    const today = new Date();
+    const activationDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const validityDays: number = this.provisionSelectedPlan.validityDays ?? 28;
+    const expiryDate = this.addDaysToDate(activationDate, validityDays);
+    const planPrice: number = this.provisionSelectedPlan.planPrice ?? 0;
+    const taxes = Math.round(planPrice * 0.18 * 100) / 100;
+
+    this.planService.createSubscription({ lineId, planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' }).subscribe({
+      next: (sub: any) => {
+        this.iamService.recordAudit('PLAN_PROVISIONED', 'ADMIN');
+        const subscriptionId = sub?.subscriptionId ?? sub?.id;
+        if (this.provisionSelectedAddOn && subscriptionId) {
+          this.planService.updateSubscription(subscriptionId, { addOnId: this.provisionSelectedAddOn.addOnId }).subscribe({
+            next: () => {},
+            error: () => this.toastService.error('Add-on could not be attached.')
+          });
+        }
+        this.toastService.success(`Plan "${this.provisionSelectedPlan.name}" provisioned successfully!`);
+        if (accountId) this.autoCreateInvoice360(accountId, planPrice, taxes, activationDate, expiryDate);
+        this.closePlanProvision360();
+        if (accountId) this.loadAccount360Profile(accountId);
+      },
+      error: (err: any) => {
+        this.toastService.error('Plan provision failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`));
+      }
+    });
+  }
+
+  private addDaysToDate(dateStr: string, days: number): string {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const date = new Date(y, m - 1, d + days);
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+  }
+
+  private autoCreateInvoice360(accountId: number, planPrice: number, taxes: number, cycleStart: string, cycleEnd: string): void {
+    this.billingService.createBillingCycle(accountId, cycleStart, cycleEnd).subscribe({
+      next: (cycle: any) => {
+        const cycleId = cycle?.cycleId ?? cycle?.id;
+        if (!cycleId) { this.toastService.error('Invoice not created: billing cycle ID missing.'); return; }
+        this.billingService.generateInvoice({ accountId, cycleId, planCharges: planPrice, excessCharges: 0, addOnCharges: 0, taxes }).subscribe({
+          next: () => this.toastService.success('Invoice generated and sent to the Billing Executive queue.'),
+          error: (err: any) => this.toastService.error('Invoice generation failed: ' + (err?.error?.message ?? `HTTP ${err?.status}`))
+        });
+      },
+      error: (err: any) => this.toastService.error('Billing cycle creation failed: ' + (err?.error?.message ?? `HTTP ${err?.status}`))
     });
   }
 }

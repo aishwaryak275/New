@@ -53,17 +53,6 @@
           <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">Usage Tracking</span>
         </button>
 
-        <!-- New Connection -->
-        <button 
-          (click)="openNewConnectionModal()"
-          class="w-full flex items-center gap-3.5 px-4 py-3 rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 transition duration-150 cursor-pointer focus:outline-none border border-sky-200"
-        >
-          <svg class="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          <span class="font-medium text-sm transition-opacity duration-200" *ngIf="!isSidebarCollapsed()">New Connection</span>
-        </button>
-
         <!-- Invoices -->
         <button 
           (click)="setTab('billing')"
@@ -201,7 +190,7 @@
           <div>
             <span class="px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-semibold uppercase tracking-wider mb-3 inline-block">Active Plan Subscription</span>
             <h3 class="text-3xl font-extrabold tracking-tight mb-2">{{ account360?.lines?.[0]?.activeSubscription?.plan?.name || 'Starter Plan' }}</h3>
-            <p class="text-indigo-200 text-sm font-light">Assigned Line: <strong class="text-white">+1-{{ account360?.lines?.[0]?.msisdn }}</strong> | Validity: {{ account360?.lines?.[0]?.activeSubscription?.plan?.validityDays }} Days</p>
+            <p class="text-indigo-200 text-sm font-light">Mobile Number: <strong class="text-white">+91-{{ account360?.lines?.[0]?.msisdn }}</strong> &nbsp;·&nbsp; Validity: {{ account360?.lines?.[0]?.activeSubscription?.plan?.validityDays }} Days</p>
           </div>
           <div class="text-left md:text-right shrink-0">
             <p class="text-4xl font-extrabold">₹{{ account360?.lines?.[0]?.activeSubscription?.plan?.planPrice }}<span class="text-xs text-indigo-300 font-light">/cycle</span></p>
@@ -211,8 +200,27 @@
           </div>
         </div>
 
-        <!-- Plan Catalog — Jio-style with Prepaid / Postpaid toggle -->
-        <div class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+        <!-- Sub-tab toggle -->
+        <div class="flex gap-2">
+          <button (click)="planSubTab = 'plans'; plansPage = 1"
+            class="px-5 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+            [class.bg-sky-600]="planSubTab === 'plans'" [class.text-white]="planSubTab === 'plans'"
+            [class.bg-white]="planSubTab !== 'plans'" [class.text-slate-500]="planSubTab !== 'plans'"
+            [class.border]="planSubTab !== 'plans'" [class.border-slate-200]="planSubTab !== 'plans'">
+            Available Plans
+          </button>
+          <button (click)="planSubTab = 'addons'; addOnsPage = 1"
+            class="px-5 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+            [class.bg-indigo-600]="planSubTab === 'addons'" [class.text-white]="planSubTab === 'addons'"
+            [class.bg-white]="planSubTab !== 'addons'" [class.text-slate-500]="planSubTab !== 'addons'"
+            [class.border]="planSubTab !== 'addons'" [class.border-slate-200]="planSubTab !== 'addons'">
+            Add-Ons
+            <span *ngIf="activeSubscriptionAddOn" class="ml-1.5 w-2 h-2 rounded-full bg-emerald-400 inline-block"></span>
+          </button>
+        </div>
+
+        <!-- Plans panel -->
+        <div *ngIf="planSubTab === 'plans'" class="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
 
           <!-- Heading + toggle -->
           <div class="text-center mb-6">
@@ -228,14 +236,14 @@
             </p>
             <div class="inline-flex bg-slate-100 rounded-full p-1 gap-0.5">
               <button
-                (click)="planFilter.set('All')"
+                (click)="planFilter.set('All'); plansPage = 1"
                 [class.bg-primary-700]="planFilter() === 'All'"
                 [class.text-white]="planFilter() === 'All'"
                 [class.text-slate-500]="planFilter() !== 'All'"
                 class="px-8 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
               >All</button>
               <button
-                (click)="planFilter.set('Prepaid')"
+                (click)="planFilter.set('Prepaid'); plansPage = 1"
                 [class.bg-white]="planFilter() === 'Prepaid'"
                 [class.shadow]="planFilter() === 'Prepaid'"
                 [class.text-slate-900]="planFilter() === 'Prepaid'"
@@ -243,7 +251,7 @@
                 class="px-8 py-2.5 rounded-full font-semibold text-sm transition-all duration-200 cursor-pointer focus:outline-none"
               >Prepaid</button>
               <button
-                (click)="planFilter.set('Postpaid')"
+                (click)="planFilter.set('Postpaid'); plansPage = 1"
                 [class.bg-white]="planFilter() === 'Postpaid'"
                 [class.shadow]="planFilter() === 'Postpaid'"
                 [class.text-slate-900]="planFilter() === 'Postpaid'"
@@ -262,11 +270,11 @@
               <input
                 type="text"
                 [ngModel]="planSearch()"
-                (ngModelChange)="planSearch.set($event)"
+                (ngModelChange)="planSearch.set($event); plansPage = 1"
                 placeholder="Search by data (GB), validity (days) or price (₹)…"
                 class="w-full pl-11 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-full text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-200"
               />
-              <button *ngIf="planSearch()" (click)="planSearch.set('')"
+              <button *ngIf="planSearch()" (click)="planSearch.set(''); plansPage = 1"
                 class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -288,10 +296,10 @@
             <p *ngIf="availablePlans().length > 0 && planSearch()" class="font-medium text-slate-500">No {{ planFilter() === 'All' ? '' : (planFilter() | lowercase) + ' ' }}plans match "{{ planSearch() }}".</p>
           </div>
 
-          <!-- Plan cards grid -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
+          <!-- Plan cards grid (paginated) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" [@staggerFadeIn]>
             <div
-              *ngFor="let p of filteredPlans()"
+              *ngFor="let p of (filteredPlans() | paginate: plansPage : pageSize)"
               class="rounded-2xl p-5 flex flex-col justify-between transition-all duration-200"
               [ngClass]="isPlanCompatible(p) ? 'bg-blue-50 border border-blue-100 hover:shadow-md hover:-translate-y-0.5' : 'bg-slate-50 border border-slate-200 opacity-80'"
             >
@@ -338,7 +346,6 @@
               </div>
 
               <!-- CTA -->
-              <!-- Incompatible plan type -->
               <button
                 *ngIf="!isPlanCompatible(p)"
                 (click)="onSelectPlan(p)"
@@ -350,7 +357,6 @@
                 </svg>
                 {{ p.type }} Only
               </button>
-              <!-- Compatible plan type -->
               <button
                 *ngIf="isPlanCompatible(p)"
                 [disabled]="hasActivePlan"
@@ -364,88 +370,79 @@
             </div>
           </div>
 
-          <!-- Plan count -->
-          <div *ngIf="filteredPlans().length > 0" class="text-center mt-6">
-            <span class="text-xs text-slate-500">
-              Showing {{ filteredPlans().length }} {{ planFilter() === 'All' ? '' : (planFilter() | lowercase) + ' ' }}plans
-              <ng-container *ngIf="accountType && planFilter() === 'All'">
-                &nbsp;·&nbsp;
-                <span class="font-semibold"
-                      [class.text-blue-600]="accountType === 'Prepaid'"
-                      [class.text-purple-600]="accountType === 'Postpaid'">
-                  {{ compatiblePlanCount }} compatible
-                </span>
-                with your {{ accountType }} account
-              </ng-container>
-            </span>
-          </div>
+          <app-paginator *ngIf="filteredPlans().length > pageSize" [total]="filteredPlans().length" [page]="plansPage" [size]="pageSize" (pageChange)="plansPage = $event"></app-paginator>
         </div>
 
-        <!-- ── Active Add-On Banner ── -->
-        <div *ngIf="activeSubscriptionAddOn" class="bg-gradient-to-r from-indigo-600 to-violet-700 rounded-2xl p-5 text-white flex items-center justify-between shadow-md">
-          <div>
-            <span class="text-[10px] font-semibold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Active Add-On</span>
-            <h3 class="text-lg font-extrabold mt-1">{{ activeSubscriptionAddOn.name }}</h3>
-            <p class="text-indigo-200 text-xs mt-0.5">{{ getAddOnTypeLabel(activeSubscriptionAddOn.type) }} &nbsp;·&nbsp; {{ activeSubscriptionAddOn.quota }} GB &nbsp;·&nbsp; {{ activeSubscriptionAddOn.validityDays }} days</p>
-          </div>
-          <span class="text-2xl font-extrabold">₹{{ activeSubscriptionAddOn.price }}</span>
-        </div>
+        <!-- Add-Ons panel -->
+        <div *ngIf="planSubTab === 'addons'" class="flex flex-col gap-4">
 
-        <!-- ── Add-Ons Section ── -->
-        <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-          <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+          <!-- Active Add-On Banner -->
+          <div *ngIf="activeSubscriptionAddOn" class="bg-gradient-to-r from-indigo-600 to-violet-700 rounded-2xl p-5 text-white flex items-center justify-between shadow-md">
             <div>
-              <h2 class="text-base font-bold text-slate-900">Available Add-Ons</h2>
-              <p class="text-xs text-slate-500 mt-0.5">Boost your plan with extra data, ISD packs, roaming, and more.</p>
+              <span class="text-[10px] font-semibold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">Active Add-On</span>
+              <h3 class="text-lg font-extrabold mt-1">{{ activeSubscriptionAddOn.name }}</h3>
+              <p class="text-indigo-200 text-xs mt-0.5">{{ getAddOnTypeLabel(activeSubscriptionAddOn.type) }} &nbsp;·&nbsp; {{ activeSubscriptionAddOn.quota }} GB &nbsp;·&nbsp; {{ activeSubscriptionAddOn.validityDays }} days</p>
             </div>
-            <span *ngIf="activeSubscriptionAddOn" class="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-3 py-1 font-semibold">
-              1 add-on active — remove it to add another
-            </span>
+            <span class="text-2xl font-extrabold">₹{{ activeSubscriptionAddOn.price }}</span>
           </div>
 
-          <div *ngIf="addOns().length > 0; else noAddOns" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div *ngFor="let addOn of addOns()"
-              class="border rounded-xl p-4 flex flex-col gap-3 transition-shadow"
-              [ngClass]="activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'border-indigo-300 bg-indigo-50/60 shadow-md' : 'border-slate-200 bg-slate-50/50 hover:shadow-md'">
-              <div class="flex items-center justify-between">
-                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700">
-                  {{ getAddOnTypeLabel(addOn.type) }}
-                </span>
-                <span *ngIf="activeSubscriptionAddOn?.addOnId === addOn.addOnId"
-                  class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">
-                  Your Add-On
-                </span>
-                <span *ngIf="activeSubscriptionAddOn?.addOnId !== addOn.addOnId" class="text-xs font-medium px-2 py-0.5 rounded-lg"
-                  [class.bg-emerald-50]="addOn.status === 'Active'"
-                  [class.text-emerald-700]="addOn.status === 'Active'"
-                  [class.bg-rose-50]="addOn.status !== 'Active'"
-                  [class.text-rose-700]="addOn.status !== 'Active'">
-                  {{ addOn.status }}
-                </span>
+          <!-- Add-Ons grid -->
+          <div class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
+            <div class="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <div>
+                <h2 class="text-base font-bold text-slate-900">Available Add-Ons</h2>
+                <p class="text-xs text-slate-500 mt-0.5">Boost your plan with extra data, ISD packs, roaming, and more.</p>
               </div>
-              <h3 class="text-sm font-bold text-slate-800">{{ addOn.name }}</h3>
-              <div class="flex gap-3 text-xs text-slate-600">
-                <span class="bg-white border border-slate-100 rounded-lg px-2 py-1">{{ addOn.quota }} GB</span>
-                <span class="bg-white border border-slate-100 rounded-lg px-2 py-1">{{ addOn.validityDays }} days</span>
-              </div>
-              <div class="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
-                <span class="text-lg font-extrabold text-slate-900">₹{{ addOn.price }}</span>
-                <button
-                  (click)="openAddOnModal(addOn)"
-                  [disabled]="(addOn.status !== 'Active' && addOn.status !== 'A') || !!activeSubscriptionAddOn || !hasActivePlan"
-                  [title]="!hasActivePlan ? 'Activate a plan first' : (activeSubscriptionAddOn ? 'You already have an active add-on' : 'Add to your plan')"
-                  class="px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition cursor-pointer shadow-sm"
-                  [ngClass]="activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'bg-indigo-500 cursor-not-allowed opacity-80' : (!!activeSubscriptionAddOn || !hasActivePlan ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-sky-600 hover:bg-sky-700')"
-                >
-                  {{ activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'Active' : 'Add to Plan' }}
-                </button>
+              <span *ngIf="activeSubscriptionAddOn" class="text-xs bg-amber-50 text-amber-700 border border-amber-200 rounded-full px-3 py-1 font-semibold">
+                1 add-on active — remove it to add another
+              </span>
+            </div>
+
+            <div *ngIf="addOns().length > 0; else noAddOns" class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div *ngFor="let addOn of (addOns() | paginate: addOnsPage : pageSize)"
+                class="border rounded-xl p-4 flex flex-col gap-3 transition-shadow"
+                [ngClass]="activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'border-indigo-300 bg-indigo-50/60 shadow-md' : 'border-slate-200 bg-slate-50/50 hover:shadow-md'">
+                <div class="flex items-center justify-between">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700">
+                    {{ getAddOnTypeLabel(addOn.type) }}
+                  </span>
+                  <span *ngIf="activeSubscriptionAddOn?.addOnId === addOn.addOnId"
+                    class="text-xs font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 border border-indigo-200">
+                    Your Add-On
+                  </span>
+                  <span *ngIf="activeSubscriptionAddOn?.addOnId !== addOn.addOnId" class="text-xs font-medium px-2 py-0.5 rounded-lg"
+                    [class.bg-emerald-50]="addOn.status === 'Active'"
+                    [class.text-emerald-700]="addOn.status === 'Active'"
+                    [class.bg-rose-50]="addOn.status !== 'Active'"
+                    [class.text-rose-700]="addOn.status !== 'Active'">
+                    {{ addOn.status }}
+                  </span>
+                </div>
+                <h3 class="text-sm font-bold text-slate-800">{{ addOn.name }}</h3>
+                <div class="flex gap-3 text-xs text-slate-600">
+                  <span class="bg-white border border-slate-100 rounded-lg px-2 py-1">{{ addOn.quota }} GB</span>
+                  <span class="bg-white border border-slate-100 rounded-lg px-2 py-1">{{ addOn.validityDays }} days</span>
+                </div>
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100 mt-auto">
+                  <span class="text-lg font-extrabold text-slate-900">₹{{ addOn.price }}</span>
+                  <button
+                    (click)="openAddOnModal(addOn)"
+                    [disabled]="(addOn.status !== 'Active' && addOn.status !== 'A') || !!activeSubscriptionAddOn || !hasActivePlan"
+                    [title]="!hasActivePlan ? 'Activate a plan first' : (activeSubscriptionAddOn ? 'You already have an active add-on' : 'Add to your plan')"
+                    class="px-3 py-1.5 text-white text-xs font-semibold rounded-lg transition cursor-pointer shadow-sm"
+                    [ngClass]="activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'bg-indigo-500 cursor-not-allowed opacity-80' : (!!activeSubscriptionAddOn || !hasActivePlan ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-sky-600 hover:bg-sky-700')"
+                  >
+                    {{ activeSubscriptionAddOn?.addOnId === addOn.addOnId ? 'Active' : 'Add to Plan' }}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
+            <app-paginator *ngIf="addOns().length > pageSize" [total]="addOns().length" [page]="addOnsPage" [size]="pageSize" (pageChange)="addOnsPage = $event"></app-paginator>
 
-          <ng-template #noAddOns>
-            <div class="p-8 text-center text-sm text-slate-400">No add-ons available at the moment.</div>
-          </ng-template>
+            <ng-template #noAddOns>
+              <div class="p-8 text-center text-sm text-slate-400">No add-ons available at the moment.</div>
+            </ng-template>
+          </div>
         </div>
       </div>
 
@@ -995,62 +992,6 @@
   </div>
 </div>
 
-<!-- 6. New Connection Request Modal -->
-<div *ngIf="isNewConnModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
-  <div [@scaleIn] class="bg-white w-full max-w-xl rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-    <div class="px-6 py-4 bg-gradient-to-r from-emerald-50 to-emerald-100 border-b border-emerald-200 flex justify-between items-center">
-      <div>
-        <h3 class="text-lg font-bold text-slate-900">Request New Connection</h3>
-        <p class="text-xs text-slate-600 mt-0.5">Submit your details so the KYC team can verify and activate your service.</p>
-      </div>
-      <button type="button" (click)="closeNewConnectionModal()" class="text-slate-400 hover:text-slate-600 text-2xl font-light cursor-pointer">×</button>
-    </div>
-
-    <form [formGroup]="newConnectionForm" (ngSubmit)="submitNewConnectionRequest()" class="space-y-0">
-      <div class="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Account Type</label>
-          <select formControlName="accountType" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
-            <option value="Prepaid">Prepaid (Pay as you go)</option>
-            <option value="Postpaid">Postpaid (Monthly Billing)</option>
-            <option value="Enterprise">Enterprise (Corporate Line)</option>
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">ID Proof Document (KYC)</label>
-          <input type="text" formControlName="idProofReference" placeholder="e.g. Aadhar / Passport / Driver License #" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-2">Preferred Telecom Plan</label>
-          <select formControlName="preferredPlanId" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-slate-900 font-medium focus:ring-2 focus:ring-emerald-500 focus:bg-white transition-all">
-            <option value="">Select a plan</option>
-            <option *ngFor="let p of availablePlans()" [value]="p.planId">
-              {{ p.name }} — ₹{{ p.planPrice }}/cycle ({{ p.dataGb }}GB Data, {{ p.validityDays }} Days)
-            </option>
-          </select>
-        </div>
-
-        <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4 text-sm text-emerald-800">
-          <p class="font-semibold mb-2">📋 What happens next?</p>
-          <ul class="list-disc list-inside space-y-1 text-xs">
-            <li>Our KYC team will verify your identity documents</li>
-            <li>You will receive a confirmation call within 24–48 hours</li>
-            <li>Your SIM and plan will be activated after verification</li>
-          </ul>
-        </div>
-      </div>
-
-      <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex gap-3 justify-end">
-        <button type="submit" [disabled]="isSubmittingNewConn" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md flex items-center gap-2 transition">
-          <span *ngIf="isSubmittingNewConn" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-          <span>{{ isSubmittingNewConn ? 'Submitting...' : 'Submit Request' }}</span>
-        </button>
-      </div>
-    </form>
-  </div>
-</div>
 
 <!-- My Account Modal -->
 <app-my-account-modal

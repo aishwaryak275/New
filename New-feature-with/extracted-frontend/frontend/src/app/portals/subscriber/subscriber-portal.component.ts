@@ -570,7 +570,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
         );
         const accountId: number = this.account360?.accountId;
         if (accountId) {
-          this.autoCreateInvoice(accountId, planPrice, taxes, activationDate, expiryDate);
+          this.autoCreateInvoice(accountId, lineId, this.targetPlan, planPrice, taxes, activationDate, expiryDate);
         }
         this.closeUpgradeModal();
         this.loadData();
@@ -597,6 +597,8 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
   private autoCreateInvoice(
     accountId: number,
+    lineId: number,
+    plan: any,
     planPrice: number,
     taxes: number,
     cycleStart: string,
@@ -619,6 +621,8 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
         }).subscribe({
           next: () => {
             this.toastService.success('Invoice generated successfully.');
+            // Bootstrap usage tracking for this line+cycle so it starts accumulating.
+            this.seedUsageTracking(lineId, cycleId, plan);
             setTimeout(() => this.loadInvoices(), 500);
           },
           error: (err: any) => {
@@ -632,6 +636,27 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
         this.toastService.error('Billing cycle creation failed: ' + msg);
       }
     });
+  }
+
+  /**
+   * Create a zero-usage record so the backend seeds a UsageSummary (with this plan's
+   * limits) for the line+cycle. Once the summary exists the scheduled usage simulator
+   * grows it over time, so a newly activated plan starts tracking immediately.
+   */
+  private seedUsageTracking(lineId: number, cycleId: number, plan: any): void {
+    const dataLimitMb = Number(plan?.dataGb ?? 0) * 1024;
+    const voiceLimitMin = Number(plan?.voiceMinutes ?? 0);
+    const smsLimit = Number(plan?.smsCount ?? 0);
+    this.usageService.createRecord({
+      lineId,
+      billingCycleId: cycleId,
+      usageType: 'DATA',
+      quantity: 1, // backend requires quantity > 0; 1 MB is a negligible seed
+      usageDate: new Date().toISOString().slice(0, 19),
+      dataLimitMb,
+      voiceLimitMin,
+      smsLimit
+    }).subscribe({ next: () => {}, error: () => {} });
   }
 
   // ==========================================

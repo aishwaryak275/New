@@ -37,7 +37,7 @@ public class UsageController {
 
         // USAGE RECORDING
         @PostMapping("/createRecord")
-        @PreAuthorize("hasAuthority('CREATE_USER')")
+        @PreAuthorize("hasAnyAuthority('CREATE_USER','USAGE_RECORDS')")
         public ResponseEntity<Map<String, String>> createRecord(
                         @Valid @RequestBody UsageRecordRequest req, HttpServletRequest httpReq) {
                 log.info("Creating usage record lineId={}", req.getLineId());

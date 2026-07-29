@@ -16,6 +16,18 @@ export class UsageService {
     return this.http.post<any>(`${this.base}/createRecord`, usageData);
   }
 
+  /**
+   * Record a usage entry including the billing cycle and plan limits. The backend
+   * auto-creates the usage summary (seeded with these limits) if none exists — used
+   * to bootstrap usage tracking the moment a plan is activated.
+   */
+  createRecord(req: {
+    lineId: number; billingCycleId: number; usageType: string; quantity: number;
+    usageDate?: string; dataLimitMb?: number; voiceLimitMin?: number; smsLimit?: number;
+  }): Observable<any> {
+    return this.http.post<any>(`${this.base}/createRecord`, req);
+  }
+
   // ── Records ──────────────────────────────────────────────────────────────────
 
   getRecordsByLine(lineId: number): Observable<any> {

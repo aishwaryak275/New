@@ -10,11 +10,13 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { fadeInUp, staggerFadeIn, shake, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
+import { PaginatorComponent } from '../../shared/pagination/paginator.component';
 
 @Component({
   selector: 'app-admin-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent, PaginatePipe, PaginatorComponent],
   templateUrl: './admin-portal.component.html',
   styleUrls: ['./admin-portal.component.css'],
   animations: [fadeInUp, staggerFadeIn, shake, scaleIn]
@@ -25,6 +27,11 @@ export class AdminPortalComponent implements OnInit {
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
   isProfileDropdownOpen = false;
+
+  // ── Client-side pagination (shared paginate pipe / app-paginator) ──────────────
+  readonly pageSize = 8;
+  usersPage = 1;
+  search360Page = 1;
 
   user!: User;
 
@@ -349,6 +356,7 @@ export class AdminPortalComponent implements OnInit {
   // ── User Manager ──────────────────────────────────────────────────────────────
   loadIamUsers(): void {
     this.userPage = 0;
+    this.usersPage = 1;
     this.iamService.getUsers().subscribe({
       next: (users) => { this.iamUsers = users; this.enrichUsersWithAccountStatus(); },
       error: () => this.toastService.error('Failed to load users.')
@@ -372,6 +380,7 @@ export class AdminPortalComponent implements OnInit {
 
   searchUsers(): void {
     this.userPage = 0;
+    this.usersPage = 1;
     const hasFilter = this.searchName || this.searchEmail || this.searchPhone || this.searchRole || this.searchStatus;
     if (!hasFilter) { this.loadIamUsers(); return; }
     this.iamService.searchUsers({
@@ -390,6 +399,7 @@ export class AdminPortalComponent implements OnInit {
     this.searchName = ''; this.searchEmail = ''; this.searchPhone = '';
     this.searchRole = ''; this.searchStatus = '';
     this.userPage = 0;
+    this.usersPage = 1;
     this.loadIamUsers();
   }
 
@@ -790,6 +800,7 @@ export class AdminPortalComponent implements OnInit {
       next: (users) => {
         this.isSearching360 = false;
         this.search360Results = users;
+        this.search360Page = 1;
         this.selected360Account = null;
         if (users.length === 0) { this.toastService.success('No records found.'); }
       },

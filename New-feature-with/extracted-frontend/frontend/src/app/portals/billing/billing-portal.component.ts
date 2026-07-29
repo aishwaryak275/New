@@ -10,11 +10,14 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { fadeInUp, staggerFadeIn, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
+import { PaginatorComponent } from '../../shared/pagination/paginator.component';
 
 type Section = 'invoices' | 'payments' | 'disputes' | 'reports' | 'settings' | 'catalog';
 
 interface Invoice {
   invoiceId: string;
+  rawId?: number;      // numeric backend id, used for the per-invoice PDF download
   accountId: string;
   customer: string;
   cycle: string;
@@ -52,7 +55,7 @@ interface Dispute {
 @Component({
   selector: 'app-billing-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent, PaginatePipe, PaginatorComponent],
   templateUrl: './billing-portal.component.html',
   styleUrls: ['./billing-portal.component.css'],
   animations: [fadeInUp, staggerFadeIn, scaleIn]
@@ -87,6 +90,11 @@ export class BillingPortalComponent implements OnInit {
   readonly invoicePageSize = 10;
   lastSync = '14:32 UTC';
   isRunActive = false;
+
+  // Shared page size for the paginated tables (keeps content on one screen).
+  readonly pageSize = 8;
+  paymentsPage = 1;
+  disputesPage = 1;
 
   // ── Payments ──────────────────────────────────────────────────────────────
   payments: Payment[] = [];
@@ -239,6 +247,7 @@ export class BillingPortalComponent implements OnInit {
   private mapInvoices(data: any[]): Invoice[] {
     return data.map(d => ({
       invoiceId: d.invoiceId != null ? `INV-${d.invoiceId}` : (d.invoiceCode ?? '—'),
+      rawId: d.invoiceId != null ? Number(d.invoiceId) : undefined,
       accountId: d.accountId != null ? `ACC-${d.accountId}` : '—',
       customer: d.customerName ?? d.accountName ?? 'Account #' + (d.accountId ?? ''),
       cycle: d.cycle ?? this.billingPeriod,
@@ -426,12 +435,75 @@ export class BillingPortalComponent implements OnInit {
     }, 1400);
   }
 
-  exportInvoices(): void {
-    this.toastService.success('Invoice list exported to CSV.');
+  /** Build a CSV file from headers + rows and trigger a download (opens in Excel). */
+  private downloadCsv(filename: string, headers: string[], rows: (string | number)[][]): void {
+    const esc = (v: any) => {
+      const s = String(v ?? '');
+      return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    };
+    const lines = [headers.map(esc).join(','), ...rows.map(r => r.map(esc).join(','))];
+    // Leading BOM so Excel detects UTF-8 correctly.
+    const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
 
+  exportInvoices(): void {
+    const rows = this.filteredInvoices.map(i => [
+      i.invoiceId, i.accountId, i.customer, i.cycle, i.amount, i.dueDate, i.status
+    ]);
+    this.downloadCsv(
+      `invoices_${this.billingPeriod.replace(/\s+/g, '_')}.csv`,
+      ['Invoice ID', 'Account ID', 'Customer', 'Cycle', 'Amount (INR)', 'Due Date', 'Status'],
+      rows
+    );
+    this.iamService.recordAudit('INVOICES_EXPORTED', 'BILLING');
+    this.toastService.success(`Exported ${rows.length} invoice(s) to CSV.`);
+  }
+
+  activeInvoice: Invoice | null = null;
+
   viewInvoice(inv: Invoice): void {
-    this.toastService.info('Opening details for ' + inv.invoiceId + ' (' + inv.customer + ').');
+    this.activeInvoice = inv;
+  }
+
+  closeInvoiceDetail(): void {
+    this.activeInvoice = null;
+  }
+
+  /** Download the individual invoice as a PDF from the backend. */
+  exportInvoicePdf(inv: Invoice | null): void {
+    if (!inv) return;
+    const id = inv.rawId ?? this.parseInvoiceNumber(inv.invoiceId);
+    if (!id) {
+      this.toastService.error('No downloadable record for this invoice.');
+      return;
+    }
+    this.billingService.downloadInvoice(id).subscribe({
+      next: (blob: Blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${inv.invoiceId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.iamService.recordAudit('INVOICE_PDF_EXPORTED', 'BILLING');
+      },
+      error: () => this.toastService.error('Failed to export invoice PDF.')
+    });
+  }
+
+  private parseInvoiceNumber(code: string): number | null {
+    const m = /(\d+)\s*$/.exec(code ?? '');
+    return m ? Number(m[1]) : null;
   }
 
   emailInvoice(inv: Invoice): void {
@@ -504,11 +576,65 @@ export class BillingPortalComponent implements OnInit {
   }
 
   exportPayments(): void {
-    this.toastService.success('Payment ledger exported to CSV.');
+    const rows = this.filteredPayments.map(p => [
+      p.paymentId, p.invoiceRef, p.accountId, p.customer, p.amount, p.method, p.date, p.reference, p.status
+    ]);
+    this.downloadCsv(
+      'payments.csv',
+      ['Payment ID', 'Invoice Ref', 'Account ID', 'Customer', 'Amount (INR)', 'Method', 'Date', 'Reference', 'Status'],
+      rows
+    );
+    this.toastService.success(`Exported ${rows.length} payment(s) to CSV.`);
   }
 
+  /** Render a printable payment receipt (browser print dialog → Save as PDF). */
   downloadReceipt(p: Payment): void {
-    this.toastService.info('Generating receipt for ' + p.paymentId + '…');
+    const row = (label: string, value: string) =>
+      `<tr><td style="padding:6px 0;color:#64748b">${label}</td><td style="padding:6px 0;text-align:right;font-weight:600;color:#0f172a">${value}</td></tr>`;
+    const html = `<!doctype html><html><head><meta charset="utf-8"><title>Receipt ${p.paymentId}</title>
+      <style>
+        *{font-family:Inter,Arial,sans-serif;box-sizing:border-box}
+        body{margin:0;padding:40px;color:#0f172a}
+        .card{max-width:520px;margin:0 auto;border:1px solid #e2e8f0;border-radius:16px;padding:32px}
+        h1{font-size:20px;margin:0}
+        .muted{color:#94a3b8;font-size:12px}
+        .badge{display:inline-block;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600}
+        table{width:100%;border-collapse:collapse;margin-top:20px;font-size:14px}
+        .total{border-top:1px solid #e2e8f0;margin-top:12px;padding-top:12px;display:flex;justify-content:space-between;align-items:center}
+        .total b{font-size:22px}
+        @media print{body{padding:0}.card{border:none}}
+      </style></head>
+      <body><div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div><h1>TeleConnect</h1><p class="muted">Payment Receipt</p></div>
+          <span class="badge">${p.status}</span>
+        </div>
+        <table>
+          ${row('Payment ID', p.paymentId)}
+          ${row('Invoice Reference', p.invoiceRef)}
+          ${row('Account', p.accountId)}
+          ${row('Customer', p.customer)}
+          ${row('Payment Method', p.method)}
+          ${row('Transaction Reference', p.reference)}
+          ${row('Date', p.date)}
+        </table>
+        <div class="total"><span class="muted">Amount Paid</span><b>${this.inr(p.amount)}</b></div>
+        <p class="muted" style="margin-top:24px;text-align:center">This is a system-generated receipt from the TeleConnect Billing module.</p>
+      </div>
+      <script>window.onload=function(){window.print();}<\/script>
+      </body></html>`;
+
+    const iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+    document.body.appendChild(iframe);
+    const win = iframe.contentWindow;
+    if (!win) { document.body.removeChild(iframe); this.toastService.error('Could not open receipt.'); return; }
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+    // Clean up the iframe once printing is done.
+    setTimeout(() => { try { document.body.removeChild(iframe); } catch {} }, 60000);
+    this.iamService.recordAudit('PAYMENT_RECEIPT_GENERATED', 'BILLING');
   }
 
   methodBadgeClass(method: string): string {
@@ -608,7 +734,15 @@ export class BillingPortalComponent implements OnInit {
   }
 
   exportDisputes(): void {
-    this.toastService.success('Dispute queue exported to CSV.');
+    const rows = this.filteredDisputes.map(d => [
+      d.disputeId, d.accountId, d.customer, d.invoice, d.category, d.reason, d.amount, d.priority, d.status, d.assignee, d.daysOpen
+    ]);
+    this.downloadCsv(
+      'disputes.csv',
+      ['Dispute ID', 'Account ID', 'Customer', 'Invoice', 'Category', 'Reason', 'Amount (INR)', 'Priority', 'Status', 'Assignee', 'Days Open'],
+      rows
+    );
+    this.toastService.success(`Exported ${rows.length} dispute(s) to CSV.`);
   }
 
   priorityBadgeClass(p: string): string {

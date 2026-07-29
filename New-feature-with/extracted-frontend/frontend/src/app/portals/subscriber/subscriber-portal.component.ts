@@ -14,16 +14,23 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { fadeInUp, staggerFadeIn, shake, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
+import { PaginatorComponent } from '../../shared/pagination/paginator.component';
 
 @Component({
   selector: 'app-subscriber-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent, PaginatePipe, PaginatorComponent],
   templateUrl: './subscriber-portal.component.html',
   styleUrls: ['./subscriber-portal.component.css'],
   animations: [fadeInUp, staggerFadeIn, shake, scaleIn]
 })
 export class SubscriberPortalComponent implements OnInit, AfterViewInit {
+  // Pagination
+  readonly pageSize = 8;
+  invoicesPage = 1;
+  requestsPage = 1;
+
   // Navigation
   activeTab = signal<string>('plan');
   isSidebarCollapsed = signal<boolean>(false);
@@ -895,12 +902,16 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
     if (this.newTicketForm.invalid || !this.account360) return;
 
     const lineId = this.account360.lines[0]?.lineId || null;
+    // Backend expects the priority code (L/M/H/C), not the display word.
+    const priorityCode: Record<string, string> = { Low: 'L', Medium: 'M', High: 'H', Critical: 'C' };
+    const rawPriority = this.newTicketForm.value.priority;
     this.ticketService.createFaultTicket({
       accountId: this.account360.accountId,
       lineId,
       faultType: this.newTicketForm.value.faultType,
       description: this.newTicketForm.value.description,
-      priority: this.newTicketForm.value.priority
+      priority: priorityCode[rawPriority] ?? rawPriority ?? 'M',
+      raisedDate: new Date().toISOString().split('T')[0]   // backend requires a LocalDate; status defaults to O (Open) server-side
     }).subscribe({
       next: () => {
         this.iamService.recordAudit('FAULT_TICKET_SUBMITTED', 'SUBSCRIBER');

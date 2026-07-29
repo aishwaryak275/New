@@ -10,16 +10,23 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { fadeInUp, staggerFadeIn, shake, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
+import { PaginatorComponent } from '../../shared/pagination/paginator.component';
 
 @Component({
   selector: 'app-netops-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, MyAccountModalComponent],
+  imports: [CommonModule, FormsModule, MyAccountModalComponent, PaginatePipe, PaginatorComponent],
   templateUrl: './netops-portal.component.html',
   styleUrls: ['./netops-portal.component.css'],
   animations: [fadeInUp, staggerFadeIn, shake, scaleIn]
 })
 export class NetopsPortalComponent implements OnInit, OnDestroy {
+  // Client-side pagination
+  readonly pageSize = 8;
+  slaPage = 1;
+  escalationsPage = 1;
+
   activeTab = signal<string>('kanban');
   isSidebarCollapsed = signal<boolean>(false);
   isNotificationOpen = signal<boolean>(false);
@@ -39,12 +46,13 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
   currentTime = new Date();
   private timerInterval: any;
 
-  // Regional impairment drilldown
+  // Impairment drilldown — grouped by fault category (a real field on every ticket).
   regionsList = [
-    { name: 'North', status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 },
-    { name: 'South', status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 },
-    { name: 'East', status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 },
-    { name: 'West', status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 }
+    { name: 'NoCoverage',   label: 'No Coverage',   status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 },
+    { name: 'CallDrops',    label: 'Call Drops',    status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 },
+    { name: 'SlowData',     label: 'Slow Data',     status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 },
+    { name: 'BillingIssue', label: 'Billing Issue', status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 },
+    { name: 'Activation',   label: 'Activation',    status: 'Clear', color: 'bg-emerald-500', border: 'border-emerald-600/30', count: 0 }
   ];
   selectedRegionFilter: string | null = null;
 
@@ -91,10 +99,25 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
     }
   }
 
+  // Backend stores ticket status as codes (O/P/R/C/E); the board works in words.
+  private readonly statusWord: Record<string, string> = {
+    O: 'Open', P: 'InProgress', R: 'Resolved', C: 'Closed', E: 'Escalated'
+  };
+  private readonly statusCode: Record<string, string> = {
+    Open: 'O', InProgress: 'P', Resolved: 'R', Closed: 'C', Escalated: 'E'
+  };
+  private toStatusWord(s: string): string {
+    return this.statusWord[s] ?? s; // pass through if already a word
+  }
+
   loadTickets(): void {
     this.ticketService.getFaultTickets().subscribe({
       next: (data) => {
-        this.allTickets = data;
+        this.allTickets = (data ?? []).map((t: any) => ({
+          ...t,
+          id: t.id ?? t.ticketId,
+          status: this.toStatusWord(t.status)
+        }));
         this.updateRegionMetrics();
         this.loadEscalatedQueue();
         this.calculateSlaPercentage();
@@ -113,7 +136,9 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
 
   loadEscalatedQueue(): void {
     this.ticketService.getEscalatedTickets().subscribe(data => {
-      this.escalatedQueue = data;
+      this.escalatedQueue = (data ?? [])
+        .map((t: any) => ({ ...t, id: t.id ?? t.ticketId, status: this.toStatusWord(t.status) }))
+        .filter((t: any) => t.status === 'Escalated');
     });
   }
 
@@ -136,11 +161,10 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
     // Reset counts
     this.regionsList.forEach(r => r.count = 0);
     
-    // Count active tickets per region
+    // Count active (not Resolved/Closed) tickets per fault category
     this.allTickets.forEach(t => {
       if (t.status !== 'Closed' && t.status !== 'Resolved') {
-        const region = t.account.subscriber.regionId;
-        const match = this.regionsList.find(r => r.name.toLowerCase() === region?.toLowerCase());
+        const match = this.regionsList.find(r => r.name === t.faultType);
         if (match) match.count++;
       }
     });
@@ -243,7 +267,7 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
   getTicketsInColumn(col: string): any[] {
     let list = this.allTickets.filter(t => t.status === col);
     if (this.selectedRegionFilter) {
-      list = list.filter(t => t.account.subscriber.regionId?.toLowerCase() === this.selectedRegionFilter?.toLowerCase());
+      list = list.filter(t => t.faultType === this.selectedRegionFilter);
     }
     return list;
   }
@@ -255,7 +279,9 @@ export class NetopsPortalComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.ticketService.updateFaultStatus(ticketId, status).subscribe({
+    // Backend expects the status code (O/P/R/C/E), not the display word.
+    const code = this.statusCode[status] ?? status;
+    this.ticketService.updateFaultStatus(ticketId, code).subscribe({
       next: () => {
         this.iamService.recordAudit('TICKET_STATUS_UPDATED', 'NETOPS');
         this.toastService.success(`Ticket #${ticketId} status updated to ${status}.`);

@@ -144,9 +144,10 @@
       <!-- ========================================== -->
       <!-- TAB: FILINGS TRACKER                       -->
       <!-- ========================================== -->
-      <div *ngIf="activeTab() === 'filings'" [@fadeInUp] class="grid md:grid-cols-2 gap-6">
-        <div 
-          *ngFor="let f of filings" 
+      <div *ngIf="activeTab() === 'filings'" [@fadeInUp]>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div
+          *ngFor="let f of filings | paginate: filingsPage : pageSize"
           [class.border-rose-500]="f.status === 'Overdue'"
           [class.bg-rose-50]="f.status === 'Overdue'"
           [class.bg-white]="f.status !== 'Overdue'"
@@ -184,6 +185,8 @@
           </div>
         </div>
       </div>
+      <app-paginator [total]="filings.length" [page]="filingsPage" [size]="pageSize" (pageChange)="filingsPage = $event"></app-paginator>
+      </div>
 
       <!-- ========================================== -->
       <!-- TAB: KYC COMPLIANCE DASHBOARD              -->
@@ -215,7 +218,7 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
-                  <tr *ngFor="let acc of nonCompliantAccounts" class="hover:bg-slate-50/20">
+                  <tr *ngFor="let acc of nonCompliantAccounts | paginate: kycPage : pageSize" class="hover:bg-slate-50/20">
                     <td class="px-6 py-3 font-semibold text-slate-700">#{{ acc.accountId }}</td>
                     <td class="px-6 py-3 font-bold text-slate-800">
                       {{ acc.subscriberName }}
@@ -253,6 +256,7 @@
                 </tbody>
               </table>
             </div>
+            <app-paginator [total]="nonCompliantAccounts.length" [page]="kycPage" [size]="pageSize" (pageChange)="kycPage = $event"></app-paginator>
           </div>
         </div>
       </div>
@@ -271,7 +275,7 @@
           </div>
           <div *ngIf="catalogPlans.length === 0" class="text-center py-10 text-slate-400 text-sm">No plans loaded. Ensure the Plan service is running.</div>
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
-            <div *ngFor="let p of catalogPlans" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3">
+            <div *ngFor="let p of catalogPlans | paginate: plansPage : pageSize" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3">
               <div class="flex justify-between items-start">
                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                       [class.bg-blue-100]="p.type === 'Prepaid'" [class.text-blue-700]="p.type === 'Prepaid'"
@@ -292,6 +296,7 @@
               </div>
             </div>
           </div>
+          <app-paginator [total]="catalogPlans.length" [page]="plansPage" [size]="pageSize" (pageChange)="plansPage = $event"></app-paginator>
         </div>
 
         <!-- Add-Ons -->
@@ -305,7 +310,7 @@
           </div>
           <div *ngIf="catalogAddOns.length === 0" class="text-center py-10 text-slate-400 text-sm">No add-ons loaded.</div>
           <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" [@staggerFadeIn]>
-            <div *ngFor="let a of catalogAddOns" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3">
+            <div *ngFor="let a of catalogAddOns | paginate: addOnsPage : pageSize" class="bg-slate-50 border border-slate-200 rounded-2xl p-5 flex flex-col gap-3">
               <div class="flex justify-between items-start">
                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700">{{ getAddOnTypeLabel(a.type) }}</span>
                 <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full"
@@ -322,6 +327,7 @@
               </div>
             </div>
           </div>
+          <app-paginator [total]="catalogAddOns.length" [page]="addOnsPage" [size]="pageSize" (pageChange)="addOnsPage = $event"></app-paginator>
         </div>
 
       </div>

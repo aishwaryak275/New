@@ -11,11 +11,13 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { fadeInUp, staggerFadeIn, shake, scaleIn, slideHorizontal } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
+import { PaginatorComponent } from '../../shared/pagination/paginator.component';
 
 @Component({
   selector: 'app-agent-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent, PaginatePipe, PaginatorComponent],
   templateUrl: './agent-portal.component.html',
   styleUrls: ['./agent-portal.component.css'],
   animations: [fadeInUp, staggerFadeIn, shake, scaleIn, slideHorizontal]
@@ -39,6 +41,11 @@ export class AgentPortalComponent implements OnInit {
 
   // User session
   user!: User;
+
+  // Client-side pagination
+  readonly pageSize = 8;
+  searchResultsPage = 1;
+  requestsPage = 1;
 
   // Search Screen
   searchQuery = '';
@@ -423,6 +430,7 @@ export class AgentPortalComponent implements OnInit {
     this.accountService.searchAccounts(query).subscribe({
       next: (data) => {
         this.searchResults = data;
+        this.searchResultsPage = 1;
         this.isSearching = false;
         this.selectedAccount360 = null;
         if (data.length === 0) {
@@ -603,6 +611,11 @@ export class AgentPortalComponent implements OnInit {
   getFilteredRequests(): any[] {
     if (this.filterStatus === 'All') return this.requestsQueue;
     return this.requestsQueue.filter(r => r.status === this.filterStatus);
+  }
+
+  setRequestFilter(status: string): void {
+    this.filterStatus = status;
+    this.requestsPage = 1;
   }
 
   approvingRequestId: number | null = null;

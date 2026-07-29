@@ -37,7 +37,7 @@ public class FaultTicketController {
 
     // POST /teleConnect/fault/createTickets
     @PostMapping("/createTickets")
-    @PreAuthorize("hasAuthority('SERVICE_REQUEST')")
+    @PreAuthorize("hasAnyAuthority('SERVICE_REQUEST','RAISE_SERVICE_REQUEST','CREATE_FAULT_TICKET')")
     public ResponseEntity<MessageResponse> createTicket(
             @Valid @RequestBody FaultTicketRequest req,
             HttpServletRequest httpReq) {

@@ -37,7 +37,8 @@ export class TicketService {
    * Components call: assignTicket(ticketId, engineerId)
    */
   assignTicket(ticketId: number, engineerId: number): Observable<any> {
-    return this.http.put<any>(`${this.base}/assignTickets/${ticketId}`, { engineerId });
+    // Backend FaultTicketRequest expects the field `assignedToId`, not `engineerId`.
+    return this.http.put<any>(`${this.base}/assignTickets/${ticketId}`, { assignedToId: engineerId });
   }
 
   /**
@@ -50,7 +51,12 @@ export class TicketService {
   }
 
   updateFaultStatus(ticketId: number, status: string, reason?: string): Observable<any> {
-    return this.http.put<any>(`${this.base}/updateTickets/${ticketId}`, { status, reason });
+    // Backend expects the status code (O/P/R/C/E). Accept either a word or a code.
+    const codeMap: Record<string, string> = {
+      Open: 'O', InProgress: 'P', Resolved: 'R', Closed: 'C', Escalated: 'E'
+    };
+    const statusCode = codeMap[status] ?? status;
+    return this.http.put<any>(`${this.base}/updateTickets/${ticketId}`, { status: statusCode, reason });
   }
 
   // ── Service Requests ─────────────────────────────────────────────────────────

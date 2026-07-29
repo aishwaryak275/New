@@ -205,7 +205,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-sm">
-              <tr *ngFor="let s of searchResults" class="hover:bg-slate-50/40">
+              <tr *ngFor="let s of (searchResults | paginate: searchResultsPage : pageSize)" class="hover:bg-slate-50/40">
                 <td class="px-6 py-4 font-semibold text-slate-700">#{{ s.accountId }}</td>
                 <td class="px-6 py-4 font-bold text-slate-800">{{ s.subscriberName }}</td>
                 <td class="px-6 py-4 text-slate-500 font-light">{{ s.subscriberEmail }}</td>
@@ -224,6 +224,7 @@
               </tr>
             </tbody>
           </table>
+          <app-paginator [total]="searchResults.length" [page]="searchResultsPage" [size]="pageSize" (pageChange)="searchResultsPage = $event"></app-paginator>
         </div>
 
         <!-- Selected Account 360 View Panel -->
@@ -415,7 +416,7 @@
             <!-- Filter chips -->
             <button 
               *ngFor="let f of ['All', 'Open', 'InProgress', 'Completed']"
-              (click)="filterStatus = f"
+              (click)="setRequestFilter(f)"
               [class.bg-sky-100]="filterStatus === f"
               [class.text-sky-700]="filterStatus === f"
               [class.bg-slate-100]="filterStatus !== f"
@@ -440,7 +441,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-sm">
-              <tr *ngFor="let r of getFilteredRequests()" class="hover:bg-slate-50/50">
+              <tr *ngFor="let r of (getFilteredRequests() | paginate: requestsPage : pageSize)" class="hover:bg-slate-50/50">
                 <td class="px-6 py-4 font-semibold text-slate-700">#SR-{{ r.requestId || r.id }}</td>
                 <td class="px-6 py-4 font-bold text-slate-800">
                   {{ (r.accountId || r.account?.id) ? '#' + (r.accountId || r.account?.id) : 'Unassigned (New Connection)' }}
@@ -517,6 +518,7 @@
             </tbody>
           </table>
         </div>
+        <app-paginator [total]="getFilteredRequests().length" [page]="requestsPage" [size]="pageSize" (pageChange)="requestsPage = $event"></app-paginator>
       </div>
 
       <!-- ========================================== -->

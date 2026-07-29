@@ -584,7 +584,7 @@
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100 text-sm">
-              <ng-container *ngFor="let inv of myInvoices">
+              <ng-container *ngFor="let inv of (myInvoices | paginate: invoicesPage : pageSize)">
                 <tr class="hover:bg-slate-50/50 cursor-pointer" (click)="toggleInvoiceDetail(inv.invoiceId)">
                   <td class="px-6 py-4 font-semibold text-slate-700">#{{ inv.invoiceId }}</td>
                   <td class="px-6 py-4 font-bold text-slate-800">₹{{ inv.totalAmount }}</td>
@@ -659,6 +659,7 @@
             </tbody>
           </table>
         </div>
+        <app-paginator [total]="myInvoices.length" [page]="invoicesPage" [size]="pageSize" (pageChange)="invoicesPage = $event"></app-paginator>
       </div>
 
       <!-- ========================================== -->
@@ -677,7 +678,7 @@
 
         <!-- Service Requests with Stepper progress -->
         <div class="grid gap-6">
-          <div *ngFor="let req of serviceRequests" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <div *ngFor="let req of (serviceRequests | paginate: requestsPage : pageSize)" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
             <div class="flex justify-between items-start mb-6">
               <div>
                 <h4 class="text-base font-bold text-slate-800 tracking-tight">{{ req.requestType }} Request</h4>
@@ -731,6 +732,7 @@
             </div>
           </div>
         </div>
+        <app-paginator [total]="serviceRequests.length" [page]="requestsPage" [size]="pageSize" (pageChange)="requestsPage = $event"></app-paginator>
       </div>
 
     </div>

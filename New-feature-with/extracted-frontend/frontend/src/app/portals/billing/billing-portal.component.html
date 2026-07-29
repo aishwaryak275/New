@@ -186,7 +186,7 @@
               <button (click)="startInvoiceRun()" [disabled]="isRunActive"
                 class="text-sm font-medium text-white bg-primary-700 hover:bg-primary-800 rounded-lg px-4 py-2 flex items-center gap-1.5 disabled:opacity-60">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
-                {{ isRunActive ? 'Running…' : 'Start New Invoice Run' }}
+                {{ isRunActive ? 'Running…' : 'Invoice' }}
               </button>
             </div>
 
@@ -219,8 +219,7 @@
                       </span>
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap">
-                      <button (click)="viewInvoice(inv)" class="text-primary-600 hover:underline text-sm mr-3">View Details</button>
-                      <button (click)="emailInvoice(inv)" class="text-slate-500 hover:underline text-sm">Email</button>
+                      <button (click)="viewInvoice(inv)" class="text-primary-600 hover:underline text-sm">View Details</button>
                     </td>
                   </tr>
                   <tr *ngIf="pagedInvoices.length === 0">
@@ -338,7 +337,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let p of filteredPayments" class="border-b border-slate-50 hover:bg-slate-50/60">
+                <tr *ngFor="let p of (filteredPayments | paginate: paymentsPage : pageSize)" class="border-b border-slate-50 hover:bg-slate-50/60">
                   <td class="px-4 py-3 font-medium text-primary-700">{{ p.paymentId }}</td>
                   <td class="px-4 py-3 text-slate-600">{{ p.invoiceRef }}</td>
                   <td class="px-4 py-3">
@@ -370,6 +369,7 @@
             <p class="text-xs text-slate-400">Showing {{ filteredPayments.length }} of {{ payments.length }} payments</p>
             <p class="text-xs text-slate-500">Total: <span class="font-bold text-emerald-600">{{ inr(paymentKpis.total) }}</span></p>
           </div>
+          <app-paginator [total]="filteredPayments.length" [page]="paymentsPage" [size]="pageSize" (pageChange)="paymentsPage = $event" class="block px-4 border-t border-slate-100"></app-paginator>
         </div>
       </section>
 
@@ -442,7 +442,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let d of filteredDisputes" class="border-b border-slate-50 hover:bg-slate-50/60">
+                <tr *ngFor="let d of (filteredDisputes | paginate: disputesPage : pageSize)" class="border-b border-slate-50 hover:bg-slate-50/60">
                   <td class="px-4 py-3 font-medium text-primary-700">{{ d.disputeId }}</td>
                   <td class="px-4 py-3">
                     <p class="text-slate-500 text-xs">{{ d.accountId }}</p>
@@ -483,6 +483,7 @@
           <div class="px-4 py-3 border-t border-slate-100">
             <p class="text-xs text-slate-400">Showing {{ filteredDisputes.length }} of {{ disputes.length }} disputes</p>
           </div>
+          <app-paginator [total]="filteredDisputes.length" [page]="disputesPage" [size]="pageSize" (pageChange)="disputesPage = $event" class="block px-4 pb-2"></app-paginator>
         </div>
       </section>
 
@@ -873,6 +874,39 @@
       </div>
       <div class="flex justify-end gap-3 px-6 py-4 border-t border-slate-100">
         <button (click)="submitLogDispute()" class="text-sm font-medium text-white bg-primary-700 hover:bg-primary-800 px-4 py-2 rounded-lg">Log Dispute</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Invoice Details -->
+  <div *ngIf="activeInvoice" class="fixed inset-0 bg-black/40 z-40 flex items-center justify-center p-4" (click)="closeInvoiceDetail()">
+    <div @scaleIn class="bg-white rounded-2xl shadow-2xl w-full max-w-md" (click)="$event.stopPropagation()">
+      <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900">{{ activeInvoice.invoiceId }}</h3>
+          <p class="text-xs text-slate-400">{{ activeInvoice.accountId }} · {{ activeInvoice.customer }}</p>
+        </div>
+        <button (click)="closeInvoiceDetail()" class="text-slate-400 hover:text-slate-600"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+      </div>
+      <div class="p-6 space-y-3 text-sm">
+        <div class="flex items-center justify-between"><span class="text-slate-500">Billing Cycle</span><span class="font-medium text-slate-800">{{ activeInvoice.cycle }}</span></div>
+        <div class="flex items-center justify-between"><span class="text-slate-500">Due Date</span><span class="font-medium" [ngClass]="activeInvoice.status === 'Overdue' ? 'text-rose-600' : 'text-slate-800'">{{ activeInvoice.dueDate }}</span></div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500">Status</span>
+          <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium" [ngClass]="invoiceStatusBadgeClass(activeInvoice.status)">
+            <span class="w-1.5 h-1.5 rounded-full" [ngClass]="invoiceDotClass(activeInvoice.status)"></span>{{ activeInvoice.status }}
+          </span>
+        </div>
+        <div class="flex items-center justify-between pt-3 mt-1 border-t border-slate-100">
+          <span class="text-slate-600 font-semibold">Total Amount</span>
+          <span class="text-xl font-bold text-slate-900">{{ inr(activeInvoice.amount) }}</span>
+        </div>
+      </div>
+      <div class="flex justify-end px-6 py-4 border-t border-slate-100">
+        <button (click)="exportInvoicePdf(activeInvoice)" class="text-sm font-medium text-white bg-primary-700 hover:bg-primary-800 px-4 py-2 rounded-lg flex items-center gap-1.5">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M12 4v12m0 0l-4-4m4 4l4-4"/></svg>
+          Export
+        </button>
       </div>
     </div>
   </div>

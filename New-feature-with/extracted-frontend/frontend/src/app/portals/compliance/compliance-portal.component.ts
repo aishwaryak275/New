@@ -11,11 +11,13 @@ import { NotificationService } from '../../core/services/notification.service';
 import { ToastService } from '../../core/services/toast.service';
 import { fadeInUp, staggerFadeIn, shake, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
+import { PaginatorComponent } from '../../shared/pagination/paginator.component';
 
 @Component({
   selector: 'app-compliance-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, MyAccountModalComponent],
+  imports: [CommonModule, FormsModule, MyAccountModalComponent, PaginatePipe, PaginatorComponent],
   templateUrl: './compliance-portal.component.html',
   styleUrls: ['./compliance-portal.component.css'],
   animations: [fadeInUp, staggerFadeIn, shake, scaleIn]
@@ -26,6 +28,13 @@ export class CompliancePortalComponent implements OnInit {
   isNotificationOpen = signal<boolean>(false);
   isMyAccountOpen = false;
   isProfileDropdownOpen = false;
+
+  // Pagination
+  readonly pageSize = 8;
+  filingsPage = 1;
+  kycPage = 1;
+  plansPage = 1;
+  addOnsPage = 1;
 
   // User session
   user!: User;

@@ -50,7 +50,7 @@ public class FaultTicketController {
 
     // GET /teleConnect/fault/getAllTickets
     @GetMapping("/getAllTickets")
-    @PreAuthorize("hasAuthority('GET_UPDATE_TICKET')")
+    @PreAuthorize("hasAnyAuthority('GET_UPDATE_TICKET','RAISE_SERVICE_REQUEST')")
     public ResponseEntity<List<FaultTicketResponse>> getAllTickets() {
         log.info("Fetching all fault tickets");
         List<FaultTicketResponse> tickets = ticketService.getAllTickets();

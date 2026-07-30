@@ -663,73 +663,130 @@
       <!-- TAB: SUPPORT CENTRE & SERVICE REQUESTS     -->
       <!-- ========================================== -->
       <div *ngIf="activeTab() === 'support'" [@fadeInUp] class="flex flex-col gap-6">
-        <!-- Support options header buttons -->
-        <div class="flex gap-4">
-          <button (click)="openRequestModal()" class="px-4 py-3 bg-sky-600 text-white font-semibold rounded-xl text-xs hover:bg-sky-700 transition cursor-pointer shadow-lg shadow-sky-600/15">
-            + Raise Service Request
+        <!-- Top CTAs — open the matching form panel -->
+        <div class="flex flex-wrap gap-3">
+          <button (click)="openRequestModal()"
+            class="px-4 py-2.5 font-semibold rounded-xl text-sm transition shadow-sm flex items-center gap-1.5"
+            [ngClass]="isRequestModalOpen ? 'bg-sky-700 text-white' : 'bg-sky-600 text-white hover:bg-sky-700'">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+            Raise service request
           </button>
-          <button (click)="openTicketModal()" class="px-4 py-3 bg-slate-900 text-white font-semibold rounded-xl text-xs hover:bg-slate-800 transition cursor-pointer shadow-lg">
-            + Raise Fault Ticket
+          <button (click)="openTicketModal()"
+            class="px-4 py-2.5 font-semibold rounded-xl text-sm transition shadow-sm flex items-center gap-1.5"
+            [ngClass]="isTicketModalOpen ? 'bg-black text-white' : 'bg-slate-900 text-white hover:bg-slate-800'">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-2.99l-6.93-12a2 2 0 00-3.48 0l-6.93 12A2 2 0 005.07 19z"/></svg>
+            Report a fault
           </button>
         </div>
 
-        <!-- Service Requests with Stepper progress -->
-        <div class="grid gap-6">
-          <div *ngFor="let req of (serviceRequests | paginate: requestsPage : pageSize)" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-            <div class="flex justify-between items-start mb-6">
-              <div>
-                <h4 class="text-base font-bold text-slate-800 tracking-tight">{{ req.requestType }} Request</h4>
-                <p class="text-xs text-slate-400 font-light mt-1">Ticket #SR-{{ req.id }} | Raised on {{ req.raisedDate | date:'mediumDate' }}</p>
-              </div>
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
-                {{ req.status }}
-              </span>
+        <!-- Form panels (shown when a button is clicked) -->
+        <div *ngIf="isRequestModalOpen || isTicketModalOpen" class="grid md:grid-cols-2 gap-6">
+          <!-- Raise service request -->
+          <div *ngIf="isRequestModalOpen" [@fadeInUp] class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" [formGroup]="newRequestForm">
+            <h3 class="text-base font-bold text-slate-800 mb-4">Raise service request</h3>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Request type</label>
+            <select formControlName="requestType" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary-500 mb-4">
+              <option value="PlanChange">Plan change</option>
+              <option value="SIMReplacement">SIM replacement</option>
+              <option value="PortingRequest">Porting request</option>
+              <option value="AccountUpdate">Account update</option>
+            </select>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Line</label>
+            <select formControlName="lineId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary-500 mb-4">
+              <option [ngValue]="null">Your number</option>
+              <option *ngFor="let l of account360?.lines" [ngValue]="l.lineId">{{ l.msisdn }}</option>
+            </select>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Details</label>
+            <textarea formControlName="additionalDetails" rows="3" placeholder="e.g. move me to the 599 postpaid plan"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary-500 resize-none"></textarea>
+            <div class="flex justify-end gap-2 mt-4">
+              <button type="button" (click)="closeRequestModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-slate-100">Cancel</button>
+              <button type="button" (click)="submitServiceRequest()" [disabled]="isSubmittingRequest || newRequestForm.invalid" class="px-4 py-2 text-sm font-semibold text-white bg-sky-600 hover:bg-sky-700 rounded-xl disabled:opacity-60">{{ isSubmittingRequest ? 'Submitting…' : 'Submit request' }}</button>
             </div>
+          </div>
 
-            <!-- Stepper visualization -->
-            <div class="relative flex items-center justify-between max-w-lg mx-auto py-4">
-              <!-- Connector line -->
-              <div class="absolute left-0 right-0 h-1 bg-slate-100 top-1/2 transform -translate-y-1/2 -z-10 rounded-full"></div>
-              
-              <!-- Step 1: Open -->
-              <div class="flex flex-col items-center gap-2 bg-white px-2">
-                <div class="w-7 h-7 rounded-full bg-sky-600 text-white flex items-center justify-center font-bold text-xs">1</div>
-                <span class="text-[10px] font-semibold text-slate-700">Open</span>
-              </div>
-              <!-- Step 2: InProgress -->
-              <div class="flex flex-col items-center gap-2 bg-white px-2">
-                <div 
-                  [class.bg-sky-600]="req.status === 'InProgress' || req.status === 'Completed'"
-                  [class.text-white]="req.status === 'InProgress' || req.status === 'Completed'"
-                  [class.bg-slate-100]="req.status === 'Open'"
-                  [class.text-slate-400]="req.status === 'Open'"
-                  class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs"
-                >
-                  2
-                </div>
-                <span class="text-[10px] font-semibold text-slate-700">Processing</span>
-              </div>
-              <!-- Step 3: Completed -->
-              <div class="flex flex-col items-center gap-2 bg-white px-2">
-                <div 
-                  [class.bg-sky-600]="req.status === 'Completed'"
-                  [class.text-white]="req.status === 'Completed'"
-                  [class.bg-slate-100]="req.status !== 'Completed'"
-                  [class.text-slate-400]="req.status !== 'Completed'"
-                  class="w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs"
-                >
-                  3
-                </div>
-                <span class="text-[10px] font-semibold text-slate-700">Completed</span>
-              </div>
-            </div>
-            
-            <div class="mt-4 p-3 bg-slate-50 rounded-xl text-xs text-slate-600 font-light">
-              <strong class="font-semibold text-slate-800">Additional Details:</strong> {{ req.additionalDetails }}
+          <!-- Report a fault -->
+          <div *ngIf="isTicketModalOpen" [@fadeInUp] class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm" [formGroup]="newTicketForm">
+            <h3 class="text-base font-bold text-slate-800 mb-4">Report a fault</h3>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Fault type</label>
+            <select formControlName="faultType" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary-500 mb-4">
+              <option value="NoCoverage">No coverage</option>
+              <option value="CallDrops">Call drops</option>
+              <option value="SlowData">Slow data</option>
+              <option value="BillingIssue">Billing issue</option>
+              <option value="Activation">Activation</option>
+            </select>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Affected line (optional)</label>
+            <select formControlName="lineId" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary-500 mb-4">
+              <option [ngValue]="null">Your number</option>
+              <option *ngFor="let l of account360?.lines" [ngValue]="l.lineId">{{ l.msisdn }}</option>
+            </select>
+            <label class="block text-xs font-semibold text-slate-600 mb-1.5">Describe the issue</label>
+            <textarea formControlName="description" rows="3" placeholder="e.g. no signal at home since morning"
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-primary-500 resize-none"></textarea>
+            <p class="text-xs text-sky-600 mt-2 flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              No priority field — our team sets urgency
+            </p>
+            <div class="flex justify-end gap-2 mt-4">
+              <button type="button" (click)="closeTicketModal()" class="px-4 py-2 text-sm font-semibold text-slate-600 rounded-xl hover:bg-slate-100">Cancel</button>
+              <button type="button" (click)="submitFaultTicket()" [disabled]="isSubmittingTicket || newTicketForm.invalid" class="px-4 py-2 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-xl disabled:opacity-60">{{ isSubmittingTicket ? 'Submitting…' : 'Report fault' }}</button>
             </div>
           </div>
         </div>
-        <app-paginator [total]="serviceRequests.length" [page]="requestsPage" [size]="pageSize" (pageChange)="requestsPage = $event"></app-paginator>
+
+        <!-- My service requests -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+            My service requests
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-[11px] font-semibold tracking-wider text-slate-400 uppercase border-b border-slate-100">
+                <th class="px-3 py-2.5">Request</th><th class="px-3 py-2.5">Type</th><th class="px-3 py-2.5">Raised on</th><th class="px-3 py-2.5">Status</th><th class="px-3 py-2.5"></th>
+              </tr></thead>
+              <tbody>
+                <tr *ngFor="let r of (serviceRequests | paginate: requestsPage : pageSize)" class="border-b border-slate-50">
+                  <td class="px-3 py-3 font-medium text-slate-700">SR-{{ r.requestId ?? r.id }}</td>
+                  <td class="px-3 py-3 text-slate-600">{{ r.requestType }}</td>
+                  <td class="px-3 py-3 text-slate-500">{{ r.raisedDate | date:'mediumDate' }}</td>
+                  <td class="px-3 py-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" [ngClass]="statusBadgeClass(requestStatusLabel(r.status))">{{ requestStatusLabel(r.status) }}</span></td>
+                  <td class="px-3 py-3 text-right">
+                    <button *ngIf="requestStatusLabel(r.status) === 'Open'" (click)="cancelServiceRequest(r)" class="text-rose-600 hover:underline text-sm font-medium">Cancel</button>
+                  </td>
+                </tr>
+                <tr *ngIf="serviceRequests.length === 0"><td colspan="5" class="px-3 py-8 text-center text-slate-400 font-light">No service requests yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <app-paginator [total]="serviceRequests.length" [page]="requestsPage" [size]="pageSize" (pageChange)="requestsPage = $event"></app-paginator>
+        </div>
+
+        <!-- My fault tickets -->
+        <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+          <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M5.07 19h13.86a2 2 0 001.74-2.99l-6.93-12a2 2 0 00-3.48 0l-6.93 12A2 2 0 005.07 19z"/></svg>
+            My fault tickets
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead><tr class="text-left text-[11px] font-semibold tracking-wider text-slate-400 uppercase border-b border-slate-100">
+                <th class="px-3 py-2.5">Ticket</th><th class="px-3 py-2.5">Issue</th><th class="px-3 py-2.5">Raised on</th><th class="px-3 py-2.5">Status</th>
+              </tr></thead>
+              <tbody>
+                <tr *ngFor="let t of (myTickets | paginate: ticketsPage : pageSize)" class="border-b border-slate-50">
+                  <td class="px-3 py-3 font-medium text-slate-700">FT-{{ t.ticketId ?? t.id }}</td>
+                  <td class="px-3 py-3 text-slate-600">{{ t.faultType }}</td>
+                  <td class="px-3 py-3 text-slate-500">{{ t.raisedDate | date:'mediumDate' }}</td>
+                  <td class="px-3 py-3"><span class="px-2.5 py-0.5 rounded-full text-xs font-semibold" [ngClass]="statusBadgeClass(ticketStatusLabel(t.status))">{{ ticketStatusLabel(t.status) }}</span></td>
+                </tr>
+                <tr *ngIf="myTickets.length === 0"><td colspan="4" class="px-3 py-8 text-center text-slate-400 font-light">No fault tickets yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <app-paginator [total]="myTickets.length" [page]="ticketsPage" [size]="pageSize" (pageChange)="ticketsPage = $event"></app-paginator>
+        </div>
       </div>
 
     </div>
@@ -846,45 +903,6 @@
   </div>
 </div>
 
-<!-- 3. Raise Service Request Modal -->
-<div *ngIf="isRequestModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
-  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-      <h3 class="text-base font-bold text-slate-800">Raise New Service Request</h3>
-      <button (click)="closeRequestModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
-    </div>
-    
-    <form [formGroup]="newRequestForm" (ngSubmit)="submitServiceRequest()" class="p-6 flex flex-col gap-4">
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Request Type</label>
-        <select 
-          formControlName="requestType"
-          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
-        >
-          <option value="PlanChange">Plan Change</option>
-          <option value="SIMReplacement">SIM Replacement</option>
-          <option value="PortingRequest">Porting Request</option>
-          <option value="AccountUpdate">Account Update</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Request Details / Instructions</label>
-        <textarea 
-          formControlName="additionalDetails"
-          rows="3"
-          placeholder="E.g., replacement for stolen SIM card, port-in Verizon phone number +1-999..."
-          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
-        ></textarea>
-      </div>
-
-      <div class="flex gap-3 justify-end mt-4">
-        <button type="submit" [disabled]="newRequestForm.invalid" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Submit Request</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 <!-- 4. Add-On Activation Modal -->
 <div *ngIf="isAddOnModalOpen && targetAddOn" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
   <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
@@ -938,60 +956,6 @@
     </div>
   </div>
 </div>
-
-<!-- 5. Raise Fault Ticket Modal -->
-<div *ngIf="isTicketModalOpen" class="fixed inset-0 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm z-50 p-4">
-  <div [@scaleIn] class="bg-white w-full max-w-md rounded-2xl shadow-2xl border border-slate-100 overflow-hidden">
-    <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-      <h3 class="text-base font-bold text-slate-800">Raise Fault Ticket (NOC Alert)</h3>
-      <button (click)="closeTicketModal()" class="text-slate-400 hover:text-slate-600 focus:outline-none text-xl">×</button>
-    </div>
-    
-    <form [formGroup]="newTicketForm" (ngSubmit)="submitFaultTicket()" class="p-6 flex flex-col gap-4">
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Fault Classification</label>
-        <select 
-          formControlName="faultType"
-          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
-        >
-          <option value="NoCoverage">No Service / No Coverage</option>
-          <option value="CallDrops">Frequent Call Drops</option>
-          <option value="SlowData">Slow Data / Impaired Speeds</option>
-          <option value="BillingIssue">Billing Discrepancy</option>
-          <option value="Activation">Activation / Provisioning Fault</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Urgency Priority</label>
-        <select 
-          formControlName="priority"
-          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
-        >
-          <option value="Low">Low (7 days SLA)</option>
-          <option value="Medium">Medium (72 hours SLA)</option>
-          <option value="High">High (24 hours SLA)</option>
-          <option value="Critical">Critical (6 hours SLA)</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-2">Issue Description</label>
-        <textarea 
-          formControlName="description"
-          rows="3"
-          placeholder="Please describe what you are experiencing..."
-          class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-primary-500"
-        ></textarea>
-      </div>
-
-      <div class="flex gap-3 justify-end mt-4">
-        <button type="submit" [disabled]="newTicketForm.invalid" class="px-4 py-2.5 bg-sky-600 hover:bg-sky-700 disabled:opacity-50 text-white font-semibold rounded-xl text-xs cursor-pointer shadow-md">Register Ticket</button>
-      </div>
-    </form>
-  </div>
-</div>
-
 
 <!-- My Account Modal -->
 <app-my-account-modal

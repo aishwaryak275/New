@@ -112,11 +112,15 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
   disputingInvoiceTotal = 0;
 
   // Service Requests & Tickets
-  serviceRequests: any[] = [];
+  serviceRequests: any[] = [];   // this subscriber's own service requests
+  myTickets: any[] = [];         // this subscriber's own fault tickets
+  ticketsPage = 1;
   newRequestForm!: FormGroup;
   isRequestModalOpen = false;
   newTicketForm!: FormGroup;
   isTicketModalOpen = false;
+  isSubmittingRequest = false;
+  isSubmittingTicket = false;
 
   // Chart reference
   private usageChart: Chart | null = null;
@@ -227,6 +231,7 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
     this.newRequestForm = this.fb.group({
       requestType: ['PlanChange', Validators.required],
+      lineId: [null],
       additionalDetails: ['', Validators.required]
     });
 
@@ -238,8 +243,8 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
 
     this.newTicketForm = this.fb.group({
       faultType: ['NoCoverage', Validators.required],
-      description: ['', [Validators.required, Validators.minLength(10)]],
-      priority: ['Medium', Validators.required]
+      lineId: [null],
+      description: ['', [Validators.required, Validators.minLength(10)]]
     });
   }
 
@@ -356,17 +361,23 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
   }
 
   loadServiceRequests(): void {
-    this.ticketService.getRequests().subscribe(data => {
-      this.serviceRequests = Array.isArray(data) ? data : [];
-      const completedConnReq = this.serviceRequests.find((r: any) =>
-        r.requestType === 'NewConnection' &&
-        (r.requestedBy === this.user?.id || r.requestedBy === Number(this.user?.id)) &&
-        r.status === 'C'
-      );
-      if (completedConnReq && (!this.account360 || !this.account360.accountId)) {
-        this.loadData();
-      }
+    this.ticketService.getRequests().subscribe({
+      next: (data) => {
+        const all = Array.isArray(data) ? data : [];
+        // Only this subscriber's own requests
+        this.serviceRequests = all.filter((r: any) =>
+          r.requestedBy === this.user?.id || r.requestedBy === Number(this.user?.id)
+        );
+        const completedConnReq = this.serviceRequests.find((r: any) =>
+          r.requestType === 'NewConnection' && r.status === 'C'
+        );
+        if (completedConnReq && (!this.account360 || !this.account360.accountId)) {
+          this.loadData();
+        }
+      },
+      error: () => { this.serviceRequests = []; }
     });
+    this.loadMyTickets();
   }
 
   loadAddOns(): void {
@@ -887,70 +898,138 @@ export class SubscriberPortalComponent implements OnInit, AfterViewInit {
   // Support Request Creation
   // ==========================================
   openRequestModal(): void {
-    this.isRequestModalOpen = true;
+    this.isRequestModalOpen = !this.isRequestModalOpen;   // toggle open/close
+    this.isTicketModalOpen = false;                       // only one form at a time
   }
 
   closeRequestModal(): void {
     this.isRequestModalOpen = false;
-    this.newRequestForm.reset({ requestType: 'PlanChange' });
+    this.newRequestForm.reset({ requestType: 'PlanChange', lineId: null, additionalDetails: '' });
   }
 
   submitServiceRequest(): void {
-    if (this.newRequestForm.invalid || !this.account360) return;
-
-    const lineId = this.account360.lines[0]?.lineId || null;
+    if (this.newRequestForm.invalid || !this.account360) {
+      this.toastService.error('Please choose a request type and add details.');
+      return;
+    }
+    const v = this.newRequestForm.value;
+    const lineId = v.lineId ?? this.account360.lines?.[0]?.lineId ?? null;
+    this.isSubmittingRequest = true;
     this.ticketService.createRequest({
       accountId: this.account360.accountId,
       lineId,
-      requestType: this.newRequestForm.value.requestType,
-      additionalDetails: this.newRequestForm.value.additionalDetails
+      requestType: v.requestType,
+      requestedBy: this.user?.id,
+      raisedDate: new Date().toISOString().split('T')[0],
+      status: 'Open',
+      additionalDetails: v.additionalDetails
     }).subscribe({
       next: () => {
+        this.isSubmittingRequest = false;
         this.iamService.recordAudit('SERVICE_REQUEST_SUBMITTED', 'SUBSCRIBER');
-        this.toastService.success('Service request raised successfully.');
-        this.closeRequestModal();
+        this.toastService.success('Service request raised — our support team will pick it up.');
+        this.newRequestForm.reset({ requestType: 'PlanChange', lineId: null, additionalDetails: '' });
+        this.isRequestModalOpen = false;
         this.loadServiceRequests();
+        this.notificationService.refreshNotifications();
       },
       error: (err) => {
+        this.isSubmittingRequest = false;
         this.toastService.error(err.error?.message || 'Failed to submit service request.');
       }
     });
   }
 
+  /** Cancel an Open service request (allowed while status is Open). */
+  cancelServiceRequest(req: any): void {
+    const id = req?.requestId ?? req?.id;
+    if (!id) return;
+    this.ticketService.cancelRequest(id).subscribe({
+      next: () => {
+        this.iamService.recordAudit('SERVICE_REQUEST_CANCELLED', 'SUBSCRIBER');
+        this.toastService.success('Service request cancelled.');
+        this.loadServiceRequests();
+      },
+      error: (err) => this.toastService.error(err.error?.message || 'Failed to cancel request.')
+    });
+  }
+
   openTicketModal(): void {
-    this.isTicketModalOpen = true;
+    this.isTicketModalOpen = !this.isTicketModalOpen;   // toggle open/close
+    this.isRequestModalOpen = false;                    // only one form at a time
   }
 
   closeTicketModal(): void {
     this.isTicketModalOpen = false;
-    this.newTicketForm.reset({ faultType: 'NoCoverage', priority: 'Medium' });
+    this.newTicketForm.reset({ faultType: 'NoCoverage', lineId: null, description: '' });
   }
 
   submitFaultTicket(): void {
-    if (this.newTicketForm.invalid || !this.account360) return;
-
-    const lineId = this.account360.lines[0]?.lineId || null;
-    // Backend expects the priority code (L/M/H/C), not the display word.
-    const priorityCode: Record<string, string> = { Low: 'L', Medium: 'M', High: 'H', Critical: 'C' };
-    const rawPriority = this.newTicketForm.value.priority;
+    if (this.newTicketForm.invalid || !this.account360) {
+      this.toastService.error('Please choose a fault type and describe the issue (min 10 chars).');
+      return;
+    }
+    const v = this.newTicketForm.value;
+    const lineId = v.lineId ?? this.account360.lines?.[0]?.lineId ?? null;
+    this.isSubmittingTicket = true;
     this.ticketService.createFaultTicket({
       accountId: this.account360.accountId,
       lineId,
-      faultType: this.newTicketForm.value.faultType,
-      description: this.newTicketForm.value.description,
-      priority: priorityCode[rawPriority] ?? rawPriority ?? 'M',
-      raisedDate: new Date().toISOString().split('T')[0]   // backend requires a LocalDate; status defaults to O (Open) server-side
+      faultType: v.faultType,
+      description: v.description,
+      priority: 'M',                                      // team sets urgency; backend default Medium
+      raisedDate: new Date().toISOString().split('T')[0]  // backend requires a LocalDate; status defaults to O (Open)
     }).subscribe({
       next: () => {
+        this.isSubmittingTicket = false;
         this.iamService.recordAudit('FAULT_TICKET_SUBMITTED', 'SUBSCRIBER');
-        this.toastService.success('Fault ticket registered in NOC tracking queues.');
-        this.closeTicketModal();
-        this.loadData(); // reload tickets
+        this.toastService.success('Fault reported — routed to Network Ops.');
+        this.newTicketForm.reset({ faultType: 'NoCoverage', lineId: null, description: '' });
+        this.isTicketModalOpen = false;
+        this.loadMyTickets();
+        this.notificationService.refreshNotifications();
       },
       error: (err) => {
-        this.toastService.error(err.error?.message || 'Failed to register fault ticket.');
+        this.isSubmittingTicket = false;
+        this.toastService.error(err.error?.message || 'Failed to report fault.');
       }
     });
+  }
+
+  // ==========================================
+  // My requests / tickets loading + status labels
+  // ==========================================
+  loadMyTickets(): void {
+    const accountId = this.account360?.accountId;
+    const lineIds = (this.account360?.lines ?? []).map((l: any) => l.lineId);
+    this.ticketService.getFaultTickets().subscribe({
+      next: (data: any[]) => {
+        const all = Array.isArray(data) ? data : [];
+        this.myTickets = all.filter((t: any) =>
+          (accountId != null && t.accountId === accountId) || lineIds.includes(t.lineId)
+        );
+      },
+      error: () => { this.myTickets = []; }
+    });
+  }
+
+  private readonly requestStatusWord: Record<string, string> = { O: 'Open', P: 'InProgress', C: 'Completed', X: 'Cancelled' };
+  private readonly ticketStatusWord: Record<string, string> = { O: 'Open', P: 'InProgress', R: 'Resolved', C: 'Closed', E: 'Escalated' };
+
+  requestStatusLabel(s: string): string { return this.requestStatusWord[s] ?? s; }
+  ticketStatusLabel(s: string): string { return this.ticketStatusWord[s] ?? s; }
+
+  statusBadgeClass(label: string): string {
+    switch (label) {
+      case 'Open': return 'bg-slate-100 text-slate-600';
+      case 'InProgress': return 'bg-blue-100 text-blue-700';
+      case 'Completed':
+      case 'Resolved': return 'bg-emerald-100 text-emerald-700';
+      case 'Escalated': return 'bg-rose-100 text-rose-700';
+      case 'Closed': return 'bg-slate-200 text-slate-700';
+      case 'Cancelled': return 'bg-slate-100 text-slate-400 line-through';
+      default: return 'bg-slate-100 text-slate-600';
+    }
   }
 
   // ==========================================

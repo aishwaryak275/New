@@ -52,7 +52,7 @@ public class ServiceRequestController {
 
     // GET /teleConnect/fault/getAllRequests
     @GetMapping("/getAllRequests")
-    @PreAuthorize("hasAuthority('SERVICE_REQUEST')")
+    @PreAuthorize("hasAnyAuthority('SERVICE_REQUEST','RAISE_SERVICE_REQUEST')")
     public ResponseEntity<List<ServiceRequestResponse>> getAllRequests() {
         log.info("Fetching all service requests");
         List<ServiceRequestResponse> requests = requestService.getAllRequests();
@@ -62,7 +62,7 @@ public class ServiceRequestController {
 
     // GET /teleConnect/fault/getRequests/{requestId}
     @GetMapping("/getRequests/{requestId}")
-    @PreAuthorize("hasAuthority('SERVICE_REQUEST')")
+    @PreAuthorize("hasAnyAuthority('SERVICE_REQUEST','RAISE_SERVICE_REQUEST')")
     public ResponseEntity<ServiceRequestResponse> getRequestById(
             @PathVariable Integer requestId) {
         log.info("Fetching service request requestId={}", requestId);
@@ -87,7 +87,7 @@ public class ServiceRequestController {
 
     // PUT /teleConnect/fault/cancelRequests/{requestId}
     @PutMapping("/cancelRequests/{requestId}")
-    @PreAuthorize("hasAuthority('SERVICE_REQUEST')")
+    @PreAuthorize("hasAnyAuthority('SERVICE_REQUEST','RAISE_SERVICE_REQUEST')")
     public ResponseEntity<MessageResponse> cancelRequest(
             @PathVariable Integer requestId,
             HttpServletRequest httpReq) {

@@ -89,7 +89,17 @@ export class TicketService {
 
   /** Update a service request's status. Agent portal calls: updateRequestStatus(id, status) */
   updateRequestStatus(requestId: number, status: string): Observable<any> {
-    return this.http.put<any>(`${this.base}/updateRequests/${requestId}`, { status });
+    // Backend expects the status code (O/P/C/X). Accept either a word or a code.
+    const codeMap: Record<string, string> = {
+      Open: 'O', InProgress: 'P', Completed: 'C', Cancelled: 'X'
+    };
+    const statusCode = codeMap[status] ?? status;
+    return this.http.put<any>(`${this.base}/updateRequests/${requestId}`, { status: statusCode });
+  }
+
+  /** Cancel an Open service request (subscriber self-service). */
+  cancelRequest(requestId: number): Observable<any> {
+    return this.http.put<any>(`${this.base}/cancelRequests/${requestId}`, {});
   }
 
   /** Approve a NewConnection service request */

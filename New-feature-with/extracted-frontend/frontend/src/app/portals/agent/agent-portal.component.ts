@@ -141,7 +141,7 @@ export class AgentPortalComponent implements OnInit {
   initForms(): void {
     this.faultForm = this.fb.group({
       accountId: ['', Validators.required],
-      lineId: [''],
+      lineId: ['', Validators.required],
       faultType: ['NoCoverage', Validators.required],
       priority: ['Medium', Validators.required],
       description: ['', [Validators.required, Validators.minLength(10)]]
@@ -650,7 +650,10 @@ export class AgentPortalComponent implements OnInit {
   // ==========================================
   getFilteredRequests(): any[] {
     if (this.filterStatus === 'All') return this.requestsQueue;
-    return this.requestsQueue.filter(r => r.status === this.filterStatus);
+    // Chips use words; backend stores status codes (O/P/C/X). Match either.
+    const codeMap: Record<string, string> = { Open: 'O', InProgress: 'P', Completed: 'C', Cancelled: 'X' };
+    const target = codeMap[this.filterStatus] ?? this.filterStatus;
+    return this.requestsQueue.filter(r => r.status === target || r.status === this.filterStatus);
   }
 
   setRequestFilter(status: string): void {
@@ -707,15 +710,26 @@ export class AgentPortalComponent implements OnInit {
       return;
     }
     this.isSubmittingFault = true;
-    this.ticketService.createFaultTicket(this.faultForm.value).subscribe({
+    const v = this.faultForm.value;
+    // Backend needs a LocalDate raisedDate and the priority CODE (L/M/H/C).
+    const priorityCode: Record<string, string> = { Low: 'L', Medium: 'M', High: 'H', Critical: 'C' };
+    this.ticketService.createFaultTicket({
+      accountId: Number(v.accountId),
+      lineId: v.lineId ? Number(v.lineId) : null,
+      faultType: v.faultType,
+      description: v.description,
+      priority: priorityCode[v.priority] ?? v.priority ?? 'M',
+      raisedDate: new Date().toISOString().split('T')[0]
+    }).subscribe({
       next: () => {
         this.isSubmittingFault = false;
-        this.toastService.success('Fault ticket raised and assigned to NOC.');
-        this.faultForm.reset({ faultType: 'NoCoverage', priority: 'Medium' });
+        this.iamService.recordAudit('FAULT_TICKET_RAISED', 'AGENT');
+        this.toastService.success('Fault ticket raised and routed to Network Ops (NOC).');
+        this.faultForm.reset({ faultType: 'NoCoverage', priority: 'Medium', accountId: '', lineId: '', description: '' });
       },
-      error: () => {
+      error: (err) => {
         this.isSubmittingFault = false;
-        this.toastService.error('Failed to create fault ticket.');
+        this.toastService.error(err?.error?.message || 'Failed to create fault ticket.');
       }
     });
   }

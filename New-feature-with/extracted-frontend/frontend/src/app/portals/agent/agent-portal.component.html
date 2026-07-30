@@ -476,7 +476,7 @@
                     [class.text-rose-700]="r.status === 'Cancelled' || r.status === 'X'"
                     class="px-2.5 py-0.5 rounded-full text-xs font-semibold"
                   >
-                    {{ r.status === 'O' ? 'Open' : (r.status === 'C' ? 'Completed' : (r.status === 'X' ? 'Cancelled' : r.status)) }}
+                    {{ r.status === 'O' ? 'Open' : (r.status === 'P' ? 'InProgress' : (r.status === 'C' ? 'Completed' : (r.status === 'X' ? 'Cancelled' : r.status))) }}
                   </span>
                 </td>
                 <td class="px-6 py-4 text-right">

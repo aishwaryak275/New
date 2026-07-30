@@ -57,7 +57,7 @@ export class PlanService {
     return this.http.get<any>(`${this.base}/getSubscriptions/${subscriptionId}`);
   }
 
-  createSubscription(request: { lineId: number; planId: number; activationDate?: string; expiryDate?: string; renewalType?: string; status?: string }): Observable<any> {
+  createSubscription(request: { lineId: number; planId: number; addOnId?: number; activationDate?: string; expiryDate?: string; renewalType?: string; status?: string }): Observable<any> {
     return this.http.post<any>(`${this.base}/createSubscriptions`, request);
   }
 

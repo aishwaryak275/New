@@ -338,8 +338,13 @@
                     </div>
                     <p class="text-xs text-slate-500 font-light mt-0.5">ICCID: {{ line.iccid }} | Type: <strong class="font-semibold text-slate-700">{{ line.serviceType || 'VoiceData' }}</strong></p>
                     
-                    <div class="mt-2 inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-sky-100 text-sky-700 text-xs font-semibold">
-                      Active Plan: {{ line.activeSubscription?.plan?.name || 'No Active Plan' }}
+                    <div class="mt-2 flex flex-wrap items-center gap-1.5">
+                      <span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-sky-100 text-sky-700 text-xs font-semibold">
+                        Active Plan: {{ line.activeSubscription?.plan?.name || 'No Active Plan' }}
+                      </span>
+                      <span *ngIf="line.activeSubscription?.addOn" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-indigo-100 text-indigo-700 text-xs font-semibold">
+                        Add-On: {{ line.activeSubscription.addOn.name }}
+                      </span>
                     </div>
                   </div>
 
@@ -371,19 +376,13 @@
                       Service Type
                     </button>
 
-                    <!-- Plan: only when no active plan -->
-                    <button *ngIf="!line.activeSubscription?.plan"
+                    <!-- Plan: add a plan (+ optional add-on). Disabled once a plan is active. -->
+                    <button
                       (click)="openPlanProvision(line)"
-                      class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer transition">
+                      [disabled]="!!line.activeSubscription?.plan"
+                      [title]="line.activeSubscription?.plan ? 'A plan is already active on this line' : 'Add a plan and optional add-on'"
+                      class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer transition disabled:opacity-40 disabled:cursor-not-allowed">
                       Plan
-                    </button>
-                    <!-- Change Plan: only when active plan exists -->
-                    <button *ngIf="line.activeSubscription?.plan"
-                      (click)="startWizardFlow(line)"
-                      [disabled]="hasPaidInvoice()"
-                      [title]="hasPaidInvoice() ? 'Plan locked — invoice is already paid' : 'Change Plan'"
-                      class="px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-lg shadow-xs cursor-pointer transition disabled:opacity-40 disabled:cursor-not-allowed">
-                      Change Plan
                     </button>
                   </div>
                 </div>

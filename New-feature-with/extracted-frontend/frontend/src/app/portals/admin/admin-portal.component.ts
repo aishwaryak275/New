@@ -847,7 +847,8 @@ export class AdminPortalComponent implements OnInit {
                   const sub = subs.find((s: any) => s.lineId === line.lineId && s.status === 'A');
                   if (!sub) return line;
                   const plan = this.plansList.find((p: any) => p.planId === sub.planId) ?? { planId: sub.planId };
-                  return { ...line, activeSubscription: { ...sub, plan } };
+                  const addOn = sub.addOnId ? (this.addOnsList.find((a: any) => a.addOnId === sub.addOnId) ?? null) : null;
+                  return { ...line, activeSubscription: { ...sub, plan, addOn } };
                 });
                 this.iamService.getUser(account.subscriberId).subscribe({
                   next: (user) => { this.selected360Account = { ...account, subscriber: user, lines: enrichedLines, tickets: [] }; this.search360Results = []; },
@@ -1032,45 +1033,37 @@ export class AdminPortalComponent implements OnInit {
     const validityDays: number = this.provisionSelectedPlan.validityDays ?? 28;
     const expiryDate = this.addDaysToDate(activationDate, validityDays);
     const planPrice: number = this.provisionSelectedPlan.planPrice ?? 0;
-    const taxes = Math.round(planPrice * 0.18 * 100) / 100;
+    const addOnId: number | undefined = this.provisionSelectedAddOn?.addOnId;
+    const addOnPrice: number = this.provisionSelectedAddOn?.price ?? 0;
+    const planName = this.provisionSelectedPlan.name;
+
+    // createSubscription persists addOnId directly (backend accepts it on create),
+    // so no fragile follow-up call is needed. Only a first-time provision generates an
+    // invoice; a mid-cycle change never spawns a second bill (one active bill per account).
+    const createNew = (withInvoice: boolean) => {
+      this.planService.createSubscription({ lineId, planId, addOnId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' }).subscribe({
+        next: () => {
+          this.iamService.recordAudit(this.isChangePlan() ? 'PLAN_CHANGED' : 'PLAN_PROVISIONED', 'ADMIN');
+          this.toastService.success(this.isChangePlan() ? `Plan changed to "${planName}" successfully!` : `Plan "${planName}" provisioned successfully!`);
+          if (withInvoice && accountId) this.autoCreateInvoice360(accountId, planPrice, addOnPrice, activationDate, expiryDate);
+          this.closePlanProvision360();
+          if (accountId) this.loadAccount360Profile(accountId);
+        },
+        error: (err: any) => this.toastService.error('Plan update failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`))
+      });
+    };
 
     if (this.isChangePlan()) {
-      const subscriptionId = this.provisionLine.activeSubscription?.subscriptionId ?? this.provisionLine.activeSubscription?.id;
-      if (!subscriptionId) { this.toastService.error('Cannot change plan: subscription ID not found.'); return; }
-      this.planService.updateSubscription(subscriptionId, { planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' }).subscribe({
-        next: () => {
-          this.iamService.recordAudit('PLAN_CHANGED', 'ADMIN');
-          if (this.provisionSelectedAddOn) {
-            this.planService.updateSubscription(subscriptionId, { addOnId: this.provisionSelectedAddOn.addOnId }).subscribe({ next: () => {}, error: () => this.toastService.error('Add-on could not be attached.') });
-          }
-          this.toastService.success(`Plan changed to "${this.provisionSelectedPlan.name}" successfully!`);
-          this.closePlanProvision360();
-          if (accountId) this.loadAccount360Profile(accountId);
-        },
-        error: (err: any) => {
-          this.toastService.error('Plan change failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`));
-        }
+      // Backend update ignores planId, so expire the current subscription
+      // (a status change it DOES honour) and create a fresh active one. No new invoice.
+      const oldSubId = this.provisionLine.activeSubscription?.subscriptionId ?? this.provisionLine.activeSubscription?.id;
+      if (!oldSubId) { this.toastService.error('Cannot change plan: subscription ID not found.'); return; }
+      this.planService.updateSubscription(oldSubId, { status: 'E' }).subscribe({
+        next: () => createNew(false),
+        error: (err: any) => this.toastService.error('Plan change failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`))
       });
     } else {
-      this.planService.createSubscription({ lineId, planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' }).subscribe({
-        next: (sub: any) => {
-          this.iamService.recordAudit('PLAN_PROVISIONED', 'ADMIN');
-          const subscriptionId = sub?.subscriptionId ?? sub?.id;
-          if (this.provisionSelectedAddOn && subscriptionId) {
-            this.planService.updateSubscription(subscriptionId, { addOnId: this.provisionSelectedAddOn.addOnId }).subscribe({
-              next: () => {},
-              error: () => this.toastService.error('Add-on could not be attached.')
-            });
-          }
-          this.toastService.success(`Plan "${this.provisionSelectedPlan.name}" provisioned successfully!`);
-          if (accountId) this.autoCreateInvoice360(accountId, planPrice, taxes, activationDate, expiryDate);
-          this.closePlanProvision360();
-          if (accountId) this.loadAccount360Profile(accountId);
-        },
-        error: (err: any) => {
-          this.toastService.error('Plan provision failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`));
-        }
-      });
+      createNew(true);
     }
   }
 
@@ -1084,17 +1077,55 @@ export class AdminPortalComponent implements OnInit {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
   }
 
-  private autoCreateInvoice360(accountId: number, planPrice: number, taxes: number, cycleStart: string, cycleEnd: string): void {
-    this.billingService.createBillingCycle(accountId, cycleStart, cycleEnd).subscribe({
-      next: (cycle: any) => {
-        const cycleId = cycle?.cycleId ?? cycle?.id;
-        if (!cycleId) { this.toastService.error('Invoice not created: billing cycle ID missing.'); return; }
-        this.billingService.generateInvoice({ accountId, cycleId, planCharges: planPrice, excessCharges: 0, addOnCharges: 0, taxes }).subscribe({
-          next: () => this.toastService.success('Invoice generated and sent to the Billing Executive queue.'),
-          error: (err: any) => this.toastService.error('Invoice generation failed: ' + (err?.error?.message ?? `HTTP ${err?.status}`))
-        });
+  private autoCreateInvoice360(accountId: number, planPrice: number, addOnPrice: number, cycleStart: string, cycleEnd: string): void {
+    const taxes = Math.round((planPrice + addOnPrice) * 0.18 * 100) / 100;
+
+    const generate = (cycleId: number) => {
+      this.billingService.generateInvoice({ accountId, cycleId, planCharges: planPrice, excessCharges: 0, addOnCharges: addOnPrice, taxes }).subscribe({
+        next: () => this.toastService.success('Invoice generated and sent to the Billing Executive queue.'),
+        error: (err: any) => {
+          const msg: string = err?.error?.message ?? '';
+          // An invoice already exists for this open cycle — treat as success, not an error.
+          if (msg.toLowerCase().includes('already exists')) {
+            this.toastService.success('Invoice already present for the current billing cycle.');
+          } else {
+            this.toastService.error('Invoice generation failed: ' + (msg || `HTTP ${err?.status}`));
+          }
+        }
+      });
+    };
+
+    const createCycleThenGenerate = () => {
+      this.billingService.createBillingCycle(accountId, cycleStart, cycleEnd).subscribe({
+        next: (cycle: any) => {
+          const cycleId = cycle?.cycleId ?? cycle?.id;
+          if (!cycleId) { this.toastService.error('Invoice not created: billing cycle ID missing.'); return; }
+          generate(cycleId);
+        },
+        error: (err: any) => this.toastService.error('Billing cycle creation failed: ' + (err?.error?.message ?? `HTTP ${err?.status}`))
+      });
+    };
+
+    const reuseOrCreateCycle = () => {
+      // Reuse an existing OPEN cycle if one exists (the backend rejects a second open cycle per account).
+      this.billingService.getCyclesByAccount(accountId).subscribe({
+        next: (cycles: any[]) => {
+          const open = (cycles ?? []).find((c: any) => (c?.status ?? '').toString().toUpperCase() === 'OPEN');
+          if (open) generate(open.cycleId ?? open.id);
+          else createCycleThenGenerate();
+        },
+        error: () => createCycleThenGenerate()
+      });
+    };
+
+    // One active bill per account: skip generation if an unpaid invoice already exists.
+    this.billingService.getInvoicesByAccount(accountId).subscribe({
+      next: (invoices: any[]) => {
+        const hasUnpaid = (invoices ?? []).some((i: any) => (i?.status ?? '').toString().toUpperCase() !== 'PAID');
+        if (hasUnpaid) { this.toastService.success('Plan updated — existing unpaid invoice retained (one active bill per account).'); return; }
+        reuseOrCreateCycle();
       },
-      error: (err: any) => this.toastService.error('Billing cycle creation failed: ' + (err?.error?.message ?? `HTTP ${err?.status}`))
+      error: () => reuseOrCreateCycle()
     });
   }
 }

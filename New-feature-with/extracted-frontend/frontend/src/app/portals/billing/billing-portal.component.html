@@ -50,6 +50,13 @@
         Reports
       </button>
 
+      <button (click)="setSection('analytics')"
+        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1 transition-colors"
+        [ngClass]="section() === 'analytics' ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50'">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        Analytics
+      </button>
+
       <button (click)="setSection('settings')"
         class="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium mb-1 transition-colors"
         [ngClass]="section() === 'settings' ? 'bg-primary-50 text-primary-700' : 'text-slate-600 hover:bg-slate-50'">
@@ -596,6 +603,11 @@
           <p class="text-xs text-slate-400 mb-4">Number of disputes opened per billing cycle</p>
           <div class="h-48"><canvas id="disputeTrendChart"></canvas></div>
         </div>
+      </section>
+
+      <!-- ============= ANALYTICS ============= -->
+      <section *ngIf="section() === 'analytics'" @fadeInUp>
+        <app-analytics-panel [role]="user.role"></app-analytics-panel>
       </section>
 
       <!-- ============= SETTINGS ============= -->

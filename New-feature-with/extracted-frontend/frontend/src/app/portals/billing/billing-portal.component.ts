@@ -11,10 +11,11 @@ import { ToastService } from '../../core/services/toast.service';
 import { ReportService } from '../../core/services/report.service';
 import { fadeInUp, staggerFadeIn, scaleIn } from '../../shared/animations';
 import { MyAccountModalComponent } from '../../shared/my-account-modal/my-account-modal.component';
+import { AnalyticsPanelComponent } from '../../shared/analytics/analytics-panel.component';
 import { PaginatePipe } from '../../shared/pagination/paginate.pipe';
 import { PaginatorComponent } from '../../shared/pagination/paginator.component';
 
-type Section = 'invoices' | 'payments' | 'disputes' | 'reports' | 'settings' | 'catalog';
+type Section = 'invoices' | 'payments' | 'disputes' | 'reports' | 'analytics' | 'settings' | 'catalog';
 
 interface Invoice {
   invoiceId: string;
@@ -56,7 +57,7 @@ interface Dispute {
 @Component({
   selector: 'app-billing-portal',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent, PaginatePipe, PaginatorComponent],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MyAccountModalComponent, AnalyticsPanelComponent, PaginatePipe, PaginatorComponent],
   templateUrl: './billing-portal.component.html',
   styleUrls: ['./billing-portal.component.css'],
   animations: [fadeInUp, staggerFadeIn, scaleIn]
@@ -75,6 +76,7 @@ export class BillingPortalComponent implements OnInit {
     payments: 'Payments',
     disputes: 'Disputes',
     reports: 'Reports',
+    analytics: 'Analytics & Reporting',
     settings: 'Settings',
     catalog: 'Plan Catalog'
   };

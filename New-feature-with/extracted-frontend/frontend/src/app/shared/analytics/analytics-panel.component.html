@@ -1,0 +1,116 @@
+<div class="flex flex-col gap-6">
+  <!-- Controls -->
+  <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm flex flex-col sm:flex-row sm:items-end gap-4">
+    <div>
+      <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Billing Cycle ID</label>
+      <input type="number" min="1" [(ngModel)]="cycleId"
+        class="w-32 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400" />
+    </div>
+    <div>
+      <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Period Start</label>
+      <input type="date" [(ngModel)]="periodStart"
+        class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400" />
+    </div>
+    <div>
+      <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-1.5">Period End</label>
+      <input type="date" [(ngModel)]="periodEnd"
+        class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-sky-400" />
+    </div>
+    <button (click)="loadAll()"
+      class="px-5 py-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-xl shadow cursor-pointer transition">
+      Refresh
+    </button>
+  </div>
+
+  <!-- Metric cards -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+    <div *ngFor="let m of metrics" class="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <!-- Card header -->
+      <div class="flex items-start justify-between px-5 py-4 border-b border-slate-100">
+        <div>
+          <h3 class="text-sm font-bold text-slate-800">{{ m.title }}</h3>
+          <p class="text-xs text-slate-400 font-light mt-0.5">{{ m.description }}</p>
+        </div>
+        <div class="flex gap-2 shrink-0">
+          <button (click)="export(m, 'pdf')" [disabled]="!data[m.key]"
+            class="px-2.5 py-1 text-[11px] font-semibold text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg cursor-pointer transition disabled:opacity-40 disabled:cursor-not-allowed">PDF</button>
+          <button (click)="export(m, 'csv')" [disabled]="!data[m.key]"
+            class="px-2.5 py-1 text-[11px] font-semibold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg cursor-pointer transition disabled:opacity-40 disabled:cursor-not-allowed">CSV</button>
+        </div>
+      </div>
+
+      <div class="p-5 flex-1 flex flex-col gap-4">
+        <!-- Loading / error -->
+        <p *ngIf="loading[m.key]" class="text-xs text-slate-400 text-center py-8">Loading {{ m.title }}…</p>
+        <p *ngIf="error[m.key]" class="text-xs text-rose-500 bg-rose-50 border border-rose-100 rounded-xl px-3 py-2">{{ error[m.key] }}</p>
+
+        <ng-container *ngIf="data[m.key] && !loading[m.key]">
+          <!-- ARPU -->
+          <ng-container *ngIf="m.key === 'arpu'">
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-sky-50 rounded-xl p-3"><p class="text-[10px] font-bold text-sky-600 uppercase">ARPU</p><p class="text-lg font-extrabold text-slate-800">₹{{ data[m.key].arpuOverall | number:'1.0-2' }}</p></div>
+              <div class="bg-emerald-50 rounded-xl p-3"><p class="text-[10px] font-bold text-emerald-600 uppercase">Revenue</p><p class="text-lg font-extrabold text-slate-800">₹{{ data[m.key].totalRevenue | number:'1.0-0' }}</p></div>
+              <div class="bg-indigo-50 rounded-xl p-3"><p class="text-[10px] font-bold text-indigo-600 uppercase">Active Subs</p><p class="text-lg font-extrabold text-slate-800">{{ data[m.key].activeSubscribers | number }}</p></div>
+            </div>
+          </ng-container>
+
+          <!-- Churn -->
+          <ng-container *ngIf="m.key === 'churn'">
+            <div *ngIf="data[m.key].highChurnAlert" class="text-[11px] font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">⚠ High churn alert — rate above threshold.</div>
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-rose-50 rounded-xl p-3"><p class="text-[10px] font-bold text-rose-600 uppercase">Churn Rate</p><p class="text-lg font-extrabold text-slate-800">{{ data[m.key].churnRate | number:'1.0-2' }}%</p></div>
+              <div class="bg-amber-50 rounded-xl p-3"><p class="text-[10px] font-bold text-amber-600 uppercase">Gross Churned</p><p class="text-lg font-extrabold text-slate-800">{{ data[m.key].grossChurned | number }}</p></div>
+              <div class="bg-slate-50 rounded-xl p-3"><p class="text-[10px] font-bold text-slate-500 uppercase">At Risk</p><p class="text-lg font-extrabold text-slate-800">{{ data[m.key].atRiskCount | number }}</p></div>
+            </div>
+          </ng-container>
+
+          <!-- Network Utilisation -->
+          <ng-container *ngIf="m.key === 'network'">
+            <div class="grid grid-cols-4 gap-3">
+              <div class="bg-sky-50 rounded-xl p-3"><p class="text-[10px] font-bold text-sky-600 uppercase">Data</p><p class="text-base font-extrabold text-slate-800">{{ toGb(data[m.key].totalDataUsedMb) | number:'1.0-2' }} GB</p></div>
+              <div class="bg-emerald-50 rounded-xl p-3"><p class="text-[10px] font-bold text-emerald-600 uppercase">Voice</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].totalVoiceUsedMin | number:'1.0-0' }}m</p></div>
+              <div class="bg-indigo-50 rounded-xl p-3"><p class="text-[10px] font-bold text-indigo-600 uppercase">SMS</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].totalSmsUsed | number }}</p></div>
+              <div class="bg-slate-50 rounded-xl p-3"><p class="text-[10px] font-bold text-slate-500 uppercase">Subs</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].subscriberCount | number }}</p></div>
+            </div>
+          </ng-container>
+
+          <!-- SLA Compliance -->
+          <ng-container *ngIf="m.key === 'sla'">
+            <div class="grid grid-cols-4 gap-3">
+              <div class="bg-emerald-50 rounded-xl p-3"><p class="text-[10px] font-bold text-emerald-600 uppercase">Compliance</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].overallComplianceRate | number:'1.0-1' }}%</p></div>
+              <div class="bg-sky-50 rounded-xl p-3"><p class="text-[10px] font-bold text-sky-600 uppercase">Closed</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].totalTicketsClosed | number }}</p></div>
+              <div class="bg-rose-50 rounded-xl p-3"><p class="text-[10px] font-bold text-rose-600 uppercase">Breaches</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].totalBreaches | number }}</p></div>
+              <div class="bg-amber-50 rounded-xl p-3"><p class="text-[10px] font-bold text-amber-600 uppercase">Escalated</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].escalatedCount | number }}</p></div>
+            </div>
+          </ng-container>
+
+          <!-- Collection Efficiency -->
+          <ng-container *ngIf="m.key === 'collection'">
+            <div class="grid grid-cols-3 gap-3">
+              <div class="bg-emerald-50 rounded-xl p-3"><p class="text-[10px] font-bold text-emerald-600 uppercase">Efficiency</p><p class="text-lg font-extrabold text-slate-800">{{ data[m.key].collectionEfficiencyPct | number:'1.0-1' }}%</p></div>
+              <div class="bg-sky-50 rounded-xl p-3"><p class="text-[10px] font-bold text-sky-600 uppercase">Invoiced</p><p class="text-lg font-extrabold text-slate-800">₹{{ data[m.key].totalInvoiced | number:'1.0-0' }}</p></div>
+              <div class="bg-indigo-50 rounded-xl p-3"><p class="text-[10px] font-bold text-indigo-600 uppercase">Collected</p><p class="text-lg font-extrabold text-slate-800">₹{{ data[m.key].totalCollected | number:'1.0-0' }}</p></div>
+            </div>
+          </ng-container>
+
+          <!-- Subscriber Growth -->
+          <ng-container *ngIf="m.key === 'growth'">
+            <div class="grid grid-cols-4 gap-3">
+              <div class="bg-emerald-50 rounded-xl p-3"><p class="text-[10px] font-bold text-emerald-600 uppercase">Gross Adds</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].grossAdds | number }}</p></div>
+              <div class="bg-rose-50 rounded-xl p-3"><p class="text-[10px] font-bold text-rose-600 uppercase">Terminations</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].terminations | number }}</p></div>
+              <div class="bg-sky-50 rounded-xl p-3"><p class="text-[10px] font-bold text-sky-600 uppercase">Net Adds</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].netAdds | number }}</p></div>
+              <div class="bg-indigo-50 rounded-xl p-3"><p class="text-[10px] font-bold text-indigo-600 uppercase">SIM Activations</p><p class="text-base font-extrabold text-slate-800">{{ data[m.key].activeSIMActivations | number }}</p></div>
+            </div>
+          </ng-container>
+
+          <!-- Chart -->
+          <div class="relative h-52 mt-1"><canvas [id]="'chart-' + m.key"></canvas></div>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+  <p *ngIf="!metrics.length" class="text-sm text-slate-400 text-center py-12">
+    Your role does not have access to any analytics reports.
+  </p>
+</div>

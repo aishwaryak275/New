@@ -105,11 +105,13 @@ export class AgentPortalComponent implements OnInit {
   selectedWizardPlan: any = null;
 
   // Plan Provision Modal
-  isPlanProvisionOpen = false;
+  isPlanProvisionOpen = signal(false);
   provisionLine: any = null;
   provisionSelectedPlan: any = null;
   provisionSelectedAddOn: any = null;
   provisionAddOns: any[] = [];
+  provisionPlans: any[] = [];
+  account360Invoices: any[] = [];
 
   // Plan Catalog (read-only reference)
   catalogPlans: any[] = [];
@@ -478,6 +480,10 @@ export class AgentPortalComponent implements OnInit {
   }
 
   selectAccount(id: number): void {
+    this.billingService.getInvoicesByAccount(id).subscribe({
+      next: (invoices) => this.account360Invoices = invoices ?? [],
+      error: () => this.account360Invoices = []
+    });
     this.accountService.getAccount360(id).subscribe({
       next: (account) => {
         this.accountService.getSimLines(id).subscribe({
@@ -769,13 +775,14 @@ export class AgentPortalComponent implements OnInit {
     const planPrice: number = plan.planPrice ?? 0;
     const taxes = Math.round(planPrice * 0.18 * 100) / 100;
 
-    this.planService.createSubscription({
-      lineId, planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A'
-    }).subscribe({
+    const existingSubId = this.selectedWizardLine?.activeSubscription?.subscriptionId ?? this.selectedWizardLine?.activeSubscription?.id;
+    const doChange = existingSubId
+      ? this.planService.updateSubscription(existingSubId, { planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' })
+      : this.planService.createSubscription({ lineId, planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' });
+
+    doChange.subscribe({
       next: () => {
-        this.toastService.success(`Plan upgraded successfully to ${plan.name}!`);
-        // Bill the plan: create a billing cycle + invoice carrying the plan price so
-        // it appears in the subscriber's invoices and the Billing Executive queue.
+        this.toastService.success(`Plan changed successfully to ${plan.name}!`);
         if (accountId) {
           this.autoCreateInvoice(accountId, planPrice, taxes, activationDate, expiryDate);
         } else {
@@ -784,12 +791,12 @@ export class AgentPortalComponent implements OnInit {
         this.resetWizard();
         this.setTab('search');
         if (this.selectedAccount360?.accountId) {
-          this.selectAccount(this.selectedAccount360.accountId); // reload
+          this.selectAccount(this.selectedAccount360.accountId);
         }
       },
       error: (err: any) => {
         const msg = err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`;
-        this.toastService.error('Failed to activate plan change: ' + msg);
+        this.toastService.error('Failed to change plan: ' + msg);
       }
     });
   }
@@ -844,6 +851,10 @@ export class AgentPortalComponent implements OnInit {
     this.wizardForm.reset();
   }
 
+  hasPaidInvoice(): boolean {
+    return this.account360Invoices.some((inv: any) => (inv.status ?? '').toUpperCase() === 'PAID');
+  }
+
   // ==========================================
   // Plan Provision Modal
   // ==========================================
@@ -851,16 +862,22 @@ export class AgentPortalComponent implements OnInit {
     this.provisionLine = line;
     this.provisionSelectedPlan = null;
     this.provisionSelectedAddOn = null;
+    this.provisionPlans = [];
     this.provisionAddOns = [];
+    const acctType: string = (this.selectedAccount360?.accountType ?? '').toLowerCase();
+    this.planService.getPlans(true).subscribe({
+      next: (d) => this.provisionPlans = acctType ? d.filter((p: any) => (p.type ?? '').toLowerCase() === acctType) : d,
+      error: () => {}
+    });
     this.planService.getAddOns().subscribe({
       next: (d) => this.provisionAddOns = d.filter((a: any) => a.status === 'A'),
       error: () => {}
     });
-    this.isPlanProvisionOpen = true;
+    this.isPlanProvisionOpen.set(true);
   }
 
   closePlanProvision(): void {
-    this.isPlanProvisionOpen = false;
+    this.isPlanProvisionOpen.set(false);
     this.provisionLine = null;
     this.provisionSelectedPlan = null;
     this.provisionSelectedAddOn = null;

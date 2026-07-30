@@ -14,7 +14,7 @@ import { getDefaultPortalRoute } from '../../../core/guards/role.guard';
   styleUrls: ['./login.component.css']
 })
 export class LoginComponent implements OnInit {
-  loginForm!: FormGroup;
+  loginForm: FormGroup;
   isLoading = false;
 
   // Demo credentials
@@ -32,19 +32,17 @@ export class LoginComponent implements OnInit {
     private authService: AuthService,
     private router: Router,
     private toastService: ToastService
-  ) {}
-
-  ngOnInit(): void {
-    // If already logged in, redirect to respective dashboard
-    if (this.authService.isAuthenticated()) {
-      this.router.navigate([getDefaultPortalRoute(this.authService.userRole()!)]);
-      return;
-    }
-
+  ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
       password: ['', [Validators.required, Validators.minLength(6)]]
     });
+  }
+
+  ngOnInit(): void {
+    if (this.authService.isAuthenticated()) {
+      this.router.navigate([getDefaultPortalRoute(this.authService.userRole()!)]);
+    }
   }
 
   onSubmit(): void {

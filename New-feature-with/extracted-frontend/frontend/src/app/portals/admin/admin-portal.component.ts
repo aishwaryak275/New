@@ -48,12 +48,14 @@ export class AdminPortalComponent implements OnInit {
   addOnsPage = 1;
 
   // ── Plan Provision Modal (Customer 360) ───────────────────────────────────────
-  isPlanProvisionOpen = false;
+  isPlanProvisionOpen = signal(false);
+  isChangePlan = signal(false);
   provisionLine: any = null;
   provisionSelectedPlan: any = null;
   provisionSelectedAddOn: any = null;
   provisionPlans360: any[] = [];
   provisionAddOns: any[] = [];
+  account360Invoices: any[] = [];
   addOnForm!: FormGroup;
   editingAddOnId: number | null = null;
   isAddOnModalOpen = false;
@@ -819,7 +821,21 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
+  loadAccount360ByUserId(userId: number): void {
+    this.accountService.getAccountsBySubscriberId(userId).subscribe({
+      next: (accounts) => {
+        if (!accounts?.length) { this.toastService.error('No subscriber account found for this user.'); return; }
+        this.loadAccount360Profile(accounts[0].accountId);
+      },
+      error: () => this.toastService.error('Failed to load account profile.')
+    });
+  }
+
   loadAccount360Profile(id: number): void {
+    this.billingService.getInvoicesByAccount(id).subscribe({
+      next: (invoices) => this.account360Invoices = invoices ?? [],
+      error: () => this.account360Invoices = []
+    });
     this.accountService.getAccount360(id).subscribe({
       next: (account) => {
         this.accountService.getSimLines(id).subscribe({
@@ -960,24 +976,46 @@ export class AdminPortalComponent implements OnInit {
 
   // ── Plan Provision (Customer 360) ─────────────────────────────────────────────
   openPlanProvision360(line: any): void {
+    this.isChangePlan.set(false);
     this.provisionLine = line;
     this.provisionSelectedPlan = null;
     this.provisionSelectedAddOn = null;
     this.provisionPlans360 = [];
     this.provisionAddOns = [];
+    const acctType: string = (this.selected360Account?.accountType ?? '').toLowerCase();
     this.planService.getPlans(true).subscribe({
-      next: (d) => this.provisionPlans360 = d,
+      next: (d) => this.provisionPlans360 = acctType ? d.filter((p: any) => (p.type ?? '').toLowerCase() === acctType) : d,
       error: () => {}
     });
     this.planService.getAddOns().subscribe({
       next: (d) => this.provisionAddOns = d.filter((a: any) => a.status === 'A'),
       error: () => {}
     });
-    this.isPlanProvisionOpen = true;
+    this.isPlanProvisionOpen.set(true);
+  }
+
+  openChangePlan360(line: any): void {
+    this.isChangePlan.set(true);
+    this.provisionLine = line;
+    this.provisionSelectedPlan = line.activeSubscription?.plan ?? null;
+    this.provisionSelectedAddOn = null;
+    this.provisionPlans360 = [];
+    this.provisionAddOns = [];
+    const acctType: string = (this.selected360Account?.accountType ?? '').toLowerCase();
+    this.planService.getPlans(true).subscribe({
+      next: (d) => this.provisionPlans360 = acctType ? d.filter((p: any) => (p.type ?? '').toLowerCase() === acctType) : d,
+      error: () => {}
+    });
+    this.planService.getAddOns().subscribe({
+      next: (d) => this.provisionAddOns = d.filter((a: any) => a.status === 'A'),
+      error: () => {}
+    });
+    this.isPlanProvisionOpen.set(true);
   }
 
   closePlanProvision360(): void {
-    this.isPlanProvisionOpen = false;
+    this.isPlanProvisionOpen.set(false);
+    this.isChangePlan.set(false);
     this.provisionLine = null;
     this.provisionSelectedPlan = null;
     this.provisionSelectedAddOn = null;
@@ -995,25 +1033,48 @@ export class AdminPortalComponent implements OnInit {
     const planPrice: number = this.provisionSelectedPlan.planPrice ?? 0;
     const taxes = Math.round(planPrice * 0.18 * 100) / 100;
 
-    this.planService.createSubscription({ lineId, planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' }).subscribe({
-      next: (sub: any) => {
-        this.iamService.recordAudit('PLAN_PROVISIONED', 'ADMIN');
-        const subscriptionId = sub?.subscriptionId ?? sub?.id;
-        if (this.provisionSelectedAddOn && subscriptionId) {
-          this.planService.updateSubscription(subscriptionId, { addOnId: this.provisionSelectedAddOn.addOnId }).subscribe({
-            next: () => {},
-            error: () => this.toastService.error('Add-on could not be attached.')
-          });
+    if (this.isChangePlan()) {
+      const subscriptionId = this.provisionLine.activeSubscription?.subscriptionId ?? this.provisionLine.activeSubscription?.id;
+      if (!subscriptionId) { this.toastService.error('Cannot change plan: subscription ID not found.'); return; }
+      this.planService.updateSubscription(subscriptionId, { planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' }).subscribe({
+        next: () => {
+          this.iamService.recordAudit('PLAN_CHANGED', 'ADMIN');
+          if (this.provisionSelectedAddOn) {
+            this.planService.updateSubscription(subscriptionId, { addOnId: this.provisionSelectedAddOn.addOnId }).subscribe({ next: () => {}, error: () => this.toastService.error('Add-on could not be attached.') });
+          }
+          this.toastService.success(`Plan changed to "${this.provisionSelectedPlan.name}" successfully!`);
+          this.closePlanProvision360();
+          if (accountId) this.loadAccount360Profile(accountId);
+        },
+        error: (err: any) => {
+          this.toastService.error('Plan change failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`));
         }
-        this.toastService.success(`Plan "${this.provisionSelectedPlan.name}" provisioned successfully!`);
-        if (accountId) this.autoCreateInvoice360(accountId, planPrice, taxes, activationDate, expiryDate);
-        this.closePlanProvision360();
-        if (accountId) this.loadAccount360Profile(accountId);
-      },
-      error: (err: any) => {
-        this.toastService.error('Plan provision failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`));
-      }
-    });
+      });
+    } else {
+      this.planService.createSubscription({ lineId, planId, activationDate, expiryDate, renewalType: 'AutoRenew', status: 'A' }).subscribe({
+        next: (sub: any) => {
+          this.iamService.recordAudit('PLAN_PROVISIONED', 'ADMIN');
+          const subscriptionId = sub?.subscriptionId ?? sub?.id;
+          if (this.provisionSelectedAddOn && subscriptionId) {
+            this.planService.updateSubscription(subscriptionId, { addOnId: this.provisionSelectedAddOn.addOnId }).subscribe({
+              next: () => {},
+              error: () => this.toastService.error('Add-on could not be attached.')
+            });
+          }
+          this.toastService.success(`Plan "${this.provisionSelectedPlan.name}" provisioned successfully!`);
+          if (accountId) this.autoCreateInvoice360(accountId, planPrice, taxes, activationDate, expiryDate);
+          this.closePlanProvision360();
+          if (accountId) this.loadAccount360Profile(accountId);
+        },
+        error: (err: any) => {
+          this.toastService.error('Plan provision failed: ' + (err?.error?.message ?? `HTTP ${err?.status ?? 'error'}`));
+        }
+      });
+    }
+  }
+
+  hasPaidInvoice360(): boolean {
+    return this.account360Invoices.some((inv: any) => (inv.status ?? '').toUpperCase() === 'PAID');
   }
 
   private addDaysToDate(dateStr: string, days: number): string {
